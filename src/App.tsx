@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
@@ -18,9 +18,9 @@ const firebaseConfig = {
   appId: '1:188028941942:web:8e9aee68e9a22091935157',
 };
 
-let _auth = null, _db = null, _provider = null;
-let _signInWithPopup = null, _signOut = null, _onAuthStateChanged = null;
-let _doc = null, _getDoc = null, _setDoc = null;
+let _auth: any = null, _db: any = null, _provider: any = null;
+let _signInWithPopup: any = null, _signOut: any = null, _onAuthStateChanged: any = null;
+let _doc: any = null, _getDoc: any = null, _setDoc: any = null;
 let firebaseReady = false;
 
 const initFirebase = async () => {
@@ -50,7 +50,7 @@ const GENRE_CFG: Record<string, { accent: string; dim: string }> = {
   Romance:            { accent: '#fb7185', dim: '#6b1a2e' },
   'Mystery/Thriller': { accent: '#fbbf24', dim: '#6b4a04' },
   Horror:             { accent: '#f87171', dim: '#5b1a1a' },
-  Contemporary:       { accent: '#f97316', dim: '#431407' }, // orange — distinct from Romantasy green
+  Contemporary:       { accent: '#f97316', dim: '#431407' },
   Classics:           { accent: '#e5c97a', dim: '#5a4000' },
   'Non-Fiction':      { accent: '#60a5fa', dim: '#1e3a5f' },
 };
@@ -75,8 +75,8 @@ const TAB_CFG: Record<string, { label: string; color: string }> = {
   tbr:     { label: '🔖 TBR',     color: '#fb923c' },
   reading: { label: '📖 Reading', color: '#34d399' },
 };
-const STATUS_COLORS: Record<string, string> = { shelf: '#a78bfa', tbr: '#fb923c', reading: '#34d399' };
 
+const STATUS_COLORS: Record<string, string> = { shelf: '#a78bfa', tbr: '#fb923c', reading: '#34d399' };
 const THIS_YEAR  = new Date().getFullYear();
 const THIS_MONTH = new Date().getMonth();
 
@@ -100,6 +100,7 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((res, rej) => 
 
 // ── Seed Data ─────────────────────────────────────────────────────────────────
 const SEED = [
+  // Original books
   fa(1,'The Awakening','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',1),
   fa(2,'Ruthless Fae','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',2),
   fa(3,'The Reckoning','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',3),
@@ -347,7 +348,7 @@ const SEED = [
   m(204,'The Witness','Sandra Brown','Thriller',null,null),
   m(275,'Verity','Colleen Hoover','Thriller',null,null),
   m(313,'Silence and Shadows','Beaty','Thriller',null,null),
-  m(126,'The Mindf*ck Series','S.T. Abby','Dark Thriller','The Mindf*ck Series',null),
+  m(126,'The Mindfck Series','S.T. Abby','Dark Thriller','The Mindfck Series',null),
   cl(205,'Dracula','Bram Stoker','Gothic Classic'),
   cl(206,'The Phantom of the Opera','Gaston Leroux','Gothic Classic'),
   cl(207,'Animal Farm','George Orwell','British Lit'),
@@ -539,6 +540,196 @@ const SEED = [
   nf(309,'The Present Age','Soren Kierkegaard','Philosophy'),
   nf(310,'Kind of Coping','Unknown','Self-Help'),
   nf(311,'Prime Nihongo','Masatomi Shigo','Language Learning'),
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // NEW BOOKS — March 2026
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Filipino / Wattpad / Local
+  r(445,'Secretly Married','Trrevistenglimmer','Contemporary Romance',null,null),
+  r(446,'Baka Sakali','Jonaxx','Contemporary Romance','Jonaxx War Series',1),
+  r(447,'Mapansin Kaya?','Jonaxx','Contemporary Romance','Jonaxx War Series',2),
+  r(448,'End This War','Jonaxx','Contemporary Romance','Jonaxx War Series',3),
+  r(449,'My Prince (Books 1 & 2)','Alyloony','Contemporary Romance','My Prince',null),
+  r(450,'Voiceless','HaveYouSeenThisGirL','Contemporary Romance','Voiceless',1),
+  r(451,'Voiceless 2','HaveYouSeenThisGirL','Contemporary Romance','Voiceless',2),
+  r(452,'Love Me Harder','Jamille Fuma','Contemporary Romance',null,null),
+  r(453,'Spending the Night with the Ellison Heir','Jonquil','Contemporary Romance','Heir Series',1),
+  r(454,'In Love with the Campus Heir','Jonquil','Contemporary Romance','Heir Series',2),
+  r(455,'Treize de Cordova','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',1),
+  r(456,'Randolf Emmanuel Fontanilla','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',2),
+  r(457,'Juanito "Yeoji" Buenzalido','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',3),
+  r(458,'Denniz Terrano','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',4),
+  r(459,'Zech Marquez','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',5),
+  r(460,'Lantis Nakago','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',6),
+  r(461,'Silva Arellano','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',7),
+  r(462,'Vincent Noblejas','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',8),
+  r(463,'Vash Ilustre','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',9),
+  r(464,'Rex Zagdameo','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',10),
+  r(465,'Ken Arboleda','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',11),
+  r(466,'Rath Zagdameo','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',12),
+  r(467,'Toxic','Shana Del Viejo','Contemporary Romance',null,null),
+  r(468,'My Not-So Secret Fiancé','Autumn Castillo','Contemporary Romance',null,null),
+  r(469,"Creed's Lover",'C.C.','Dark Romance',null,null),
+  r(470,"The Devil's Kiss",'Martha Cecilia','Contemporary Romance','K Series',1),
+  r(471,'Ang Sisiw at ang Agila','Martha Cecilia','Contemporary Romance','K Series',2),
+  r(472,'Dahil Ikaw','Martha Cecilia','Contemporary Romance','K Series',3),
+  r(473,'Jewel, Black Diamond','Martha Cecilia','Contemporary Romance','K Series',4),
+  r(474,'The Rain in España','4Reuminct','Contemporary Romance','University Series',1),
+  r(475,'Safe Skies, Archer','4Reuminct','Contemporary Romance','University Series',2),
+  r(476,'Chasing in the Wild','4Reuminct','Contemporary Romance','University Series',3),
+  r(477,'Avenues of the Diamond','4Reuminct','Contemporary Romance','University Series',4),
+  r(478,'Play the Queen','AkosiIbarra','Contemporary Romance',null,null),
+  co(479,'Montello High: School of Gangsters','SielAlstreim','Contemporary Fiction','Montello High Saga',1),
+  co(480,'Snow White is a Gangster','SielAlstreim','Contemporary Fiction','Montello High Saga',2),
+  co(481,'Dark Fairy Tale','SielAlstreim','Contemporary Fiction','Montello High Saga',3),
+  r(482,'Marrying Mr. Popular','Chrispepper','Contemporary Romance',null,null),
+  r(483,'Unwanted Marriage','OwwSIC','Contemporary Romance',null,null),
+  r(484,"Let's Talk About Us",'Marielicious','New Adult Romance',null,null),
+  r(485,'The Sixth String','Purplena','Contemporary Romance',null,null),
+  r(486,'Apple Snap','Crestfallenmoon','Contemporary Romance',null,null),
+  r(487,'Bridal Shower','Soju','Contemporary Romance',null,null),
+  r(488,'My Naughty Love','Mizrian49','Contemporary Romance',null,null),
+  r(489,'Wild and Wrangled','Lyla Sage','Contemporary Romance','Dusty Boots',null),
+  r(490,'Body Check','Elle Kennedy','Sports Romance',null,null),
+  r(491,'Good Girl Complex','Elle Kennedy','Contemporary Romance','Avalon Bay',1),
+  r(492,'Bad Girl Reputation','Elle Kennedy','Contemporary Romance','Avalon Bay',2),
+  r(493,'The Summer Girl','Elle Kennedy','Contemporary Romance','Avalon Bay',3),
+  r(494,'Say You Swear','Meagan Brandy','Contemporary Romance',null,null),
+  fa(495,'The Book of Azrael','Amber V. Nicole','Dark Fantasy','Gods & Monsters',1),
+  fa(496,'Bury Our Bones in the Midnight Soil','V.E. Schwab','Dark Fantasy',null,null),
+  fa(497,'For This Wrath','Emsey Varga','Dark Fantasy',null,null),
+  fa(498,'The Gods Below','Andrea Stewart','High Fantasy','The Hollow Covenant',1),
+  co(499,'The Seven Husbands of Evelyn Hugo','Taylor Jenkins Reid','Literary Fiction',null,null),
+  fa(500,'Immortal','Sue Lynn Tan','High Fantasy',null,null),
+  fa(501,'Heir of Storms','Lauryn Hamilton Murray','High Fantasy',null,null),
+  fa(502,'The God and the Gumiho','Sophie Kim','YA Fantasy',null,null),
+  fa(503,'The Girl With No Reflection','Keshe Chow','YA Fantasy',null,null),
+  fa(504,'The Teller of Small Fortunes','Julie Leong','High Fantasy',null,null),
+  fa(505,"The Swan's Daughter",'Roshani Chokshi','YA Fantasy',null,null),
+  fa(506,'Long Live Evil','Sarah Rees Brennan','Dark Fantasy',null,null),
+  fa(507,'The Dagger and the Flame','Catherine Doyle','Dark Fantasy','The City of Fantome',1),
+  fa(508,'Immortal Dark','Tigest Girma','Dark Fantasy',null,null),
+  m(509,'The Last One','Rachel Howzell Hall','Thriller',null,null),
+  fa(510,'Hollow','C. Peckham & S. Valenti','Paranormal Romance','Crown of Hearts & Chaos',1),
+  fa(511,'Never Keep','C. Peckham & S. Valenti','Paranormal Romance','Sins of the Zodiac',1),
+  fa(512,'Filthy Rich Fae','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',null),
+  fa(513,'Filthy Rich Vampire','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',1),
+  fa(514,'Godkiller','Hannah Kaner','High Fantasy','Fallen Gods',1),
+  fa(515,'The Gilded Crown','Marianne Gordon','High Fantasy',null,null),
+  fa(516,'House of Bone and Blood','Alexis L. Menard','Dark Fantasy',null,null),
+  fa(517,'Never the Roses','Jennifer K. Lambert','Dark Fantasy',null,null),
+  fa(518,'North is the Night','Emily Rath','Dark Fantasy',null,null),
+  fa(519,'Nightweaver','R.M. Gray','Dark Fantasy',null,null),
+  fa(520,'The Cursed','Harper L. Woods','Dark Fantasy','The Coven',1),
+  fa(521,'The Coven','Harper L. Woods','Dark Fantasy','The Coven',2),
+  fa(522,'Heir','Sabaa Tahir','High Fantasy',null,null),
+  fa(523,'The Night Ends with Fire','K.X. Song','High Fantasy',null,null),
+  fa(524,'The Night Is Defying','Chloe C. Penaranda','Dark Fantasy','Night Is Series',1),
+  fa(525,'The Stars Are Dying','Chloe C. Penaranda','Dark Fantasy','Night Is Series',2),
+  fa(526,'The Courting of Bristol Keats','Mary E. Pearson','High Fantasy',null,null),
+  fa(527,'This Monster of Mine','Shalini Abeysekara','YA Fantasy',null,null),
+  fa(528,'Where Shadows Meet','Patrice Caldwell','YA Fantasy',null,null),
+  fa(529,'The Scorpion and the Night Blossom','Amélie Wen Zhao','Historical Fantasy',null,null),
+  fa(530,'Between Two Kings','Lindsay Straube','Dark Fantasy','Poison Beauties',1),
+  fa(531,'Kiss of the Basilisk','Lindsay Straube','Dark Fantasy','Poison Beauties',2),
+  fa(532,'The Ex Hex','Erin Sterling','Contemporary Romance','Graves Glen',1),
+  fa(533,"Barbarian's Mate",'Ruby Dixon','Paranormal Romance','Ice Planet Barbarians',null),
+  r(534,'Court of the Vampire Queen','Katee Robert','Dark Romance',null,null),
+  r(535,'Dowry of Blood','S.T. Gibson','Dark Romance',null,null),
+  r(536,"A Demon's Guide to Wooing a Witch",'Sarah Hawley','Contemporary Romance',null,null),
+  r(537,'What the Hex','Jessica Clare','Contemporary Romance',null,null),
+  r(538,'Check & Mate','Ali Hazelwood','Contemporary Romance',null,null),
+  r(539,'Deep End','Ali Hazelwood','Contemporary Romance',null,null),
+  r(540,'It Happened One Summer','Tessa Bailey','Contemporary Romance','Bellinger Sisters',1),
+  r(541,'Secretly Yours','Tessa Bailey','Contemporary Romance',null,null),
+  r(542,'Things We Never Got Over','Lucy Score','Contemporary Romance','Knockemout',1),
+  r(543,'Things We Hide from the Light','Lucy Score','Contemporary Romance','Knockemout',2),
+  r(544,'Things We Left Behind','Lucy Score','Contemporary Romance','Knockemout',3),
+  r(545,'Chasing Hardlee','Madyn Rose','Contemporary Romance',null,null),
+  r(546,'Done and Dusted','Lyla Sage','Contemporary Romance','Dusty Boots',1),
+  r(547,'Swift and Saddled','Lyla Sage','Contemporary Romance','Dusty Boots',2),
+  r(548,'Lost and Lassoed','Lyla Sage','Contemporary Romance','Dusty Boots',3),
+  r(549,'The American Roommate Experiment','Elena Armas','Contemporary Romance',null,null),
+  r(550,'Love and Other Flight Delays','Denise Williams','Contemporary Romance',null,null),
+  r(551,'Not Another Love Song','Julie Soto','Contemporary Romance',null,null),
+  r(552,'The Fine Print','Lauren Asher','Contemporary Romance','Bandini Brothers',1),
+  r(553,'Terms and Conditions','Lauren Asher','Contemporary Romance','Bandini Brothers',2),
+  r(554,'Final Offer','Lauren Asher','Contemporary Romance','Bandini Brothers',3),
+  r(555,'Love Redesigned','Lauren Asher','Contemporary Romance',null,null),
+  r(556,'Love Unwritten','Lauren Asher','Contemporary Romance',null,null),
+  r(557,'Throttled','Lauren Asher','Sports Romance','Dirty Air',1),
+  r(558,'The Happy Ever After Playlist','Abby Jimenez','Contemporary Romance',null,null),
+  r(559,'The Friend Zone','Abby Jimenez','Contemporary Romance',null,null),
+  r(560,'Next-Door Nemesis','Alexa Martin','Contemporary Romance',null,null),
+  r(561,'Mr. Fixer Upper','Lucy Score','Contemporary Romance',null,null),
+  r(562,"Archer's Voice",'Mia Sheridan','Contemporary Romance',null,null),
+  r(563,'Same Time Next Summer','Annabel Monaghan','Contemporary Romance',null,null),
+  r(564,'The Breakup Tour','E. Wibberley & A. Siegemund-Broka','Contemporary Romance',null,null),
+  r(565,'Summer Reading','Jenn McKinlay','Contemporary Romance',null,null),
+  r(566,'Collide','Bal Khabra','Sports Romance',null,null),
+  r(567,'Canadian Boyfriend','Jenny Holiday','Contemporary Romance',null,null),
+  r(568,'Love Your Life','Sophie Kinsella','Contemporary Romance',null,null),
+  r(569,'Pretty Reckless','L.J. Shen','New Adult Romance','All Saints',1),
+  r(570,'Broken Knight','L.J. Shen','New Adult Romance','All Saints',2),
+  r(571,'Angry God','L.J. Shen','New Adult Romance','All Saints',3),
+  r(572,'Damaged Goods','L.J. Shen','New Adult Romance','All Saints',4),
+  r(573,'Psyche and Eros','Luna McNamara','Contemporary Romance',null,null),
+  fa(575,'The Invisible Life of Addie LaRue','V.E. Schwab','Dark Fantasy',null,null),
+  r(576,'Tweet Cute','Emma Lord','Contemporary Romance',null,null),
+  r(577,'Love & Other Words','Christina Lauren','Contemporary Romance',null,null),
+  r(578,'Book Lovers','Emily Henry','Contemporary Romance',null,null),
+  r(579,'If I Stopped Haunting You','Colby Wilkens','Contemporary Romance',null,null),
+  r(580,'Twisted Knight','K. Bromberg','Contemporary Romance',null,null),
+  r(581,"Life's Too Short",'K. Bromberg','Contemporary Romance',null,null),
+  r(582,'The Dead Romantics','Ashley Poston','Contemporary Romance',null,null),
+  r(583,'Grey','E.L. James','Contemporary Romance','Fifty Shades',null),
+  r(584,'Cross My Heart','Roxy Stone','Contemporary Romance',null,null),
+  r(585,'That Prince is Mine','Jacy Lee','Contemporary Romance',null,null),
+  r(586,'The Long Game','Elena Armas','Contemporary Romance',null,null),
+  r(587,'The Spanish Love Deception','Elena Armas','Contemporary Romance',null,null),
+  r(588,'The Seven Year Slip','Ashley Poston','Contemporary Romance',null,null),
+  r(589,'Icebreaker','Hannah Grace','Sports Romance','Maple Hills',1),
+  r(590,'Wildfire','Hannah Grace','Sports Romance','Maple Hills',2),
+  r(591,'Daydream','Hannah Grace','Sports Romance','Maple Hills',3),
+  r(592,'Sanctuary of the Shadow','Aurora Ascher','Dark Romance',null,null),
+  r(593,'Heavenbreaker','Sara Wolf','Dark Romance',null,null),
+  fa(594,'The Shadows Between Us','Tricia Levenseller','YA Fantasy',null,null),
+  fa(595,'The Robin on the Oak Throne','K.A. Linde','Dark Fantasy','Wren & Robin',1),
+  fa(596,'The Wren in the Holly Library','K.A. Linde','Dark Fantasy','Wren & Robin',2),
+  fa(597,'The Monster and the Last Blood Match','K.A. Linde','Dark Fantasy',null,null),
+  fa(598,'Blood of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',1),
+  fa(599,'Bonds of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',2),
+  fa(600,'The Games Gods Play','Abigail Owen','Paranormal Romance',null,null),
+  fa(601,'Three Shattered Souls','Mai Corland','High Fantasy','Five Broken Blades',null),
+  fa(602,'The Bond That Burns','Briar Boleyn','Dark Fantasy',null,null),
+  fa(603,'On Wings of Blood','Briar Boleyn','Dark Fantasy',null,null),
+  fa(604,'The Things Gods Break','Abigail Owen','Paranormal Romance',null,null),
+  fa(605,'A Dance of Lies','Brittney Arena','YA Fantasy',null,null),
+  fa(606,'Sorcery and Small Magics','Maiga Doocy','YA Fantasy',null,null),
+  fa(607,'Graceless Heart','Isabel Ibanez','YA Fantasy',null,null),
+  fa(608,'A Song to Drown Rivers','Ann Liang','Historical Fantasy',null,null),
+  fa(609,'Firebird','Juliette Cross','Dark Fantasy',null,null),
+  rt(610,'Immortal Consequences','I.V. Marie',null,null),
+  cl(611,'The Long Valley','John Steinbeck','American Lit'),
+  cl(612,'The Screwtape Letters','C.S. Lewis','British Lit'),
+  fa(613,'The Knight and the Moth','Rachel Gillig','Dark Fantasy',null,null),
+  fa(614,'Never Ever After','Sue Lynn Tan','High Fantasy',null,null),
+  fa(615,'The Rose Bargain','Sasha Peyton Smith','YA Fantasy',null,null),
+  fa(616,'The Floating World','Axie Oh','YA Fantasy',null,null),
+  fa(617,'Babel','R.F. Kuang','Historical Fantasy',null,null),
+  fa(618,'A Language of Dragons','S.F. Williamson','YA Fantasy',null,null),
+  fa(619,'Sleep Like Death','Kalynn Bayron','YA Fantasy',null,null),
+  r(620,'Nocticadia','Keri Lake','Dark Romance',null,null),
+  fa(621,'The Glittering Edge','Alyssa Villaire','Dark Fantasy',null,null),
+  fa(622,'Gifted & Talented','Olivie Blake','Dark Fantasy',null,null),
+  fa(623,'Cruel is the Light','Sophie Clark','YA Fantasy',null,null),
+  fa(624,'The Never List','Jade Presley','Dark Fantasy',null,null),
+  fa(625,'The Half King','Melissa Landers','YA Fantasy',null,null),
+  fa(626,'For Whom the Belle Tolls','Jaysea Lynn','Dark Fantasy',null,null),
+  fa(627,'The Darkness Within Us','Tricia Levenseller','YA Fantasy',null,null),
+  r(628,'Rose in Chains','Julie Soto','Contemporary Romance',null,null),
+  r(629,'Repeat After Me','Jessica Warman','Contemporary Romance',null,null),
 ];
 
 const seen = new Set<number>();
@@ -571,19 +762,15 @@ function GoalRing({ count, goal, label, emoji, gradStart, gradEnd, gradId }: {
   count: number; goal: number; label: string; emoji: string; gradStart: string; gradEnd: string; gradId: string;
 }) {
   const pct = goal ? Math.min(100, Math.round((count / goal) * 100)) : 0;
-  const R = 46;
-  const circ = 2 * Math.PI * R;
+  const R = 46; const circ = 2 * Math.PI * R;
   return (
     <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:'0.5rem' }}>
       <div style={{ position:'relative',width:'110px',height:'110px' }}>
         <svg width="110" height="110" viewBox="0 0 110 110" style={{ transform:'rotate(-90deg)' }}>
           <circle cx="55" cy="55" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10"/>
           <circle cx="55" cy="55" r={R} fill="none" stroke={`url(#${gradId})`} strokeWidth="10"
-            strokeLinecap="round"
-            strokeDasharray={`${circ}`}
-            strokeDashoffset={`${circ * (1 - pct / 100)}`}
-            style={{ transition:'stroke-dashoffset 0.8s ease' }}
-          />
+            strokeLinecap="round" strokeDasharray={`${circ}`} strokeDashoffset={`${circ*(1-pct/100)}`}
+            style={{ transition:'stroke-dashoffset 0.8s ease' }}/>
           <defs>
             <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor={gradStart}/>
@@ -593,7 +780,7 @@ function GoalRing({ count, goal, label, emoji, gradStart, gradEnd, gradId }: {
         </svg>
         <div style={{ position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center' }}>
           <span style={{ color:'white',fontWeight:'bold',fontSize:'1.3rem',lineHeight:1 }}>{count}</span>
-          <span style={{ color:'rgba(255,255,255,0.3)',fontSize:'0.6rem' }}>of {goal || '?'}</span>
+          <span style={{ color:'rgba(255,255,255,0.3)',fontSize:'0.6rem' }}>of {goal||'?'}</span>
         </div>
       </div>
       <div style={{ textAlign:'center' }}>
@@ -606,51 +793,34 @@ function GoalRing({ count, goal, label, emoji, gradStart, gradEnd, gradId }: {
 
 // ── GoalSetModal ──────────────────────────────────────────────────────────────
 function GoalSetModal({ goals, onSave, onClose }: { goals: any; onSave: (g: any) => void; onClose: () => void }) {
-  const [y,             setY]             = useState(goals.yearly        || '');
-  const [mo,            setMo]            = useState(goals.monthly       || '');
-  const [readProgress,  setReadProgress]  = useState(goals.readProgress  ?? '');
-  const [monthProgress, setMonthProgress] = useState(goals.monthProgress ?? '');
-
+  const [y,setY] = useState(goals.yearly||'');
+  const [mo,setMo] = useState(goals.monthly||'');
+  const [readProgress,setReadProgress] = useState(goals.readProgress??'');
+  const [monthProgress,setMonthProgress] = useState(goals.monthProgress??'');
   const inp: React.CSSProperties = { width:'100%',background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:'0.6rem',padding:'0.55rem 0.75rem',color:'white',fontSize:'0.95rem',boxSizing:'border-box',textAlign:'center' };
-
   return (
     <div style={{ position:'fixed',inset:0,zIndex:60,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.8)',padding:'1rem' }}>
       <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.12)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'360px',maxHeight:'90vh',overflowY:'auto' }}>
         <h3 style={{ color:'white',fontWeight:'bold',marginBottom:'1rem',fontSize:'1rem' }}>📖 Set Reading Goals</h3>
-
         <div style={{ marginBottom:'0.65rem' }}>
           <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>Yearly goal (books)</label>
           <input type="number" value={y} onChange={e=>setY(e.target.value)} placeholder="e.g. 120" min={1} style={inp}/>
         </div>
         <div style={{ marginBottom:'0.65rem' }}>
-          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>
-            Books read so far this year <span style={{ color:'rgba(255,255,255,0.25)' }}>(manual override)</span>
-          </label>
-          <input type="number" value={readProgress} onChange={e=>setReadProgress(e.target.value)} placeholder="e.g. 34 — leave blank to auto-count" min={0} style={inp}/>
+          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>Books read so far this year <span style={{ color:'rgba(255,255,255,0.25)' }}>(manual override)</span></label>
+          <input type="number" value={readProgress} onChange={e=>setReadProgress(e.target.value)} placeholder="leave blank to auto-count" min={0} style={inp}/>
         </div>
         <div style={{ marginBottom:'0.65rem' }}>
           <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>Monthly goal (books)</label>
           <input type="number" value={mo} onChange={e=>setMo(e.target.value)} placeholder="e.g. 12" min={1} style={inp}/>
         </div>
         <div style={{ marginBottom:'1rem' }}>
-          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>
-            Books read this month <span style={{ color:'rgba(255,255,255,0.25)' }}>(override, blank = auto-track)</span>
-          </label>
+          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>Books read this month <span style={{ color:'rgba(255,255,255,0.25)' }}>(override)</span></label>
           <input type="number" value={monthProgress} onChange={e=>setMonthProgress(e.target.value)} placeholder="auto-tracked if blank" min={0} style={inp}/>
         </div>
-
         <div style={{ display:'flex',gap:'0.75rem' }}>
-          <button onClick={() => onSave({
-            yearly:       Number(y)  || 0,
-            monthly:      Number(mo) || 0,
-            readProgress:  readProgress  !== '' ? Number(readProgress)  : null,
-            monthProgress: monthProgress !== '' ? Number(monthProgress) : null,
-          })} style={{ flex:1,background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer' }}>
-            Save
-          </button>
-          <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>
-            Cancel
-          </button>
+          <button onClick={()=>onSave({ yearly:Number(y)||0, monthly:Number(mo)||0, readProgress:readProgress!==''?Number(readProgress):null, monthProgress:monthProgress!==''?Number(monthProgress):null })} style={{ flex:1,background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer' }}>Save</button>
+          <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Cancel</button>
         </div>
       </div>
     </div>
@@ -659,67 +829,38 @@ function GoalSetModal({ goals, onSave, onClose }: { goals: any; onSave: (g: any)
 
 // ── HomeTab ───────────────────────────────────────────────────────────────────
 function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals: any; onEditGoals: () => void; userName: string }) {
-  const now        = new Date();
-  const readAll    = books.filter(b => b.read);
-  const tbrCount   = books.filter(b => b.status === 'tbr').length;
-  const readingCount = books.filter(b => b.status === 'reading').length;
-
-  // yearly — manual override or auto count by readYear
-  const thisYearAuto = readAll.filter(b => b.readYear === THIS_YEAR || (!b.readYear && b.readAt && new Date(b.readAt).getFullYear() === THIS_YEAR));
-  const goalCount    = goals.readProgress != null ? goals.readProgress : thisYearAuto.length;
-
-  // monthly — manual override or auto count by readAt timestamp
-  const thisMonthAuto = readAll.filter(b => {
-    if (!b.readAt) return false;
-    const d = new Date(b.readAt);
-    return d.getMonth() === THIS_MONTH && d.getFullYear() === THIS_YEAR;
-  });
-  const monthGoalCount = goals.monthProgress != null ? goals.monthProgress : thisMonthAuto.length;
-
-  const readPct   = books.length ? Math.round((readAll.length / books.length) * 100) : 0;
-  const unreadPct = 100 - readPct;
-
-  const genreData = useMemo(() => {
-    const c: Record<string, number> = {};
-    readAll.forEach(b => { c[b.genre] = (c[b.genre] || 0) + 1; });
-    return Object.entries(c).map(([g, n]) => ({ genre: g, count: n, color: GENRE_CFG[g]?.accent || '#a78bfa' })).sort((a, b) => b.count - a.count);
-  }, [readAll]);
-
-  const authorData = useMemo(() => {
-    const c: Record<string, number> = {};
-    readAll.forEach(b => { c[b.author] = (c[b.author] || 0) + 1; });
-    return Object.entries(c).map(([a, n]) => ({ author: a, count: n })).sort((a, b) => b.count - a.count).slice(0, 8);
-  }, [readAll]);
-
-  const maxGenre  = genreData[0]?.count  || 1;
-  const maxAuthor = authorData[0]?.count || 1;
-
+  const now = new Date();
+  const readAll = books.filter(b => b.read);
+  const tbrCount = books.filter(b => b.status==='tbr').length;
+  const readingCount = books.filter(b => b.status==='reading').length;
+  const thisYearAuto = readAll.filter(b => b.readYear===THIS_YEAR||(!b.readYear&&b.readAt&&new Date(b.readAt).getFullYear()===THIS_YEAR));
+  const goalCount = goals.readProgress!=null ? goals.readProgress : thisYearAuto.length;
+  const thisMonthAuto = readAll.filter(b => { if(!b.readAt) return false; const d=new Date(b.readAt); return d.getMonth()===THIS_MONTH&&d.getFullYear()===THIS_YEAR; });
+  const monthGoalCount = goals.monthProgress!=null ? goals.monthProgress : thisMonthAuto.length;
+  const readPct = books.length ? Math.round((readAll.length/books.length)*100) : 0;
+  const unreadPct = 100-readPct;
+  const genreData = useMemo(()=>{ const c: Record<string,number>={}; readAll.forEach(b=>{c[b.genre]=(c[b.genre]||0)+1;}); return Object.entries(c).map(([g,n])=>({genre:g,count:n,color:GENRE_CFG[g]?.accent||'#a78bfa'})).sort((a,b)=>b.count-a.count); },[readAll]);
+  const authorData = useMemo(()=>{ const c: Record<string,number>={}; readAll.forEach(b=>{c[b.author]=(c[b.author]||0)+1;}); return Object.entries(c).map(([a,n])=>({author:a,count:n})).sort((a,b)=>b.count-a.count).slice(0,8); },[readAll]);
+  const maxGenre = genreData[0]?.count||1;
+  const maxAuthor = authorData[0]?.count||1;
   const card: React.CSSProperties = { background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' };
-  const currentlyReading = books.filter((b:any) => b.status === 'reading');
+  const currentlyReading = books.filter((b:any)=>b.status==='reading');
   const recentlyRead = [...readAll].sort((a:any,b:any)=>(b.readAt||0)-(a.readAt||0)).slice(0,5);
   const monthLeft = Math.max(0,(goals.monthly||0)-monthGoalCount);
-  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
-
+  const greeting = now.getHours()<12?'Good morning':now.getHours()<18?'Good afternoon':'Good evening';
   return (
     <div style={{ padding:'1rem',maxWidth:'960px',margin:'0 auto' }}>
-
-      {/* HERO BANNER */}
-      <div style={{ ...card, display:'flex',justifyContent:'space-between',alignItems:'center',borderColor:'rgba(167,139,250,0.18)',marginBottom:'0.75rem' }}>
+      <div style={{ ...card,display:'flex',justifyContent:'space-between',alignItems:'center',borderColor:'rgba(167,139,250,0.18)',marginBottom:'0.75rem' }}>
         <div>
-          <div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)',marginBottom:'0.15rem' }}>
-            {now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
-          </div>
-          <div style={{ fontSize:'1.25rem',fontWeight:'bold',color:'#e8d9ff',marginBottom:'0.3rem' }}>
-            {greeting}{userName ? `, ${userName}` : ''} ✦
-          </div>
+          <div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)',marginBottom:'0.15rem' }}>{now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
+          <div style={{ fontSize:'1.25rem',fontWeight:'bold',color:'#e8d9ff',marginBottom:'0.3rem' }}>{greeting}{userName?`, ${userName}`:''} ✦</div>
           <div style={{ fontSize:'0.75rem',color:'rgba(255,255,255,0.4)',lineHeight:1.7 }}>
             <span style={{ color:'#fb7185',fontWeight:600 }}>{monthGoalCount} {monthGoalCount===1?'book':'books'}</span> read this month
-            {goals.monthly > 0 && <span style={{ color:'rgba(255,255,255,0.25)' }}> · {monthLeft} left to goal</span>}
+            {goals.monthly>0&&<span style={{ color:'rgba(255,255,255,0.25)' }}> · {monthLeft} left to goal</span>}
             <span style={{ margin:'0 0.35rem',color:'rgba(255,255,255,0.12)' }}>·</span>
             <span style={{ color:'#a78bfa',fontWeight:600 }}>{goalCount} of {goals.yearly||'?'}</span> this year
           </div>
         </div>
-        {/* Elegant open book SVG */}
         <svg width="56" height="56" viewBox="0 0 64 64" fill="none" style={{ flexShrink:0 }}>
           <path d="M32 16 C22 14 12 16 10 18 L10 50 C12 48 22 46 32 48Z" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" strokeWidth="1"/>
           <path d="M32 16 C42 14 52 16 54 18 L54 50 C52 48 42 46 32 48Z" fill="rgba(192,132,252,0.1)" stroke="#c084fc" strokeWidth="1"/>
@@ -734,8 +875,6 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
           <circle cx="8" cy="44" r="1" fill="#a78bfa" opacity="0.5"/>
         </svg>
       </div>
-
-      {/* STAT CARDS */}
       <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'0.5rem',marginBottom:'0.75rem' }}>
         {[
           { label:'Total',   value:books.length,  color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.25)' },
@@ -749,30 +888,21 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
           </div>
         ))}
       </div>
-
-      {/* CURRENTLY READING */}
-      {currentlyReading.length > 0 && (
-        <div style={{ ...card, borderColor:'rgba(96,165,250,0.15)' }}>
+      {currentlyReading.length>0&&(
+        <div style={{ ...card,borderColor:'rgba(96,165,250,0.15)' }}>
           <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📖 Currently Reading</div>
           <div style={{ display:'flex',gap:'0.6rem',flexWrap:'wrap' }}>
-            {currentlyReading.map((b:any)=>{
-              const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy'];
-              return (
-                <div key={b.id} style={{ background:'rgba(255,255,255,0.03)',border:`1px solid ${cfg.accent}25`,borderLeft:`3px solid ${cfg.accent}`,borderRadius:'0.6rem',padding:'0.6rem 0.75rem',flex:1,minWidth:'130px' }}>
-                  <div style={{ fontSize:'0.78rem',fontWeight:'bold',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
-                  <div style={{ fontSize:'0.65rem',color:cfg.accent+'bb',marginTop:'0.1rem' }}>{b.author}</div>
-                  <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.25)',marginTop:'0.15rem' }}>{b.genre}</div>
-                </div>
-              );
-            })}
+            {currentlyReading.map((b:any)=>{ const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
+              <div key={b.id} style={{ background:'rgba(255,255,255,0.03)',border:`1px solid ${cfg.accent}25`,borderLeft:`3px solid ${cfg.accent}`,borderRadius:'0.6rem',padding:'0.6rem 0.75rem',flex:1,minWidth:'130px' }}>
+                <div style={{ fontSize:'0.78rem',fontWeight:'bold',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
+                <div style={{ fontSize:'0.65rem',color:cfg.accent+'bb',marginTop:'0.1rem' }}>{b.author}</div>
+                <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.25)',marginTop:'0.15rem' }}>{b.genre}</div>
+              </div>
+            ); })}
           </div>
         </div>
       )}
-
-      {/* GOALS + RECENTLY READ side by side */}
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem' }}>
-
-        {/* GOAL RINGS */}
         <div style={card}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.75rem' }}>
             <span style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>Reading Goals</span>
@@ -790,37 +920,27 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
             </div>
           )}
         </div>
-
-        {/* RECENTLY READ */}
         <div style={card}>
           <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>Recently Read</div>
-          {recentlyRead.length === 0 ? (
+          {recentlyRead.length===0?(
             <div style={{ color:'rgba(255,255,255,0.2)',fontSize:'0.75rem',textAlign:'center',padding:'1rem 0' }}>No books read yet</div>
-          ) : (
+          ):(
             <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
-              {recentlyRead.map((b:any)=>{
-                const color = GENRE_CFG[b.genre]?.accent||'#a78bfa';
-                const dateStr = b.readAt ? new Date(b.readAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : b.readYear||'';
-                return (
-                  <div key={b.id} style={{ display:'flex',alignItems:'center',gap:'0.5rem' }}>
-                    <div style={{ width:'6px',height:'6px',borderRadius:'50%',background:color,flexShrink:0 }}/>
-                    <div style={{ flex:1,minWidth:0 }}>
-                      <div style={{ fontSize:'0.72rem',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
-                      <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.3)' }}>{b.author}</div>
-                    </div>
-                    <div style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.2)',flexShrink:0 }}>{dateStr}</div>
+              {recentlyRead.map((b:any)=>{ const color=GENRE_CFG[b.genre]?.accent||'#a78bfa'; const dateStr=b.readAt?new Date(b.readAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}):b.readYear||''; return (
+                <div key={b.id} style={{ display:'flex',alignItems:'center',gap:'0.5rem' }}>
+                  <div style={{ width:'6px',height:'6px',borderRadius:'50%',background:color,flexShrink:0 }}/>
+                  <div style={{ flex:1,minWidth:0 }}>
+                    <div style={{ fontSize:'0.72rem',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
+                    <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.3)' }}>{b.author}</div>
                   </div>
-                );
-              })}
+                  <div style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.2)',flexShrink:0 }}>{dateStr}</div>
+                </div>
+              ); })}
             </div>
           )}
         </div>
       </div>
-
-      {/* READ VS UNREAD + GENRES side by side */}
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem' }}>
-
-        {/* READ VS UNREAD */}
         <div style={card}>
           <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Read vs Unread</div>
           <div style={{ height:'10px',borderRadius:'9999px',background:'rgba(255,255,255,0.07)',overflow:'hidden',display:'flex',marginBottom:'0.5rem' }}>
@@ -831,25 +951,18 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
             <span style={{ fontSize:'0.65rem',color:'#34d399' }}>● Read {readPct}%</span>
             <span style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>● Unread {unreadPct}%</span>
           </div>
-          {/* motivational nudge */}
-          {goals.monthly > 0 && (
+          {goals.monthly>0&&(
             <div style={{ background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.15)',borderRadius:'0.5rem',padding:'0.45rem 0.6rem' }}>
               <div style={{ fontSize:'0.68rem',color:'#a78bfa' }}>
-                {monthGoalCount >= (goals.monthly||0)
-                  ? `✦ Monthly goal complete! Amazing work.`
-                  : monthLeft === 1
-                  ? `✦ Just 1 book left to hit your monthly goal!`
-                  : `✦ ${monthLeft} books left this month — you've got this!`}
+                {monthGoalCount>=(goals.monthly||0)?'✦ Monthly goal complete! Amazing work.':monthLeft===1?'✦ Just 1 book left to hit your monthly goal!':`✦ ${monthLeft} books left this month — you've got this!`}
               </div>
             </div>
           )}
         </div>
-
-        {/* TOP GENRES */}
-        {genreData.length > 0 ? (
+        {genreData.length>0?(
           <div style={card}>
             <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Genres</div>
-            {genreData.slice(0,5).map(({ genre, count, color })=>(
+            {genreData.slice(0,5).map(({genre,count,color})=>(
               <div key={genre} style={{ marginBottom:'0.45rem' }}>
                 <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
                   <span style={{ fontSize:'0.68rem',color }}>{genre}</span>
@@ -861,20 +974,18 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
               </div>
             ))}
           </div>
-        ) : (
-          <div style={{ ...card, display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'0.5rem' }}>
+        ):(
+          <div style={{ ...card,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'0.5rem' }}>
             <div style={{ fontSize:'1.5rem' }}>📊</div>
             <p style={{ fontSize:'0.78rem',color:'rgba(255,255,255,0.2)',textAlign:'center' }}>Mark books as read to see genre stats</p>
           </div>
         )}
       </div>
-
-      {/* TOP AUTHORS */}
-      {authorData.length > 0 && (
+      {authorData.length>0&&(
         <div style={card}>
           <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Authors</div>
           <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
-            {authorData.map(({ author, count })=>(
+            {authorData.map(({author,count})=>(
               <div key={author} style={{ marginBottom:'0.35rem' }}>
                 <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
                   <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.65)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'75%' }}>{author}</span>
@@ -888,7 +999,6 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
           </div>
         </div>
       )}
-
     </div>
   );
 }
@@ -898,32 +1008,42 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   book: any; onSave: (b: any) => void; onSaveMany: (bs: any[]) => void; onClose: () => void; tab: string; allSeries: string[]; allBooks: any[];
 }) {
   const [mode, setMode] = useState('single');
-  const [shelfGenre,  setShelfGenre]  = useState('Romance');
-  const [shelfStatus, setShelfStatus] = useState(tab === 'home' ? 'shelf' : tab);
-  const [shelfRead,   setShelfRead]   = useState(false);
-
+  const [shelfGenre, setShelfGenre] = useState('Romance');
+  const [shelfStatus, setShelfStatus] = useState(tab==='home'?'shelf':tab);
+  const [shelfRead, setShelfRead] = useState(false);
   const blank = { title:'',author:'',category:'Fiction',genre:'Fantasy',subgenre:'Romantasy',series:'',sn:'',read:false,status:tab==='home'?'shelf':tab,readAt:null,readYear:null };
-  const [f, setF]          = useState(book ? {...book,sn:book.sn??'',series:book.series??''} : blank);
-  const [identifying,  setId]        = useState(false);
-  const [idMsg,        setIdMsg]     = useState('');
-  const [suggestions,  setSuggestions] = useState<any[]>([]);
-  const [showSug,      setShowSug]   = useState(false);
-  const [dupWarning,   setDupWarning] = useState('');
-  const photoRef  = useRef<HTMLInputElement>(null);
-  const sugTimer  = useRef<any>(null);
+  const [f, setF] = useState(book ? {...book,sn:book.sn??'',series:book.series??''} : blank);
+  const [identifying, setId] = useState(false);
+  const [idMsg, setIdMsg] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSug, setShowSug] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState<{top:number;left:number;width:number}|null>(null);
+  const [dupWarning, setDupWarning] = useState('');
+  const photoRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const sugTimer = useRef<any>(null);
+
   const set = (k: string, v: any) => setF((p: any) => ({...p,[k]:v}));
 
-  // Google Books autocomplete
+  // ── FIXED: Google Books autocomplete with portal-style fixed positioning ──
+  const updateDropdownPos = useCallback(() => {
+    if (titleInputRef.current) {
+      const r = titleInputRef.current.getBoundingClientRect();
+      setDropdownPos({ top: r.bottom + 4, left: r.left, width: r.width });
+    }
+  }, []);
+
   const searchGoogleBooks = async (query: string) => {
     if (query.length < 3) { setSuggestions([]); setShowSug(false); return; }
     try {
-      const res  = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=6&printType=books`);
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=6&printType=books`);
       const data = await res.json();
-      const items = (data.items || []).map((item: any) => {
+      const items = (data.items||[]).map((item: any) => {
         const v = item.volumeInfo;
-        return { title: v.title||'', author: (v.authors||[]).join(', '), cover: v.imageLinks?.smallThumbnail||'' };
+        return { title:v.title||'', author:(v.authors||[]).join(', '), cover:v.imageLinks?.smallThumbnail||'' };
       }).filter((b: any) => b.title);
-      setSuggestions(items); setShowSug(items.length > 0);
+      setSuggestions(items);
+      if (items.length > 0) { updateDropdownPos(); setShowSug(true); }
     } catch { setSuggestions([]); }
   };
 
@@ -934,19 +1054,28 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   };
 
   const pickSuggestion = (sug: any) => {
-    setF((p: any) => ({ ...p, title: sug.title, author: sug.author || p.author }));
+    setF((p: any) => ({...p, title:sug.title, author:sug.author||p.author}));
     setSuggestions([]); setShowSug(false);
   };
+
+  // Close dropdown on scroll/resize
+  useEffect(() => {
+    const hide = () => setShowSug(false);
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('resize', hide);
+    return () => { window.removeEventListener('scroll', hide, true); window.removeEventListener('resize', hide); };
+  }, []);
 
   const handleCoverPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setId(true); setIdMsg('Identifying…');
     try {
       const b64 = await fileToBase64(file);
-      const res = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json'},
+      // FIX: use Netlify proxy instead of direct Anthropic API
+      const res = await fetch('/.netlify/functions/claude', { method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:200, messages:[{ role:'user', content:[
           { type:'image', source:{ type:'base64', media_type:file.type, data:b64 } },
-          { type:'text', text:'Identify the book. Return ONLY JSON: {"title":"...","author":"..."}. Unknown: {"title":"","author":""}.' },
+          { type:'text', text:'Identify the book. Return ONLY JSON: {"title":"…","author":"…"}. Unknown: {"title":"","author":""}.' },
         ]}]}),
       });
       const data = await res.json();
@@ -961,22 +1090,26 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
     if (!f.title.trim()||!f.author.trim()) return;
     if (!book) {
       const titleLower = f.title.trim().toLowerCase();
-      const isDup = allBooks.some((b: any) => b.title.toLowerCase() === titleLower);
+      const isDup = allBooks.some((b: any) => b.title.toLowerCase()===titleLower);
       if (isDup) { setDupWarning(`"${f.title.trim()}" is already in your shelf!`); return; }
     }
     onSave({ ...f, sn:f.sn!==''?Number(f.sn):null, series:f.series||null, id:f.id||uid(),
-      readAt:  f.read&&!f.readAt ? Date.now() : f.readAt,
-      readYear:f.read ? (f.readYear || THIS_YEAR) : null,
+      readAt: f.read&&!f.readAt ? Date.now() : f.readAt,
+      readYear: f.read ? (f.readYear||THIS_YEAR) : null,
     });
   };
 
   const [bulkText,setBulkText] = useState('');
   const [bulkDone,setBulkDone] = useState(false);
+
+  // FIX: pipeM declared, byM regex fixed (no junk char)
   const bulkParsed = useMemo(()=>bulkText.split('\n').map(l=>l.trim()).filter(Boolean).map(line=>{
-    const byM=line.match(/^(.+?)\s+by\s+(.+)$/i), pipeM=line.match(/^(.+?)\s*\|\s*(.+)$/), dashM=line.match(/^(.+?)\s*[-–—]\s*(.+)$/);
-    if(byM)   return {title:byM[1].trim(),  author:byM[2].trim()};
-    if(pipeM) return {title:pipeM[1].trim(),author:pipeM[2].trim()};
-    if(dashM) return {title:dashM[1].trim(),author:dashM[2].trim()};
+    const byM   = line.match(/^(.+?)\s+by\s+(.+)$/);
+    const pipeM = line.match(/^(.+?)\s*\|\s*(.+)$/);
+    const dashM = line.match(/^(.+?)\s*[-–—]\s*(.+)$/);
+    if(byM)   return {title:byM[1].trim(),   author:byM[2].trim()};
+    if(pipeM) return {title:pipeM[1].trim(),  author:pipeM[2].trim()};
+    if(dashM) return {title:dashM[1].trim(),  author:dashM[2].trim()};
     return {title:line,author:''};
   }),[bulkText]);
 
@@ -987,13 +1120,13 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   };
 
   const shelfInputRef = useRef<HTMLInputElement>(null);
-  const [shelfImg,setShelfImg]   = useState<string|null>(null);
-  const [shelfB64,setShelfB64]   = useState('');
+  const [shelfImg,setShelfImg] = useState<string|null>(null);
+  const [shelfB64,setShelfB64] = useState('');
   const [shelfMime,setShelfMime] = useState('');
-  const [scanning,setScanning]   = useState(false);
-  const [scanErr,setScanErr]     = useState('');
-  const [scanned,setScanned]     = useState<{title:string;author:string;selected:boolean}[]>([]);
-  const [scanDone,setScanDone]   = useState(false);
+  const [scanning,setScanning] = useState(false);
+  const [scanErr,setScanErr] = useState('');
+  const [scanned,setScanned] = useState<{title:string;author:string;selected:boolean}[]>([]);
+  const [scanDone,setScanDone] = useState(false);
 
   const handleShelfFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file=e.target.files?.[0]; if(!file) return;
@@ -1004,7 +1137,8 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   const runScan = async () => {
     if(!shelfB64) return; setScanning(true); setScanErr(''); setScanned([]);
     try {
-      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      // FIX: use Netlify proxy
+      const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:shelfMime,data:shelfB64}},
           {type:'text',text:`Look at every single book spine visible in this bookshelf photo. Read each title and author carefully.\nReturn ONLY a raw JSON array:\n[{"title":"Exact Title","author":"Author Name"},...]\n- Include every spine you can read\n- Empty string for unknown author\n- Do not skip any books`},
@@ -1056,205 +1190,233 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   );
 
   return (
-    <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.85)',padding:'1rem' }}>
-      <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'480px',maxHeight:'93vh',overflowY:'auto' }}>
-        <h2 style={{ color:'white',fontWeight:'bold',marginBottom:'0.85rem',fontSize:'1.05rem' }}>{book?'Edit Book':'Add Book'}</h2>
-
-        {!book&&(
-          <div style={{ display:'flex',gap:'0.3rem',marginBottom:'1rem',background:'rgba(255,255,255,0.04)',borderRadius:'0.65rem',padding:'0.25rem' }}>
-            {[['single','Single'],['bulk','Bulk paste'],['photo','📸 Scan shelf']].map(([mv,lbl])=>(
-              <button key={mv} onClick={()=>setMode(mv)} style={{ flex:1,padding:'0.35rem 0.2rem',borderRadius:'0.5rem',border:'none',background:mode===mv?'#6d28d9':'transparent',color:mode===mv?'white':'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.72rem',fontWeight:mode===mv?600:400,transition:'background 0.15s' }}>{lbl}</button>
-            ))}
-          </div>
-        )}
-
-        {/* SINGLE */}
-        {mode==='single'&&(
-          <>
-            {!book&&(
-              <div style={{ marginBottom:'0.75rem' }}>
-                <input ref={photoRef} type="file" accept="image/*" capture="environment" style={{ display:'none' }} onChange={handleCoverPhoto}/>
-                <button onClick={()=>photoRef.current?.click()} disabled={identifying} style={{ width:'100%',padding:'0.55rem',borderRadius:'0.6rem',border:'1px dashed rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.03)',color:'rgba(255,255,255,0.5)',cursor:'pointer',fontSize:'0.8rem' }}>
-                 {identifying?'Identifying…':'Scan cover to identify'}
-                </button>
-                {idMsg&&<div style={{ fontSize:'0.7rem',color:'#34d399',marginTop:'0.25rem',textAlign:'center' }}>{idMsg}</div>}
+    <>
+      {/* FIXED: Autocomplete dropdown rendered outside modal using fixed positioning */}
+      {showSug && suggestions.length > 0 && dropdownPos && (
+        <div style={{
+          position:'fixed',
+          top: dropdownPos.top,
+          left: dropdownPos.left,
+          width: dropdownPos.width,
+          zIndex: 9999,
+          background:'#1a1035',
+          border:'1px solid rgba(255,255,255,0.12)',
+          borderRadius:'0.65rem',
+          maxHeight:'220px',
+          overflowY:'auto',
+          boxShadow:'0 8px 32px rgba(0,0,0,0.7)',
+        }}>
+          {suggestions.map((sug,i)=>(
+            <div key={i} onMouseDown={e=>{e.preventDefault();pickSuggestion(sug);}}
+              style={{ display:'flex',alignItems:'center',gap:'0.6rem',padding:'0.5rem 0.75rem',cursor:'pointer',borderBottom:'1px solid rgba(255,255,255,0.06)' }}
+              onMouseEnter={e=>(e.currentTarget.style.background='rgba(109,40,217,0.2)')}
+              onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
+              {sug.cover&&<img src={sug.cover} alt="" style={{ width:'28px',height:'40px',objectFit:'cover',borderRadius:'3px',flexShrink:0 }}/>}
+              <div style={{ minWidth:0 }}>
+                <div style={{ fontSize:'0.78rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{sug.title}</div>
+                <div style={{ fontSize:'0.68rem',color:'rgba(255,255,255,0.4)' }}>{sug.author}</div>
               </div>
-            )}
-            {/* Title with Google Books autocomplete */}
-            <div style={{ marginBottom:'0.65rem',position:'relative' }}>
-              <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Title</label>
-              <input value={f.title} onChange={e=>handleTitleChange(e.target.value)} onFocus={()=>suggestions.length>0&&setShowSug(true)} placeholder="Book title" style={inp} autoComplete="off"/>
-              {dupWarning&&<div style={{ fontSize:'0.7rem',color:'#f87171',marginTop:'0.2rem' }}>⚠ {dupWarning}</div>}
-              {showSug&&suggestions.length>0&&(
-                <div style={{ position:'absolute',top:'100%',left:0,right:0,zIndex:99,background:'#1a1035',border:'1px solid rgba(255,255,255,0.12)',borderRadius:'0.65rem',marginTop:'0.25rem',maxHeight:'220px',overflowY:'auto',boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }}>
-                  {suggestions.map((sug,i)=>(
-                    <div key={i} onMouseDown={e=>{e.preventDefault();pickSuggestion(sug);}} style={{ display:'flex',alignItems:'center',gap:'0.6rem',padding:'0.5rem 0.75rem',cursor:'pointer',borderBottom:'1px solid rgba(255,255,255,0.06)',transition:'background 0.1s' }}
-                      onMouseEnter={e=>(e.currentTarget.style.background='rgba(109,40,217,0.2)')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
-                      {sug.cover&&<img src={sug.cover} alt="" style={{ width:'28px',height:'40px',objectFit:'cover',borderRadius:'3px',flexShrink:0 }}/>}
-                      <div style={{ minWidth:0 }}>
-                        <div style={{ fontSize:'0.78rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{sug.title}</div>
-                        <div style={{ fontSize:'0.68rem',color:'rgba(255,255,255,0.4)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{sug.author}</div>
-                      </div>
-                    </div>
-                  ))}
-                  <div onMouseDown={()=>setShowSug(false)} style={{ padding:'0.3rem 0.75rem',fontSize:'0.65rem',color:'rgba(255,255,255,0.2)',cursor:'pointer',textAlign:'center' }}>✕ Dismiss</div>
+            </div>
+          ))}
+          <div onMouseDown={()=>setShowSug(false)} style={{ padding:'0.3rem 0.75rem',fontSize:'0.65rem',color:'rgba(255,255,255,0.2)',cursor:'pointer',textAlign:'center' }}>✕ Dismiss</div>
+        </div>
+      )}
+
+      <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.85)',padding:'1rem' }}>
+        <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'480px',maxHeight:'93vh',overflowY:'auto' }}>
+          <h2 style={{ color:'white',fontWeight:'bold',marginBottom:'0.85rem',fontSize:'1.05rem' }}>{book?'Edit Book':'Add Book'}</h2>
+
+          {!book&&(
+            <div style={{ display:'flex',gap:'0.3rem',marginBottom:'1rem',background:'rgba(255,255,255,0.04)',borderRadius:'0.65rem',padding:'0.25rem' }}>
+              {[['single','Single'],['bulk','Bulk paste'],['photo','📸 Scan shelf']].map(([mv,lbl])=>(
+                <button key={mv} onClick={()=>setMode(mv)} style={{ flex:1,padding:'0.35rem 0.2rem',borderRadius:'0.5rem',border:'none',background:mode===mv?'#6d28d9':'transparent',color:mode===mv?'white':'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.72rem',fontWeight:mode===mv?600:400,transition:'background 0.15s' }}>{lbl}</button>
+              ))}
+            </div>
+          )}
+
+          {/* SINGLE */}
+          {mode==='single'&&(
+            <>
+              {!book&&(
+                <div style={{ marginBottom:'0.75rem' }}>
+                  <input ref={photoRef} type="file" accept="image/*" capture="environment" style={{ display:'none' }} onChange={handleCoverPhoto}/>
+                  <button onClick={()=>photoRef.current?.click()} disabled={identifying} style={{ width:'100%',padding:'0.55rem',borderRadius:'0.6rem',border:'1px dashed rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.03)',color:'rgba(255,255,255,0.5)',cursor:'pointer',fontSize:'0.8rem' }}>
+                    {identifying?'Identifying…':'📷 Scan cover to identify'}
+                  </button>
+                  {idMsg&&<div style={{ fontSize:'0.7rem',color:'#34d399',marginTop:'0.25rem',textAlign:'center' }}>{idMsg}</div>}
                 </div>
               )}
-            </div>
-            {/* Author */}
-            <div style={{ marginBottom:'0.65rem' }}>
-              <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Author</label>
-              <input value={f.author} onChange={e=>set('author',e.target.value)} placeholder="Author name" style={inp}/>
-            </div>
-            <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem',marginBottom:'0.65rem' }}>
-              <div>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Genre</label>
-                <select value={f.genre} onChange={e=>{set('genre',e.target.value);set('subgenre',SUBGENRES[e.target.value]?.[0]||'');}} style={{...inp,background:'#1a1035'}}>{Object.keys(SUBGENRES).map(g=><option key={g}>{g}</option>)}</select>
-              </div>
-              <div>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Subgenre</label>
-                <select value={f.subgenre} onChange={e=>set('subgenre',e.target.value)} style={{...inp,background:'#1a1035'}}>{(SUBGENRES[f.genre]||[]).map((s:string)=><option key={s}>{s}</option>)}</select>
-              </div>
-            </div>
-            <div style={{ display:'grid',gridTemplateColumns:'2fr 1fr',gap:'0.5rem',marginBottom:'0.65rem' }}>
-              <div>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Series</label>
-                <input value={f.series} onChange={e=>set('series',e.target.value)} placeholder="Series name" list="sl" style={inp}/>
-                <datalist id="sl">{allSeries.map(s=><option key={s} value={s}/>)}</datalist>
-              </div>
-              <div>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>#</label>
-                <input type="number" value={f.sn} onChange={e=>set('sn',e.target.value)} min={0} step={0.5} style={inp}/>
-              </div>
-            </div>
-            <div style={{ marginBottom:'0.75rem' }}>
-              <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.35rem' }}>Add to</label>
-              <div style={{ display:'flex',gap:'0.4rem' }}>
-                {Object.entries(TAB_CFG).filter(([k])=>k!=='home').map(([k,cfg])=>(
-                  <button key={k} onClick={()=>set('status',k)} style={{ flex:1,padding:'0.4rem 0.2rem',borderRadius:'0.6rem',border:`1px solid ${f.status===k?cfg.color:'rgba(255,255,255,0.1)'}`,background:f.status===k?cfg.color+'25':'transparent',color:f.status===k?cfg.color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.68rem',fontWeight:f.status===k?700:400 }}>
-                    {k==='shelf'?'📚 Shelf':k==='tbr'?'🔖 TBR':'📖 Reading'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {f.status==='shelf'&&(
-              <label style={{ display:'flex',alignItems:'center',gap:'0.5rem',cursor:'pointer',marginBottom:'0.65rem' }}>
-                <input type="checkbox" checked={f.read||false} onChange={e=>set('read',e.target.checked)} style={{ accentColor:'#7c3aed' }}/>
-                <span style={{ color:'rgba(255,255,255,0.6)',fontSize:'0.85rem' }}>Mark as read</span>
-              </label>
-            )}
-            {f.read&&(
-              <div style={{ marginBottom:'1rem' }}>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Year read</label>
-                <input type="number" value={f.readYear??''} onChange={e=>set('readYear',e.target.value?Number(e.target.value):null)} placeholder={String(THIS_YEAR)} style={inp}/>
-                <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.25)',marginTop:'0.2rem' }}>Change this for books read in previous years so they don't count toward this year's goal</div>
-              </div>
-            )}
-            <div style={{ display:'flex',gap:'0.75rem' }}>
-              <button onClick={submitSingle} style={{ flex:1,background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer' }}>{book?'Save':'Add'}</button>
-              <button onClick={onClose}      style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Cancel</button>
-            </div>
-          </>
-        )}
 
-        {/* BULK */}
-        {mode==='bulk'&&(
-          <>
-            <div style={{ marginBottom:'0.6rem' }}>
-              <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.3rem' }}>Paste your list — one book per line</label>
-              <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.25)',marginBottom:'0.4rem' }}>
-                <span style={{ color:'rgba(255,255,255,0.4)' }}>Title by Author</span> · <span style={{ color:'rgba(255,255,255,0.4)' }}>Title - Author</span> · <span style={{ color:'rgba(255,255,255,0.4)' }}>Title | Author</span>
+              {/* FIXED: Title input with fixed-position dropdown */}
+              <div style={{ marginBottom:'0.65rem' }}>
+                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Title</label>
+                <input
+                  ref={titleInputRef}
+                  value={f.title}
+                  onChange={e=>handleTitleChange(e.target.value)}
+                  onFocus={()=>{ if(suggestions.length>0){ updateDropdownPos(); setShowSug(true); } }}
+                  onBlur={()=>setTimeout(()=>setShowSug(false),150)}
+                  placeholder="Book title"
+                  style={inp}
+                  autoComplete="off"
+                />
+                {dupWarning&&<div style={{ fontSize:'0.7rem',color:'#f87171',marginTop:'0.2rem' }}>⚠ {dupWarning}</div>}
               </div>
-              <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} placeholder={'Fourth Wing by Rebecca Yarros\nIron Flame - Rebecca Yarros'} rows={6} style={{...inp,resize:'vertical',lineHeight:'1.5',fontFamily:'monospace',fontSize:'0.8rem'}}/>
-            </div>
-            {bulkParsed.length>0&&(
-              <div style={{ marginBottom:'0.75rem',maxHeight:'150px',overflowY:'auto',borderRadius:'0.6rem',border:'1px solid rgba(255,255,255,0.07)',background:'rgba(255,255,255,0.02)' }}>
-                {bulkParsed.map((p,i)=>(
-                  <div key={i} style={{ padding:'0.35rem 0.65rem',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',gap:'0.5rem',alignItems:'center' }}>
-                    <span style={{ fontSize:'0.7rem',flexShrink:0,color:p.author?'#34d399':'#fbbf24' }}>{p.author?'✓':'⚠'}</span>
-                    <div style={{ minWidth:0 }}>
-                      <div style={{ fontSize:'0.75rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{p.title}</div>
-                      <div style={{ fontSize:'0.68rem',color:'rgba(255,255,255,0.35)' }}>{p.author||'No author detected'}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <BatchSettings/>
-            <div style={{ display:'flex',gap:'0.75rem' }}>
-              <button onClick={submitBulk} disabled={bulkParsed.length===0||bulkDone} style={{ flex:1,background:bulkDone?'#059669':'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer',transition:'background 0.2s' }}>
-                {bulkDone?`✓ Added ${bulkParsed.length} books!`:`Add ${bulkParsed.length||0} book${bulkParsed.length!==1?'s':''}`}
-              </button>
-              <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Cancel</button>
-            </div>
-          </>
-        )}
 
-        {/* PHOTO SCAN */}
-        {mode==='photo'&&(
-          <>
-            <input ref={shelfInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleShelfFile}/>
-            {!shelfImg?(
-              <button onClick={()=>shelfInputRef.current?.click()} style={{ width:'100%',padding:'2.5rem 1rem',borderRadius:'0.75rem',border:'2px dashed rgba(255,255,255,0.15)',background:'rgba(255,255,255,0.02)',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.85rem',display:'flex',flexDirection:'column',alignItems:'center',gap:'0.5rem' }}>
-                <span style={{ fontSize:'2.5rem' }}>📸</span>
-                <span>Tap to upload a shelf photo</span>
-                <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.25)' }}>Works best with clear, well-lit spines</span>
-              </button>
-            ):(
-              <div style={{ marginBottom:'0.75rem',position:'relative' }}>
-                <img src={shelfImg} alt="shelf" style={{ width:'100%',borderRadius:'0.65rem',maxHeight:'200px',objectFit:'cover' }}/>
-                <button onClick={()=>shelfInputRef.current?.click()} style={{ position:'absolute',bottom:'0.5rem',right:'0.5rem',background:'rgba(0,0,0,0.65)',color:'white',border:'none',borderRadius:'0.5rem',padding:'0.3rem 0.6rem',fontSize:'0.7rem',cursor:'pointer' }}>Change photo</button>
+              <div style={{ marginBottom:'0.65rem' }}>
+                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Author</label>
+                <input value={f.author} onChange={e=>set('author',e.target.value)} placeholder="Author name" style={inp}/>
               </div>
-            )}
-            {shelfImg&&!scanning&&scanned.length===0&&!scanErr&&(
-              <button onClick={runScan} style={{ width:'100%',marginBottom:'0.75rem',padding:'0.65rem',background:'linear-gradient(135deg,#6d28d9,#4f46e5)',color:'white',border:'none',borderRadius:'0.75rem',fontWeight:'700',cursor:'pointer',fontSize:'0.9rem' }}>✨ Scan for books</button>
-            )}
-            {scanning&&(
-              <div style={{ textAlign:'center',padding:'1.5rem 0',marginBottom:'0.75rem' }}>
-                <div style={{ fontSize:'1.5rem',marginBottom:'0.4rem' }}>🔍</div>
-                <div style={{ color:'rgba(255,255,255,0.5)',fontSize:'0.8rem' }}>Scanning your shelf… this may take a moment</div>
-              </div>
-            )}
-            {scanErr&&(
-              <div style={{ background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:'0.6rem',padding:'0.75rem',marginBottom:'0.75rem',color:'#fca5a5',fontSize:'0.8rem',textAlign:'center' }}>
-                {scanErr}
-                <button onClick={runScan} style={{ display:'block',margin:'0.5rem auto 0',background:'none',border:'1px solid #fca5a5',color:'#fca5a5',borderRadius:'0.5rem',padding:'0.25rem 0.75rem',cursor:'pointer',fontSize:'0.75rem' }}>Try again</button>
-              </div>
-            )}
-            {scanned.length>0&&(
-              <>
-                <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.4rem' }}>
-                  <span style={{ color:'#4ade80',fontSize:'0.8rem',fontWeight:600 }}>✨ Found {scanned.length} books</span>
-                  <div style={{ display:'flex',gap:'0.5rem' }}>
-                    <button onClick={()=>toggleAll(true)}  style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>All</button>
-                    <button onClick={()=>toggleAll(false)} style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>None</button>
-                    <button onClick={runScan}              style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>Rescan</button>
-                  </div>
+              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem',marginBottom:'0.65rem' }}>
+                <div>
+                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Genre</label>
+                  <select value={f.genre} onChange={e=>{set('genre',e.target.value);set('subgenre',SUBGENRES[e.target.value]?.[0]||'');}} style={{...inp,background:'#1a1035'}}>{Object.keys(SUBGENRES).map(g=><option key={g}>{g}</option>)}</select>
                 </div>
-                <div style={{ maxHeight:'260px',overflowY:'auto',borderRadius:'0.65rem',border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.02)',marginBottom:'0.75rem' }}>
-                  {scanned.map((b,i)=>(
-                    <div key={i} style={{ display:'flex',gap:'0.5rem',alignItems:'flex-start',padding:'0.45rem 0.65rem',borderBottom:'1px solid rgba(255,255,255,0.05)',background:b.selected?'rgba(109,40,217,0.08)':'transparent' }}>
-                      <input type="checkbox" checked={b.selected} onChange={()=>toggleOne(i)} style={{ accentColor:'#7c3aed',marginTop:'0.25rem',flexShrink:0,cursor:'pointer' }}/>
-                      <div style={{ flex:1,minWidth:0 }}>
-                        <input value={b.title} onChange={e=>editOne(i,'title',e.target.value)} style={{...inp,padding:'0.25rem 0.4rem',fontSize:'0.78rem',fontWeight:600,marginBottom:'0.2rem',color:b.selected?'white':'rgba(255,255,255,0.35)'}}/>
-                        <input value={b.author} onChange={e=>editOne(i,'author',e.target.value)} placeholder="Author name" style={{...inp,padding:'0.2rem 0.4rem',fontSize:'0.7rem',color:b.selected?'rgba(255,255,255,0.6)':'rgba(255,255,255,0.2)'}}/>
+                <div>
+                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Subgenre</label>
+                  <select value={f.subgenre} onChange={e=>set('subgenre',e.target.value)} style={{...inp,background:'#1a1035'}}>{(SUBGENRES[f.genre]||[]).map((s:string)=><option key={s}>{s}</option>)}</select>
+                </div>
+              </div>
+              <div style={{ display:'grid',gridTemplateColumns:'2fr 1fr',gap:'0.5rem',marginBottom:'0.65rem' }}>
+                <div>
+                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Series</label>
+                  <input value={f.series} onChange={e=>set('series',e.target.value)} placeholder="Series name" list="sl" style={inp}/>
+                  <datalist id="sl">{allSeries.map(s=><option key={s} value={s}/>)}</datalist>
+                </div>
+                <div>
+                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>#</label>
+                  <input type="number" value={f.sn} onChange={e=>set('sn',e.target.value)} min={0} step={0.5} style={inp}/>
+                </div>
+              </div>
+              <div style={{ marginBottom:'0.75rem' }}>
+                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.35rem' }}>Add to</label>
+                <div style={{ display:'flex',gap:'0.4rem' }}>
+                  {Object.entries(TAB_CFG).filter(([k])=>k!=='home').map(([k,cfg])=>(
+                    <button key={k} onClick={()=>set('status',k)} style={{ flex:1,padding:'0.4rem 0.2rem',borderRadius:'0.6rem',border:`1px solid ${f.status===k?cfg.color:'rgba(255,255,255,0.1)'}`,background:f.status===k?cfg.color+'25':'transparent',color:f.status===k?cfg.color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.68rem',fontWeight:f.status===k?700:400 }}>
+                      {k==='shelf'?'📚 Shelf':k==='tbr'?'🔖 TBR':'📖 Reading'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {f.status==='shelf'&&(
+                <label style={{ display:'flex',alignItems:'center',gap:'0.5rem',cursor:'pointer',marginBottom:'0.65rem' }}>
+                  <input type="checkbox" checked={f.read||false} onChange={e=>set('read',e.target.checked)} style={{ accentColor:'#7c3aed' }}/>
+                  <span style={{ color:'rgba(255,255,255,0.6)',fontSize:'0.85rem' }}>Mark as read</span>
+                </label>
+              )}
+              {f.read&&(
+                <div style={{ marginBottom:'1rem' }}>
+                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Year read</label>
+                  <input type="number" value={f.readYear??''} onChange={e=>set('readYear',e.target.value?Number(e.target.value):null)} placeholder={String(THIS_YEAR)} style={inp}/>
+                  <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.25)',marginTop:'0.2rem' }}>Change this for books read in previous years</div>
+                </div>
+              )}
+              <div style={{ display:'flex',gap:'0.75rem' }}>
+                <button onClick={submitSingle} style={{ flex:1,background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer' }}>{book?'Save':'Add'}</button>
+                <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Cancel</button>
+              </div>
+            </>
+          )}
+
+          {/* BULK */}
+          {mode==='bulk'&&(
+            <>
+              <div style={{ marginBottom:'0.6rem' }}>
+                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.3rem' }}>Paste your list — one book per line</label>
+                <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.25)',marginBottom:'0.4rem' }}>
+                  <span style={{ color:'rgba(255,255,255,0.4)' }}>Title by Author</span> · <span style={{ color:'rgba(255,255,255,0.4)' }}>Title - Author</span> · <span style={{ color:'rgba(255,255,255,0.4)' }}>Title | Author</span>
+                </div>
+                <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} placeholder={'Fourth Wing by Rebecca Yarros\nIron Flame - Rebecca Yarros'} rows={6} style={{...inp,resize:'vertical',lineHeight:'1.5',fontFamily:'monospace',fontSize:'0.8rem'}}/>
+              </div>
+              {bulkParsed.length>0&&(
+                <div style={{ marginBottom:'0.75rem',maxHeight:'150px',overflowY:'auto',borderRadius:'0.6rem',border:'1px solid rgba(255,255,255,0.07)',background:'rgba(255,255,255,0.02)' }}>
+                  {bulkParsed.map((p,i)=>(
+                    <div key={i} style={{ padding:'0.35rem 0.65rem',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',gap:'0.5rem',alignItems:'center' }}>
+                      <span style={{ fontSize:'0.7rem',flexShrink:0,color:p.author?'#34d399':'#fbbf24' }}>{p.author?'✓':'⚠'}</span>
+                      <div style={{ minWidth:0 }}>
+                        <div style={{ fontSize:'0.75rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{p.title}</div>
+                        <div style={{ fontSize:'0.68rem',color:'rgba(255,255,255,0.35)' }}>{p.author||'No author detected'}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <BatchSettings/>
-                <div style={{ display:'flex',gap:'0.75rem' }}>
-                  <button onClick={submitScan} disabled={selectedCount===0||scanDone} style={{ flex:1,background:scanDone?'#059669':'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.65rem',fontWeight:'700',cursor:'pointer',fontSize:'0.9rem',transition:'background 0.2s' }}>
-                    {scanDone?`✓ Added ${selectedCount} books!`:`Add ${selectedCount} book${selectedCount!==1?'s':''}`}
-                  </button>
-                  <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.65rem',cursor:'pointer' }}>Cancel</button>
+              )}
+              <BatchSettings/>
+              <div style={{ display:'flex',gap:'0.75rem' }}>
+                <button onClick={submitBulk} disabled={bulkParsed.length===0||bulkDone} style={{ flex:1,background:bulkDone?'#059669':'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer',transition:'background 0.2s' }}>
+                  {bulkDone?`✓ Added ${bulkParsed.length} books!`:`Add ${bulkParsed.length||0} book${bulkParsed.length!==1?'s':''}`}
+                </button>
+                <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Cancel</button>
+              </div>
+            </>
+          )}
+
+          {/* PHOTO SCAN */}
+          {mode==='photo'&&(
+            <>
+              <input ref={shelfInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleShelfFile}/>
+              {!shelfImg?(
+                <button onClick={()=>shelfInputRef.current?.click()} style={{ width:'100%',padding:'2.5rem 1rem',borderRadius:'0.75rem',border:'2px dashed rgba(255,255,255,0.15)',background:'rgba(255,255,255,0.02)',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.85rem',display:'flex',flexDirection:'column',alignItems:'center',gap:'0.5rem' }}>
+                  <span style={{ fontSize:'2.5rem' }}>📸</span>
+                  <span>Tap to upload a shelf photo</span>
+                  <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.25)' }}>Works best with clear, well-lit spines</span>
+                </button>
+              ):(
+                <div style={{ marginBottom:'0.75rem',position:'relative' }}>
+                  <img src={shelfImg} alt="shelf" style={{ width:'100%',borderRadius:'0.65rem',maxHeight:'200px',objectFit:'cover' }}/>
+                  <button onClick={()=>shelfInputRef.current?.click()} style={{ position:'absolute',bottom:'0.5rem',right:'0.5rem',background:'rgba(0,0,0,0.65)',color:'white',border:'none',borderRadius:'0.5rem',padding:'0.3rem 0.6rem',fontSize:'0.7rem',cursor:'pointer' }}>Change photo</button>
                 </div>
-              </>
-            )}
-          </>
-        )}
+              )}
+              {shelfImg&&!scanning&&scanned.length===0&&!scanErr&&(
+                <button onClick={runScan} style={{ width:'100%',marginBottom:'0.75rem',padding:'0.65rem',background:'linear-gradient(135deg,#6d28d9,#4f46e5)',color:'white',border:'none',borderRadius:'0.75rem',fontWeight:'700',cursor:'pointer',fontSize:'0.9rem' }}>✨ Scan for books</button>
+              )}
+              {scanning&&(
+                <div style={{ textAlign:'center',padding:'1.5rem 0',marginBottom:'0.75rem' }}>
+                  <div style={{ fontSize:'1.5rem',marginBottom:'0.4rem' }}>🔍</div>
+                  <div style={{ color:'rgba(255,255,255,0.5)',fontSize:'0.8rem' }}>Scanning your shelf… this may take a moment</div>
+                </div>
+              )}
+              {scanErr&&(
+                <div style={{ background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:'0.6rem',padding:'0.75rem',marginBottom:'0.75rem',color:'#fca5a5',fontSize:'0.8rem',textAlign:'center' }}>
+                  {scanErr}
+                  <button onClick={runScan} style={{ display:'block',margin:'0.5rem auto 0',background:'none',border:'1px solid #fca5a5',color:'#fca5a5',borderRadius:'0.5rem',padding:'0.25rem 0.75rem',cursor:'pointer',fontSize:'0.75rem' }}>Try again</button>
+                </div>
+              )}
+              {scanned.length>0&&(
+                <>
+                  <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.4rem' }}>
+                    <span style={{ color:'#4ade80',fontSize:'0.8rem',fontWeight:600 }}>✨ Found {scanned.length} books</span>
+                    <div style={{ display:'flex',gap:'0.5rem' }}>
+                      <button onClick={()=>toggleAll(true)}  style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>All</button>
+                      <button onClick={()=>toggleAll(false)} style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>None</button>
+                      <button onClick={runScan}              style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>Rescan</button>
+                    </div>
+                  </div>
+                  <div style={{ maxHeight:'260px',overflowY:'auto',borderRadius:'0.65rem',border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.02)',marginBottom:'0.75rem' }}>
+                    {scanned.map((b,i)=>(
+                      <div key={i} style={{ display:'flex',gap:'0.5rem',alignItems:'flex-start',padding:'0.45rem 0.65rem',borderBottom:'1px solid rgba(255,255,255,0.05)',background:b.selected?'rgba(109,40,217,0.08)':'transparent' }}>
+                        <input type="checkbox" checked={b.selected} onChange={()=>toggleOne(i)} style={{ accentColor:'#7c3aed',marginTop:'0.25rem',flexShrink:0,cursor:'pointer' }}/>
+                        <div style={{ flex:1,minWidth:0 }}>
+                          <input value={b.title} onChange={e=>editOne(i,'title',e.target.value)} style={{...inp,padding:'0.25rem 0.4rem',fontSize:'0.78rem',fontWeight:600,marginBottom:'0.2rem',color:b.selected?'white':'rgba(255,255,255,0.35)'}}/>
+                          <input value={b.author} onChange={e=>editOne(i,'author',e.target.value)} placeholder="Author name" style={{...inp,padding:'0.2rem 0.4rem',fontSize:'0.7rem',color:b.selected?'rgba(255,255,255,0.6)':'rgba(255,255,255,0.2)'}}/>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <BatchSettings/>
+                  <div style={{ display:'flex',gap:'0.75rem' }}>
+                    <button onClick={submitScan} disabled={selectedCount===0||scanDone} style={{ flex:1,background:scanDone?'#059669':'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.65rem',fontWeight:'700',cursor:'pointer',fontSize:'0.9rem',transition:'background 0.2s' }}>
+                      {scanDone?`✓ Added ${selectedCount} books!`:`Add ${selectedCount} book${selectedCount!==1?'s':''}`}
+                    </button>
+                    <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.65rem',cursor:'pointer' }}>Cancel</button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -1344,8 +1506,9 @@ export default function App() {
     try{localStorage.setItem(GOALS_KEY,JSON.stringify(g));}catch{}
     if(user) saveToFirestore(user.uid,books,g);
   };
-  const handleSignIn =()=>{ if(firebaseReady) _signInWithPopup(_auth,_provider).catch(()=>{}); };
-  const handleSignOut=()=>{ if(firebaseReady) _signOut(_auth); };
+
+  const handleSignIn  = ()=>{ if(firebaseReady) _signInWithPopup(_auth,_provider).catch(()=>{}); };
+  const handleSignOut = ()=>{ if(firebaseReady) _signOut(_auth); };
 
   const update=(id:any,patch:any)=>{
     const extra:any={};
@@ -1361,7 +1524,7 @@ export default function App() {
   },[books,tab]);
 
   const allGenres=useMemo(()=>[...new Set(tabBooks.map((b:any)=>b.genre))].sort() as string[],[tabBooks]);
-  const allSubs  =useMemo(()=>{const src=fGenre==='All'?tabBooks:tabBooks.filter((b:any)=>b.genre===fGenre);return[...new Set(src.map((b:any)=>b.subgenre).filter(Boolean))].sort() as string[];},[tabBooks,fGenre]);
+  const allSubs=useMemo(()=>{const src=fGenre==='All'?tabBooks:tabBooks.filter((b:any)=>b.genre===fGenre);return[...new Set(src.map((b:any)=>b.subgenre).filter(Boolean))].sort() as string[];},[tabBooks,fGenre]);
   const allSeries=useMemo(()=>[...new Set(books.map((b:any)=>b.series).filter(Boolean))].sort() as string[],[books]);
 
   const filtered=useMemo(()=>{
@@ -1415,7 +1578,6 @@ export default function App() {
       {/* STICKY HEADER */}
       <div style={{ background:'#0d0a1c',borderBottom:'1px solid rgba(255,255,255,0.07)',position:'sticky',top:0,zIndex:40,width:'100%' }}>
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'0.6rem 1rem 0' }}>
-
           <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.4rem' }}>
             <div>
               <div style={{ color:'#e8d9ff',fontWeight:'bold',fontSize:'1rem',letterSpacing:'0.04em' }}>
@@ -1521,29 +1683,15 @@ export default function App() {
                     )}
                     {bst==='shelf'&&(
                       <>
-                        {/* if this card is pending year entry, show inline picker */}
-                        {pendingRead?.id===b.id ? (
+                        {pendingRead?.id===b.id?(
                           <div style={{ position:'absolute',top:'0.4rem',right:'0.5rem',display:'flex',alignItems:'center',gap:'0.3rem' }}>
-                            <input
-                              type="number"
-                              value={pendingRead.year}
-                              onChange={e=>setPendingRead({...pendingRead,year:e.target.value})}
-                              placeholder={String(THIS_YEAR)}
-                              style={{ width:'62px',background:'rgba(255,255,255,0.08)',border:'1px solid #34d399',borderRadius:'0.4rem',padding:'0.15rem 0.35rem',color:'white',fontSize:'0.65rem',textAlign:'center' }}
-                              autoFocus
-                            />
-                            <button onClick={()=>{
-                              const yr = Number(pendingRead.year)||THIS_YEAR;
-                              update(b.id,{read:true,readAt:Date.now(),readYear:yr});
-                              setPendingRead(null);
-                            }} style={{ fontSize:'0.62rem',padding:'0.2rem 0.4rem',borderRadius:'9999px',border:'1px solid #34d399',background:'#05653044',color:'#34d399',cursor:'pointer',fontWeight:700 }}>✓</button>
+                            <input type="number" value={pendingRead.year} onChange={e=>setPendingRead({...pendingRead,year:e.target.value})} placeholder={String(THIS_YEAR)}
+                              style={{ width:'62px',background:'rgba(255,255,255,0.08)',border:'1px solid #34d399',borderRadius:'0.4rem',padding:'0.15rem 0.35rem',color:'white',fontSize:'0.65rem',textAlign:'center' }} autoFocus/>
+                            <button onClick={()=>{ const yr=Number(pendingRead.year)||THIS_YEAR; update(b.id,{read:true,readAt:Date.now(),readYear:yr}); setPendingRead(null); }} style={{ fontSize:'0.62rem',padding:'0.2rem 0.4rem',borderRadius:'9999px',border:'1px solid #34d399',background:'#05653044',color:'#34d399',cursor:'pointer',fontWeight:700 }}>✓</button>
                             <button onClick={()=>setPendingRead(null)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.35rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.15)',background:'transparent',color:'rgba(255,255,255,0.35)',cursor:'pointer' }}>✕</button>
                           </div>
-                        ) : (
-                          <button onClick={()=>{
-                            if(b.read) { update(b.id,{read:false}); }
-                            else { setPendingRead({id:b.id,year:String(THIS_YEAR)}); }
-                          }} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.3)'}) }}>
+                        ):(
+                          <button onClick={()=>{ if(b.read){update(b.id,{read:false});}else{setPendingRead({id:b.id,year:String(THIS_YEAR)});} }} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.3)'}) }}>
                             {b.read?`✓ Read ${b.readYear&&b.readYear!==THIS_YEAR?b.readYear:''}`.trim():'Unread'}
                           </button>
                         )}
@@ -1551,14 +1699,14 @@ export default function App() {
                     )}
                     {bst==='reading'&&(
                       <>
-                        {pendingRead?.id===b.id ? (
+                        {pendingRead?.id===b.id?(
                           <div style={{ position:'absolute',top:'0.4rem',right:'0.5rem',display:'flex',alignItems:'center',gap:'0.3rem' }}>
                             <input type="number" value={pendingRead.year} onChange={e=>setPendingRead({...pendingRead,year:e.target.value})} placeholder={String(THIS_YEAR)}
                               style={{ width:'62px',background:'rgba(255,255,255,0.08)',border:'1px solid #34d399',borderRadius:'0.4rem',padding:'0.15rem 0.35rem',color:'white',fontSize:'0.65rem',textAlign:'center' }} autoFocus/>
                             <button onClick={()=>{ const yr=Number(pendingRead.year)||THIS_YEAR; update(b.id,{status:'shelf',read:true,readAt:Date.now(),readYear:yr}); setPendingRead(null); }} style={{ fontSize:'0.62rem',padding:'0.2rem 0.4rem',borderRadius:'9999px',border:'1px solid #34d399',background:'#05653044',color:'#34d399',cursor:'pointer',fontWeight:700 }}>✓</button>
                             <button onClick={()=>setPendingRead(null)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.35rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.15)',background:'transparent',color:'rgba(255,255,255,0.35)',cursor:'pointer' }}>✕</button>
                           </div>
-                        ) : (
+                        ):(
                           <button onClick={()=>setPendingRead({id:b.id,year:String(THIS_YEAR)})} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',background:'#05653044',borderColor:'#34d399',color:'#34d399' }}>✓ Finished</button>
                         )}
                       </>
@@ -1573,7 +1721,7 @@ export default function App() {
                       </div>
                       <div style={{ display:'flex',gap:'0.4rem' }}>
                         <button onClick={()=>setEditBook(b)} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.25)',cursor:'pointer',fontSize:'0.9rem' }}>✎</button>
-                        <button onClick={()=>setDelId(b.id)}  style={{ background:'none',border:'none',color:'rgba(255,255,255,0.25)',cursor:'pointer',fontSize:'0.9rem' }}>✕</button>
+                        <button onClick={()=>setDelId(b.id)} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.25)',cursor:'pointer',fontSize:'0.9rem' }}>✕</button>
                       </div>
                     </div>
                   </div>
