@@ -1170,6 +1170,7 @@ export default function App() {
   const [delId,       setDelId]       = useState<any>(null);
   const [editBook,    setEditBook]    = useState<any>(null);
   const [goalModal,   setGoalModal]   = useState(false);
+  const [pendingRead, setPendingRead] = useState<{id:any;year:string}|null>(null);
 
   useEffect(()=>{
     (async()=>{
@@ -1412,12 +1413,48 @@ export default function App() {
                       </div>
                     )}
                     {bst==='shelf'&&(
-                      <button onClick={()=>update(b.id,{read:!b.read})} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.3)'}) }}>
-                        {b.read?'✓ Read':'Unread'}
-                      </button>
+                      <>
+                        {/* if this card is pending year entry, show inline picker */}
+                        {pendingRead?.id===b.id ? (
+                          <div style={{ position:'absolute',top:'0.4rem',right:'0.5rem',display:'flex',alignItems:'center',gap:'0.3rem' }}>
+                            <input
+                              type="number"
+                              value={pendingRead.year}
+                              onChange={e=>setPendingRead({...pendingRead,year:e.target.value})}
+                              placeholder={String(THIS_YEAR)}
+                              style={{ width:'62px',background:'rgba(255,255,255,0.08)',border:'1px solid #34d399',borderRadius:'0.4rem',padding:'0.15rem 0.35rem',color:'white',fontSize:'0.65rem',textAlign:'center' }}
+                              autoFocus
+                            />
+                            <button onClick={()=>{
+                              const yr = Number(pendingRead.year)||THIS_YEAR;
+                              update(b.id,{read:true,readAt:Date.now(),readYear:yr});
+                              setPendingRead(null);
+                            }} style={{ fontSize:'0.62rem',padding:'0.2rem 0.4rem',borderRadius:'9999px',border:'1px solid #34d399',background:'#05653044',color:'#34d399',cursor:'pointer',fontWeight:700 }}>✓</button>
+                            <button onClick={()=>setPendingRead(null)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.35rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.15)',background:'transparent',color:'rgba(255,255,255,0.35)',cursor:'pointer' }}>✕</button>
+                          </div>
+                        ) : (
+                          <button onClick={()=>{
+                            if(b.read) { update(b.id,{read:false}); }
+                            else { setPendingRead({id:b.id,year:String(THIS_YEAR)}); }
+                          }} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.3)'}) }}>
+                            {b.read?`✓ Read ${b.readYear&&b.readYear!==THIS_YEAR?b.readYear:''}`.trim():'Unread'}
+                          </button>
+                        )}
+                      </>
                     )}
                     {bst==='reading'&&(
-                      <button onClick={()=>update(b.id,{status:'shelf',read:true})} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',background:'#05653044',borderColor:'#34d399',color:'#34d399' }}>✓ Finished</button>
+                      <>
+                        {pendingRead?.id===b.id ? (
+                          <div style={{ position:'absolute',top:'0.4rem',right:'0.5rem',display:'flex',alignItems:'center',gap:'0.3rem' }}>
+                            <input type="number" value={pendingRead.year} onChange={e=>setPendingRead({...pendingRead,year:e.target.value})} placeholder={String(THIS_YEAR)}
+                              style={{ width:'62px',background:'rgba(255,255,255,0.08)',border:'1px solid #34d399',borderRadius:'0.4rem',padding:'0.15rem 0.35rem',color:'white',fontSize:'0.65rem',textAlign:'center' }} autoFocus/>
+                            <button onClick={()=>{ const yr=Number(pendingRead.year)||THIS_YEAR; update(b.id,{status:'shelf',read:true,readAt:Date.now(),readYear:yr}); setPendingRead(null); }} style={{ fontSize:'0.62rem',padding:'0.2rem 0.4rem',borderRadius:'9999px',border:'1px solid #34d399',background:'#05653044',color:'#34d399',cursor:'pointer',fontWeight:700 }}>✓</button>
+                            <button onClick={()=>setPendingRead(null)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.35rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.15)',background:'transparent',color:'rgba(255,255,255,0.35)',cursor:'pointer' }}>✕</button>
+                          </div>
+                        ) : (
+                          <button onClick={()=>setPendingRead({id:b.id,year:String(THIS_YEAR)})} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',background:'#05653044',borderColor:'#34d399',color:'#34d399' }}>✓ Finished</button>
+                        )}
+                      </>
                     )}
                     <div style={{ fontWeight:'bold',color:'white',fontSize:'0.875rem',lineHeight:'1.3',paddingRight:'3.5rem',marginBottom:'0.2rem' }}>{b.title}</div>
                     <div style={{ fontSize:'0.75rem',color:cfg.accent+'bb',marginBottom:'0.2rem' }}>{b.author}</div>
