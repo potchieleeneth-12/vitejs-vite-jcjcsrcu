@@ -1075,7 +1075,7 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
               <div style={{ marginBottom:'0.75rem' }}>
                 <input ref={photoRef} type="file" accept="image/*" capture="environment" style={{ display:'none' }} onChange={handleCoverPhoto}/>
                 <button onClick={()=>photoRef.current?.click()} disabled={identifying} style={{ width:'100%',padding:'0.55rem',borderRadius:'0.6rem',border:'1px dashed rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.03)',color:'rgba(255,255,255,0.5)',cursor:'pointer',fontSize:'0.8rem' }}>
-                  📷 {identifying?'Identifying…':'Scan cover to identify'}
+                 {identifying?'Identifying…':'Scan cover to identify'}
                 </button>
                 {idMsg&&<div style={{ fontSize:'0.7rem',color:'#34d399',marginTop:'0.25rem',textAlign:'center' }}>{idMsg}</div>}
               </div>
@@ -1410,7 +1410,7 @@ export default function App() {
   );
 
   return (
-    <div style={{ background:'#06040f',minHeight:'100vh',width:'100%',color:'white',fontFamily:'Georgia,serif' }}>
+    <div style={{ background:'#06040f',minHeight:'100vh',width:'100vw',maxWidth:'100vw',color:'white',fontFamily:'Georgia,serif',overflowX:'hidden' }}>
 
       {/* STICKY HEADER */}
       <div style={{ background:'#0d0a1c',borderBottom:'1px solid rgba(255,255,255,0.07)',position:'sticky',top:0,zIndex:40,width:'100%' }}>
