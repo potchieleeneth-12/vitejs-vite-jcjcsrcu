@@ -1813,7 +1813,7 @@ export default function App() {
 
   const update=(id:any,patch:any)=>{
     const extra:any={};
-    if(patch.read===true){ extra.readAt=Date.now(); extra.readYear=THIS_YEAR; }
+    if(patch.read===true && patch.readYear==null){ extra.readAt=Date.now(); extra.readYear=THIS_YEAR; }
     if(patch.read===false){ extra.readAt=null; extra.readYear=null; }
     persist(books.map(b=>b.id===id?{...b,...patch,...extra}:b));
   };
