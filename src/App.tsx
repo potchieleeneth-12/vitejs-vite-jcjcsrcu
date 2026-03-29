@@ -658,7 +658,7 @@ function GoalSetModal({ goals, onSave, onClose }: { goals: any; onSave: (g: any)
 }
 
 // ── HomeTab ───────────────────────────────────────────────────────────────────
-function HomeTab({ books, goals, onEditGoals }: { books: any[]; goals: any; onEditGoals: () => void }) {
+function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals: any; onEditGoals: () => void; userName: string }) {
   const now        = new Date();
   const readAll    = books.filter(b => b.read);
   const tbrCount   = books.filter(b => b.status === 'tbr').length;
@@ -694,94 +694,201 @@ function HomeTab({ books, goals, onEditGoals }: { books: any[]; goals: any; onEd
   const maxGenre  = genreData[0]?.count  || 1;
   const maxAuthor = authorData[0]?.count || 1;
 
-  const card: React.CSSProperties = { background:'rgba(255,255,255,0.04)',borderRadius:'1rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' };
+  const card: React.CSSProperties = { background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' };
+  const currentlyReading = books.filter((b:any) => b.status === 'reading');
+  const recentlyRead = [...readAll].sort((a:any,b:any)=>(b.readAt||0)-(a.readAt||0)).slice(0,5);
+  const monthLeft = Math.max(0,(goals.monthly||0)-monthGoalCount);
+  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
     <div style={{ padding:'1rem',maxWidth:'960px',margin:'0 auto' }}>
-      <div style={{ display:'flex',gap:'0.5rem',marginBottom:'0.75rem' }}>
-        <StatCard label="Total Books" value={books.length} color="#a78bfa"/>
-        <StatCard label="Read" value={readAll.length} color="#34d399"/>
-        <StatCard label="TBR" value={tbrCount} color="#fb923c"/>
-        <StatCard label="Reading" value={readingCount} color="#60a5fa"/>
+
+      {/* HERO BANNER */}
+      <div style={{ ...card, display:'flex',justifyContent:'space-between',alignItems:'center',borderColor:'rgba(167,139,250,0.18)',marginBottom:'0.75rem' }}>
+        <div>
+          <div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)',marginBottom:'0.15rem' }}>
+            {now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
+          </div>
+          <div style={{ fontSize:'1.25rem',fontWeight:'bold',color:'#e8d9ff',marginBottom:'0.3rem' }}>
+            {greeting}{userName ? `, ${userName}` : ''} ✦
+          </div>
+          <div style={{ fontSize:'0.75rem',color:'rgba(255,255,255,0.4)',lineHeight:1.7 }}>
+            <span style={{ color:'#fb7185',fontWeight:600 }}>{monthGoalCount} {monthGoalCount===1?'book':'books'}</span> read this month
+            {goals.monthly > 0 && <span style={{ color:'rgba(255,255,255,0.25)' }}> · {monthLeft} left to goal</span>}
+            <span style={{ margin:'0 0.35rem',color:'rgba(255,255,255,0.12)' }}>·</span>
+            <span style={{ color:'#a78bfa',fontWeight:600 }}>{goalCount} of {goals.yearly||'?'}</span> this year
+          </div>
+        </div>
+        {/* Elegant open book SVG */}
+        <svg width="56" height="56" viewBox="0 0 64 64" fill="none" style={{ flexShrink:0 }}>
+          <path d="M32 16 C22 14 12 16 10 18 L10 50 C12 48 22 46 32 48Z" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" strokeWidth="1"/>
+          <path d="M32 16 C42 14 52 16 54 18 L54 50 C52 48 42 46 32 48Z" fill="rgba(192,132,252,0.1)" stroke="#c084fc" strokeWidth="1"/>
+          <line x1="32" y1="16" x2="32" y2="48" stroke="#e8d9ff" strokeWidth="1.2"/>
+          <line x1="16" y1="26" x2="28" y2="25" stroke="rgba(167,139,250,0.4)" strokeWidth="0.8"/>
+          <line x1="16" y1="31" x2="28" y2="30" stroke="rgba(167,139,250,0.4)" strokeWidth="0.8"/>
+          <line x1="16" y1="36" x2="28" y2="35" stroke="rgba(167,139,250,0.4)" strokeWidth="0.8"/>
+          <line x1="36" y1="25" x2="48" y2="26" stroke="rgba(192,132,252,0.4)" strokeWidth="0.8"/>
+          <line x1="36" y1="30" x2="48" y2="31" stroke="rgba(192,132,252,0.4)" strokeWidth="0.8"/>
+          <line x1="36" y1="35" x2="48" y2="36" stroke="rgba(192,132,252,0.4)" strokeWidth="0.8"/>
+          <circle cx="50" cy="14" r="1.5" fill="#c084fc" opacity="0.7"/>
+          <circle cx="8" cy="44" r="1" fill="#a78bfa" opacity="0.5"/>
+        </svg>
       </div>
 
-      {/* read vs unread */}
-      <div style={card}>
-        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.6rem' }}>
-          <span style={{ color:'white',fontWeight:'600',fontSize:'0.875rem' }}>Read vs Unread</span>
-          <span style={{ color:'rgba(255,255,255,0.35)',fontSize:'0.72rem' }}>{readAll.length} of {books.length} books</span>
+      {/* STAT CARDS */}
+      <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'0.5rem',marginBottom:'0.75rem' }}>
+        {[
+          { label:'Total',   value:books.length,  color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.25)' },
+          { label:'Read',    value:readAll.length, color:'#34d399', bg:'rgba(52,211,153,0.07)',  border:'rgba(52,211,153,0.25)' },
+          { label:'TBR',     value:tbrCount,       color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)' },
+          { label:'Reading', value:readingCount,   color:'#60a5fa', bg:'rgba(96,165,250,0.07)',  border:'rgba(96,165,250,0.25)' },
+        ].map(s=>(
+          <div key={s.label} style={{ background:s.bg,border:`1px solid ${s.border}`,borderTop:`2px solid ${s.color}`,borderRadius:'0.75rem',padding:'0.75rem',textAlign:'center' }}>
+            <div style={{ fontSize:'1.5rem',fontWeight:'bold',color:s.color,lineHeight:1 }}>{s.value}</div>
+            <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.35)',marginTop:'0.25rem' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* CURRENTLY READING */}
+      {currentlyReading.length > 0 && (
+        <div style={{ ...card, borderColor:'rgba(96,165,250,0.15)' }}>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📖 Currently Reading</div>
+          <div style={{ display:'flex',gap:'0.6rem',flexWrap:'wrap' }}>
+            {currentlyReading.map((b:any)=>{
+              const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy'];
+              return (
+                <div key={b.id} style={{ background:'rgba(255,255,255,0.03)',border:`1px solid ${cfg.accent}25`,borderLeft:`3px solid ${cfg.accent}`,borderRadius:'0.6rem',padding:'0.6rem 0.75rem',flex:1,minWidth:'130px' }}>
+                  <div style={{ fontSize:'0.78rem',fontWeight:'bold',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
+                  <div style={{ fontSize:'0.65rem',color:cfg.accent+'bb',marginTop:'0.1rem' }}>{b.author}</div>
+                  <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.25)',marginTop:'0.15rem' }}>{b.genre}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div style={{ height:'12px',borderRadius:'9999px',background:'rgba(255,255,255,0.08)',overflow:'hidden',display:'flex' }}>
-          <div style={{ width:`${readPct}%`,background:'linear-gradient(90deg,#34d399,#059669)',transition:'width 0.5s',borderRadius:'9999px 0 0 9999px' }}/>
-          <div style={{ width:`${unreadPct}%`,background:'rgba(255,255,255,0.05)',borderRadius:'0 9999px 9999px 0' }}/>
+      )}
+
+      {/* GOALS + RECENTLY READ side by side */}
+      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem' }}>
+
+        {/* GOAL RINGS */}
+        <div style={card}>
+          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.75rem' }}>
+            <span style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>Reading Goals</span>
+            <button onClick={onEditGoals} style={{ background:'rgba(109,40,217,0.3)',border:'1px solid #6d28d9',color:'#a78bfa',borderRadius:'0.5rem',padding:'0.2rem 0.55rem',fontSize:'0.65rem',cursor:'pointer' }}>Edit</button>
+          </div>
+          <div style={{ display:'flex',gap:'0.75rem',justifyContent:'center' }}>
+            <GoalRing count={goalCount} goal={goals.yearly||0} label={`${THIS_YEAR} Yearly`} emoji="📅" gradStart="#a78bfa" gradEnd="#7c3aed" gradId="yearGrad"/>
+            <GoalRing count={monthGoalCount} goal={goals.monthly||0} label={now.toLocaleDateString('en-US',{month:'long'})} emoji="🌸" gradStart="#fb7185" gradEnd="#be123c" gradId="monthGrad"/>
+          </div>
+          {(goals.readProgress!=null||goals.monthProgress!=null)&&(
+            <div style={{ textAlign:'center',marginTop:'0.6rem',fontSize:'0.6rem',color:'rgba(255,255,255,0.2)' }}>
+              {goals.readProgress!=null?'📌 Yearly manually set':''}
+              {goals.readProgress!=null&&goals.monthProgress!=null?' · ':''}
+              {goals.monthProgress!=null?'📌 Monthly manually set':''}
+            </div>
+          )}
         </div>
-        <div style={{ display:'flex',gap:'1rem',marginTop:'0.5rem' }}>
-          <span style={{ fontSize:'0.68rem',color:'#34d399' }}>● Read {readPct}%</span>
-          <span style={{ fontSize:'0.68rem',color:'rgba(255,255,255,0.3)' }}>● Unread {unreadPct}%</span>
+
+        {/* RECENTLY READ */}
+        <div style={card}>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>Recently Read</div>
+          {recentlyRead.length === 0 ? (
+            <div style={{ color:'rgba(255,255,255,0.2)',fontSize:'0.75rem',textAlign:'center',padding:'1rem 0' }}>No books read yet</div>
+          ) : (
+            <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
+              {recentlyRead.map((b:any)=>{
+                const color = GENRE_CFG[b.genre]?.accent||'#a78bfa';
+                const dateStr = b.readAt ? new Date(b.readAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : b.readYear||'';
+                return (
+                  <div key={b.id} style={{ display:'flex',alignItems:'center',gap:'0.5rem' }}>
+                    <div style={{ width:'6px',height:'6px',borderRadius:'50%',background:color,flexShrink:0 }}/>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <div style={{ fontSize:'0.72rem',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
+                      <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.3)' }}>{b.author}</div>
+                    </div>
+                    <div style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.2)',flexShrink:0 }}>{dateStr}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* reading goals — circular rings */}
-      <div style={card}>
-        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem' }}>
-          <span style={{ color:'white',fontWeight:'600',fontSize:'0.875rem' }}>Reading Goals</span>
-          <button onClick={onEditGoals} style={{ background:'rgba(109,40,217,0.3)',border:'1px solid #6d28d9',color:'#a78bfa',borderRadius:'0.5rem',padding:'0.2rem 0.6rem',fontSize:'0.68rem',cursor:'pointer' }}>Edit</button>
+      {/* READ VS UNREAD + GENRES side by side */}
+      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem' }}>
+
+        {/* READ VS UNREAD */}
+        <div style={card}>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Read vs Unread</div>
+          <div style={{ height:'10px',borderRadius:'9999px',background:'rgba(255,255,255,0.07)',overflow:'hidden',display:'flex',marginBottom:'0.5rem' }}>
+            <div style={{ width:`${readPct}%`,background:'#34d399',borderRadius:'9999px 0 0 9999px',transition:'width 0.5s' }}/>
+            <div style={{ width:`${unreadPct}%`,background:'rgba(255,255,255,0.04)',borderRadius:'0 9999px 9999px 0' }}/>
+          </div>
+          <div style={{ display:'flex',gap:'1rem',marginBottom:'0.6rem' }}>
+            <span style={{ fontSize:'0.65rem',color:'#34d399' }}>● Read {readPct}%</span>
+            <span style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>● Unread {unreadPct}%</span>
+          </div>
+          {/* motivational nudge */}
+          {goals.monthly > 0 && (
+            <div style={{ background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.15)',borderRadius:'0.5rem',padding:'0.45rem 0.6rem' }}>
+              <div style={{ fontSize:'0.68rem',color:'#a78bfa' }}>
+                {monthGoalCount >= (goals.monthly||0)
+                  ? `✦ Monthly goal complete! Amazing work.`
+                  : monthLeft === 1
+                  ? `✦ Just 1 book left to hit your monthly goal!`
+                  : `✦ ${monthLeft} books left this month — you've got this!`}
+              </div>
+            </div>
+          )}
         </div>
-        <div style={{ display:'flex',gap:'2rem',justifyContent:'center',flexWrap:'wrap' }}>
-          <GoalRing count={goalCount} goal={goals.yearly || 0} label={`${THIS_YEAR} Yearly`} emoji="📅" gradStart="#a78bfa" gradEnd="#7c3aed" gradId="yearGrad"/>
-          <GoalRing count={monthGoalCount} goal={goals.monthly || 0} label={now.toLocaleDateString('en-US',{month:'long'})} emoji="🌸" gradStart="#fb7185" gradEnd="#be123c" gradId="monthGrad"/>
-        </div>
-        {(goals.readProgress != null || goals.monthProgress != null) && (
-          <div style={{ textAlign:'center',marginTop:'0.75rem',fontSize:'0.65rem',color:'rgba(255,255,255,0.25)' }}>
-            {goals.readProgress != null ? '📌 Yearly progress manually set' : ''}
-            {goals.readProgress != null && goals.monthProgress != null ? ' · ' : ''}
-            {goals.monthProgress != null ? '📌 Monthly progress manually set' : ''}
+
+        {/* TOP GENRES */}
+        {genreData.length > 0 ? (
+          <div style={card}>
+            <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Genres</div>
+            {genreData.slice(0,5).map(({ genre, count, color })=>(
+              <div key={genre} style={{ marginBottom:'0.45rem' }}>
+                <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
+                  <span style={{ fontSize:'0.68rem',color }}>{genre}</span>
+                  <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)' }}>{count}</span>
+                </div>
+                <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.05)',overflow:'hidden' }}>
+                  <div style={{ width:`${(count/maxGenre)*100}%`,height:'100%',background:color,borderRadius:'9999px',transition:'width 0.5s' }}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ ...card, display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'0.5rem' }}>
+            <div style={{ fontSize:'1.5rem' }}>📊</div>
+            <p style={{ fontSize:'0.78rem',color:'rgba(255,255,255,0.2)',textAlign:'center' }}>Mark books as read to see genre stats</p>
           </div>
         )}
       </div>
 
-      {/* genres */}
-      {genreData.length > 0 && (
-        <div style={card}>
-          <div style={{ color:'white',fontWeight:'600',fontSize:'0.875rem',marginBottom:'0.75rem' }}>Most Read Genres</div>
-          {genreData.map(({ genre, count, color }) => (
-            <div key={genre} style={{ marginBottom:'0.5rem' }}>
-              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.2rem' }}>
-                <span style={{ fontSize:'0.72rem',color }}>{genre}</span>
-                <span style={{ fontSize:'0.68rem',color:'rgba(255,255,255,0.3)' }}>{count} {count===1?'book':'books'}</span>
-              </div>
-              <div style={{ height:'6px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
-                <div style={{ width:`${(count/maxGenre)*100}%`,height:'100%',background:color,borderRadius:'9999px',transition:'width 0.5s' }}/>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* top authors */}
+      {/* TOP AUTHORS */}
       {authorData.length > 0 && (
         <div style={card}>
-          <div style={{ color:'white',fontWeight:'600',fontSize:'0.875rem',marginBottom:'0.75rem' }}>Top Authors</div>
-          {authorData.map(({ author, count }) => (
-            <div key={author} style={{ marginBottom:'0.5rem' }}>
-              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.2rem' }}>
-                <span style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.65)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'70%' }}>{author}</span>
-                <span style={{ fontSize:'0.68rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{count} {count===1?'book':'books'}</span>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Authors</div>
+          <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
+            {authorData.map(({ author, count })=>(
+              <div key={author} style={{ marginBottom:'0.35rem' }}>
+                <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
+                  <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.65)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'75%' }}>{author}</span>
+                  <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{count} {count===1?'book':'books'}</span>
+                </div>
+                <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.05)',overflow:'hidden' }}>
+                  <div style={{ width:`${(count/maxAuthor)*100}%`,height:'100%',background:'#a78bfa',borderRadius:'9999px',transition:'width 0.5s' }}/>
+                </div>
               </div>
-              <div style={{ height:'6px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
-                <div style={{ width:`${(count/maxAuthor)*100}%`,height:'100%',background:'linear-gradient(90deg,#a78bfa,#7c3aed)',borderRadius:'9999px',transition:'width 0.5s' }}/>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
-      {genreData.length === 0 && (
-        <div style={{ textAlign:'center',padding:'2rem 0',color:'rgba(255,255,255,0.2)' }}>
-          <div style={{ fontSize:'2.5rem',marginBottom:'0.5rem' }}>📊</div>
-          <p style={{ fontSize:'0.85rem' }}>Mark books as read to see your stats here.</p>
-        </div>
-      )}
     </div>
   );
 }
@@ -1170,6 +1277,7 @@ export default function App() {
   const [delId,       setDelId]       = useState<any>(null);
   const [editBook,    setEditBook]    = useState<any>(null);
   const [goalModal,   setGoalModal]   = useState(false);
+  const [pendingRead, setPendingRead] = useState<{id:any;year:string}|null>(null);
 
   useEffect(()=>{
     (async()=>{
@@ -1369,7 +1477,7 @@ export default function App() {
         </div>
       </div>
 
-      {tab==='home'&&<HomeTab books={books} goals={goals} onEditGoals={()=>setGoalModal(true)}/>}
+      {tab==='home'&&<HomeTab books={books} goals={goals} onEditGoals={()=>setGoalModal(true)} userName="Elle"/>}
 
       {tab!=='home'&&(
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
@@ -1412,12 +1520,48 @@ export default function App() {
                       </div>
                     )}
                     {bst==='shelf'&&(
-                      <button onClick={()=>update(b.id,{read:!b.read})} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.3)'}) }}>
-                        {b.read?'✓ Read':'Unread'}
-                      </button>
+                      <>
+                        {/* if this card is pending year entry, show inline picker */}
+                        {pendingRead?.id===b.id ? (
+                          <div style={{ position:'absolute',top:'0.4rem',right:'0.5rem',display:'flex',alignItems:'center',gap:'0.3rem' }}>
+                            <input
+                              type="number"
+                              value={pendingRead.year}
+                              onChange={e=>setPendingRead({...pendingRead,year:e.target.value})}
+                              placeholder={String(THIS_YEAR)}
+                              style={{ width:'62px',background:'rgba(255,255,255,0.08)',border:'1px solid #34d399',borderRadius:'0.4rem',padding:'0.15rem 0.35rem',color:'white',fontSize:'0.65rem',textAlign:'center' }}
+                              autoFocus
+                            />
+                            <button onClick={()=>{
+                              const yr = Number(pendingRead.year)||THIS_YEAR;
+                              update(b.id,{read:true,readAt:Date.now(),readYear:yr});
+                              setPendingRead(null);
+                            }} style={{ fontSize:'0.62rem',padding:'0.2rem 0.4rem',borderRadius:'9999px',border:'1px solid #34d399',background:'#05653044',color:'#34d399',cursor:'pointer',fontWeight:700 }}>✓</button>
+                            <button onClick={()=>setPendingRead(null)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.35rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.15)',background:'transparent',color:'rgba(255,255,255,0.35)',cursor:'pointer' }}>✕</button>
+                          </div>
+                        ) : (
+                          <button onClick={()=>{
+                            if(b.read) { update(b.id,{read:false}); }
+                            else { setPendingRead({id:b.id,year:String(THIS_YEAR)}); }
+                          }} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.3)'}) }}>
+                            {b.read?`✓ Read ${b.readYear&&b.readYear!==THIS_YEAR?b.readYear:''}`.trim():'Unread'}
+                          </button>
+                        )}
+                      </>
                     )}
                     {bst==='reading'&&(
-                      <button onClick={()=>update(b.id,{status:'shelf',read:true})} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',background:'#05653044',borderColor:'#34d399',color:'#34d399' }}>✓ Finished</button>
+                      <>
+                        {pendingRead?.id===b.id ? (
+                          <div style={{ position:'absolute',top:'0.4rem',right:'0.5rem',display:'flex',alignItems:'center',gap:'0.3rem' }}>
+                            <input type="number" value={pendingRead.year} onChange={e=>setPendingRead({...pendingRead,year:e.target.value})} placeholder={String(THIS_YEAR)}
+                              style={{ width:'62px',background:'rgba(255,255,255,0.08)',border:'1px solid #34d399',borderRadius:'0.4rem',padding:'0.15rem 0.35rem',color:'white',fontSize:'0.65rem',textAlign:'center' }} autoFocus/>
+                            <button onClick={()=>{ const yr=Number(pendingRead.year)||THIS_YEAR; update(b.id,{status:'shelf',read:true,readAt:Date.now(),readYear:yr}); setPendingRead(null); }} style={{ fontSize:'0.62rem',padding:'0.2rem 0.4rem',borderRadius:'9999px',border:'1px solid #34d399',background:'#05653044',color:'#34d399',cursor:'pointer',fontWeight:700 }}>✓</button>
+                            <button onClick={()=>setPendingRead(null)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.35rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.15)',background:'transparent',color:'rgba(255,255,255,0.35)',cursor:'pointer' }}>✕</button>
+                          </div>
+                        ) : (
+                          <button onClick={()=>setPendingRead({id:b.id,year:String(THIS_YEAR)})} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',background:'#05653044',borderColor:'#34d399',color:'#34d399' }}>✓ Finished</button>
+                        )}
+                      </>
                     )}
                     <div style={{ fontWeight:'bold',color:'white',fontSize:'0.875rem',lineHeight:'1.3',paddingRight:'3.5rem',marginBottom:'0.2rem' }}>{b.title}</div>
                     <div style={{ fontSize:'0.75rem',color:cfg.accent+'bb',marginBottom:'0.2rem' }}>{b.author}</div>
