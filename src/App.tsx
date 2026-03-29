@@ -62,7 +62,7 @@ const SUBGENRES: Record<string, string[]> = {
   'Mystery/Thriller': ['Cozy Mystery','YA Mystery','Historical Mystery','Thriller','Dark Thriller','Conspiracy Thriller'],
   Horror:             ['Gothic Horror','Dark Fiction','Horror Comedy'],
   Contemporary:       ['Contemporary Fiction','Literary Fiction','Cozy Fiction','New Adult','Chick Lit'],
-  Classics:           ['Gothic Classic','Russian Lit','French Lit','British Lit','American Lit','Fairy Tales'],
+  Classics:           ['Gothic Classic','Russian Lit','French Lit','British Lit','American Lit','Fairy Tales','German Lit'],
   'Non-Fiction':      ['Memoir','Self-Help','Philosophy','Language Learning'],
 };
 
@@ -274,6 +274,7 @@ const SEED = [
   fa(267,'Daughter of the Siren Queen','Tricia Levenseller','YA Fantasy','Daughter of the Pirate King',2),
   fa(268,'Vengeance of the Pirate Queen','Tricia Levenseller','YA Fantasy','Daughter of the Pirate King',3),
   fa(269,'Belladonna','Adalyn Grace','Dark Fantasy','Belladonna',1),
+  fa(574,'Foxglove','Adalyn Grace','Dark Fantasy','Belladonna',3),
   fa(270,'Wisteria','Adalyn Grace','Dark Fantasy','Belladonna',2),
   fa(159,'Holly','Adalyn Grace','Dark Fantasy','Belladonna',null),
   fa(306,'The Phoenix King','Aparna Verma','High Fantasy','The Ravence Trilogy',1),
@@ -793,11 +794,26 @@ const SEED = [
   fa(681,'What Hunts Inside the Shadows','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',2),
   fa(682,'What Lurks Between the Fates','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',3),
   fa(683,'What Sleeps Within the Cove','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',4),
-
-
-
-
-
+  // ── Brandon Sanderson — Mistborn ─────────────────────────────────────────────
+  fa(684,'The Final Empire','Brandon Sanderson','High Fantasy','Mistborn',1),
+  fa(685,'The Well of Ascension','Brandon Sanderson','High Fantasy','Mistborn',2),
+  fa(686,'The Hero of Ages','Brandon Sanderson','High Fantasy','Mistborn',3),
+  // ── Franz Kafka Collection ────────────────────────────────────────────────────
+  cl(687,'The Metamorphosis','Franz Kafka','German Lit'),
+  cl(688,'The Trial','Franz Kafka','German Lit'),
+  cl(689,'The Castle','Franz Kafka','German Lit'),
+  cl(690,'Amerika','Franz Kafka','German Lit'),
+  cl(691,'In the Penal Colony and Other Short Stories','Franz Kafka','German Lit'),
+  // ── Tracy Wolff — Crave series ────────────────────────────────────────────────
+  fa(692,'Crave','Tracy Wolff','Paranormal Romance','Crave',1),
+  fa(693,'Crush','Tracy Wolff','Paranormal Romance','Crave',2),
+  fa(694,'Covet','Tracy Wolff','Paranormal Romance','Crave',3),
+  fa(695,'Court','Tracy Wolff','Paranormal Romance','Crave',4),
+  fa(696,'Charm','Tracy Wolff','Paranormal Romance','Crave',5),
+  fa(697,'Cherish','Tracy Wolff','Paranormal Romance','Crave',6),
+  // ── Jordan B. Peterson — 12 Rules ────────────────────────────────────────────
+  nf(698,'12 Rules for Life','Jordan B. Peterson','Self-Help'),
+  nf(699,'Beyond Order','Jordan B. Peterson','Self-Help'),
 
 ];
 
