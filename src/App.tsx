@@ -40,7 +40,17 @@ const initFirebase = async () => {
 
 const saveToFirestore = async (uid: string, books: any[], goals: any) => {
   if (!firebaseReady) return;
-  try { await _setDoc(_doc(_db, 'users', uid), { books, goals }); } catch {}
+  try {
+    await _setDoc(_doc(_db, 'users', uid), { books, goals });
+    // Also save public snapshot for share page (read books + wishlist only)
+    const publicBooks = books.map((b: any) => ({
+      id: b.id, title: b.title, author: b.author, genre: b.genre,
+      subgenre: b.subgenre, series: b.series, sn: b.sn,
+      read: b.read, readYear: b.readYear, status: b.status,
+      rating: b.rating ?? null, note: b.note ?? '',
+    }));
+    await _setDoc(_doc(_db, 'public', uid), { books: publicBooks, updatedAt: Date.now() });
+  } catch {}
 };
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -70,26 +80,31 @@ const STORAGE_KEY = 'myshelf-v6';
 const GOALS_KEY   = 'myshelf-goals-v1';
 
 const TAB_CFG: Record<string, { label: string; color: string }> = {
-  home:    { label: '✦ Home',     color: '#c084fc' },
-  shelf:   { label: '📚 Shelf',   color: '#a78bfa' },
-  tbr:     { label: '🔖 TBR',     color: '#fb923c' },
-  reading: { label: '📖 Reading', color: '#34d399' },
+  home:     { label: '✦ Home',       color: '#c084fc' },
+  shelf:    { label: '📚 Shelf',     color: '#a78bfa' },
+  tbr:      { label: '🔖 TBR',       color: '#fb923c' },
+  reading:  { label: '📖 Reading',   color: '#34d399' },
+  wishlist: { label: '✨ Wishlist',  color: '#f472b6' },
 };
 
-const STATUS_COLORS: Record<string, string> = { shelf: '#a78bfa', tbr: '#fb923c', reading: '#34d399' };
+const STATUS_COLORS: Record<string, string> = {
+  shelf: '#a78bfa', tbr: '#fb923c', reading: '#34d399', wishlist: '#f472b6',
+};
+
 const THIS_YEAR  = new Date().getFullYear();
 const THIS_MONTH = new Date().getMonth();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const uid = () => Date.now() + Math.random();
-const fa  = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => ({ id, title: t, author: a, category: 'Fiction', genre: 'Fantasy',         subgenre: sg, series: sr, sn, read: false, status: 'shelf', readAt: null, readYear: null });
-const rt  = (id: number, t: string, a: string, sr: string | null, sn: number | null)              => ({ id, title: t, author: a, category: 'Fiction', genre: 'Romantasy',        subgenre: 'Romantasy', series: sr, sn, read: false, status: 'shelf', readAt: null, readYear: null });
-const r   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => ({ id, title: t, author: a, category: 'Fiction', genre: 'Romance',          subgenre: sg, series: sr, sn, read: false, status: 'shelf', readAt: null, readYear: null });
-const m   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => ({ id, title: t, author: a, category: 'Fiction', genre: 'Mystery/Thriller', subgenre: sg, series: sr, sn, read: false, status: 'shelf', readAt: null, readYear: null });
-const h   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => ({ id, title: t, author: a, category: 'Fiction', genre: 'Horror',           subgenre: sg, series: sr, sn, read: false, status: 'shelf', readAt: null, readYear: null });
-const co  = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => ({ id, title: t, author: a, category: 'Fiction', genre: 'Contemporary',     subgenre: sg, series: sr, sn, read: false, status: 'shelf', readAt: null, readYear: null });
-const cl  = (id: number, t: string, a: string, sg: string)                                        => ({ id, title: t, author: a, category: 'Fiction', genre: 'Classics',          subgenre: sg, series: null, sn: null, read: false, status: 'shelf', readAt: null, readYear: null });
-const nf  = (id: number, t: string, a: string, sg: string)                                        => ({ id, title: t, author: a, category: 'Non-Fiction', genre: 'Non-Fiction',   subgenre: sg, series: null, sn: null, read: false, status: 'shelf', readAt: null, readYear: null });
+const base = (extra: any) => ({ read: false, status: 'shelf', readAt: null, readYear: null, rating: null, note: '' , ...extra });
+const fa  = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Fantasy',         subgenre: sg, series: sr, sn });
+const rt  = (id: number, t: string, a: string, sr: string | null, sn: number | null)              => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romantasy',        subgenre: 'Romantasy', series: sr, sn });
+const r   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romance',          subgenre: sg, series: sr, sn });
+const m   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Mystery/Thriller', subgenre: sg, series: sr, sn });
+const h   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Horror',           subgenre: sg, series: sr, sn });
+const co  = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Contemporary',     subgenre: sg, series: sr, sn });
+const cl  = (id: number, t: string, a: string, sg: string)                                        => base({ id, title: t, author: a, category: 'Fiction', genre: 'Classics',          subgenre: sg, series: null, sn: null });
+const nf  = (id: number, t: string, a: string, sg: string)                                        => base({ id, title: t, author: a, category: 'Non-Fiction', genre: 'Non-Fiction',   subgenre: sg, series: null, sn: null });
 
 const fileToBase64 = (file: File): Promise<string> => new Promise((res, rej) => {
   const reader = new FileReader();
@@ -98,9 +113,22 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((res, rej) => 
   reader.readAsDataURL(file);
 });
 
+// ── Export CSV ────────────────────────────────────────────────────────────────
+const exportCSV = (books: any[]) => {
+  const headers = ['Title','Author','Genre','Subgenre','Series','#','Status','Read','Year Read','Rating','Note'];
+  const rows = books.map(b => [
+    b.title, b.author, b.genre, b.subgenre||'', b.series||'', b.sn!=null?b.sn:'',
+    b.status, b.read?'Yes':'No', b.readYear||'', b.rating||'', (b.note||'').replace(/"/g,"'"),
+  ].map(v=>`"${v}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'myshelf.csv'; a.click();
+  URL.revokeObjectURL(url);
+};
+
 // ── Seed Data ─────────────────────────────────────────────────────────────────
 const SEED = [
-  // Original books
   fa(1,'The Awakening','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',1),
   fa(2,'Ruthless Fae','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',2),
   fa(3,'The Reckoning','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',3),
@@ -363,7 +391,6 @@ const SEED = [
   cl(216,'Great Expectations','Charles Dickens','British Lit'),
   cl(217,'Frankenstein','Mary Shelley','Gothic Classic'),
   cl(218,'For Whom the Bell Tolls','Ernest Hemingway','American Lit'),
-  
   co(112,'Legends & Lattes','Travis Baldree','Cozy Fiction',null,null),
   co(329,'Bookshops & Bonedust','Travis Baldree','Cozy Fiction',null,null),
   co(173,'The Wedding Witch','Erin Sterling','Cozy Fiction','Graves Glen',null),
@@ -538,12 +565,6 @@ const SEED = [
   nf(309,'The Present Age','Soren Kierkegaard','Philosophy'),
   nf(310,'Kind of Coping','Unknown','Self-Help'),
   nf(311,'Prime Nihongo','Masatomi Shigo','Language Learning'),
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // NEW BOOKS — March 2026
-  // ══════════════════════════════════════════════════════════════════════════
-
-  // Filipino / Wattpad / Local
   r(445,'Secretly Married','Trrevistenglimmer','Contemporary Romance',null,null),
   r(446,'Baka Sakali','Jonaxx','Contemporary Romance','Jonaxx War Series',1),
   r(447,'Mapansin Kaya?','Jonaxx','Contemporary Romance','Jonaxx War Series',2),
@@ -728,7 +749,6 @@ const SEED = [
   fa(627,'The Darkness Within Us','Tricia Levenseller','YA Fantasy',null,null),
   r(628,'Rose in Chains','Julie Soto','Contemporary Romance',null,null),
   r(629,'Repeat After Me','Jessica Warman','Contemporary Romance',null,null),
-  // ── New Books (March 2026 — final additions) ──────────────────────────────────
   fa(630,'One Dark Window','Rachel Gillig','Dark Fantasy','The Shepherd King',1),
   fa(631,'Two Twisted Crowns','Rachel Gillig','Dark Fantasy','The Shepherd King',2),
   nf(632,'On the Origins and History of Consciousness','Erich Neumann','Philosophy'),
@@ -754,39 +774,26 @@ const SEED = [
   rt(652,'House of Flame and Shadow','Sarah J. Maas','Crescent City',3),
   fa(653,'Spark of the Everflame','Penn Cole','High Fantasy','Forging of Light',1),
   fa(654,'Glow of Everflame','Penn Cole','High Fantasy','Forging of Light',2),
-  // ── Sabaa Tahir — An Ember in the Ashes ──────────────────────────────────────
   fa(656,'An Ember in the Ashes','Sabaa Tahir','High Fantasy','An Ember in the Ashes',1),
   fa(657,'A Torch Against the Night','Sabaa Tahir','High Fantasy','An Ember in the Ashes',2),
   fa(658,'A Reaper at the Gates','Sabaa Tahir','High Fantasy','An Ember in the Ashes',3),
   fa(659,'A Sky Beyond the Storm','Sabaa Tahir','High Fantasy','An Ember in the Ashes',4),
-
-  // ── Becca Fitzpatrick — Hush Hush (rest of series, book 1 already in seed) ───
   fa(660,'Crescendo','Becca Fitzpatrick','Paranormal Romance','Hush Hush',2),
   fa(661,'Silence','Becca Fitzpatrick','Paranormal Romance','Hush Hush',3),
   fa(662,'Finale','Becca Fitzpatrick','Paranormal Romance','Hush Hush',4),
-
-  // ── Jay Kristoff — Empire of the Vampire ─────────────────────────────────────
   fa(663,'Empire of the Vampire','Jay Kristoff','Dark Fantasy','Empire of the Vampire',1),
   fa(664,'Empire of the Damned','Jay Kristoff','Dark Fantasy','Empire of the Vampire',2),
-
-  // ── Brigid Kemmerer ───────────────────────────────────────────────────────────
   fa(665,'Forging Silver into Stars','Brigid Kemmerer','YA Fantasy','Forging Silver into Stars',1),
   fa(666,'Carving Shadows into Gold','Brigid Kemmerer','YA Fantasy','Forging Silver into Stars',2),
-
-  // ── Melissa Blair — Halfling series ──────────────────────────────────────────
   fa(667,'A Broken Blade','Melissa Blair','Dark Fantasy','The Halfling series',1),
   fa(668,'A Vicious Game','Melissa Blair','Dark Fantasy','The Halfling series',3),
   fa(669,'An Honored Vow','Melissa Blair','Dark Fantasy','The Halfling series',4),
-  
-  // ── Sophie Lark — Brutal Birthright ──────────────────────────────────────────
   r(671,'Brutal Prince','Sophie Lark','Dark Romance','Brutal Birthright',1),
   r(672,'Stolen Heir','Sophie Lark','Dark Romance','Brutal Birthright',2),
   r(673,'Savage Lover','Sophie Lark','Dark Romance','Brutal Birthright',3),
   r(674,'Bloody Heart','Sophie Lark','Dark Romance','Brutal Birthright',4),
   r(675,'Broken Vow','Sophie Lark','Dark Romance','Brutal Birthright',5),
   r(676,'Heavy Crown','Sophie Lark','Dark Romance','Brutal Birthright',6),
-
-  // ── Sophie Lark — Sinners Duet ────────────────────────────────────────────────
   r(677,'There Are No Saints','Sophie Lark','Dark Romance','Sinners Duet',1),
   r(678,'There Is No Devil','Sophie Lark','Dark Romance','Sinners Duet',2),
   fa(679,'Sword Catcher','Cassandra Clare','High Fantasy','Sword Catcher',1),
@@ -794,27 +801,22 @@ const SEED = [
   fa(681,'What Hunts Inside the Shadows','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',2),
   fa(682,'What Lurks Between the Fates','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',3),
   fa(683,'What Sleeps Within the Cove','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',4),
-  // ── Brandon Sanderson — Mistborn ─────────────────────────────────────────────
   fa(684,'The Final Empire','Brandon Sanderson','High Fantasy','Mistborn',1),
   fa(685,'The Well of Ascension','Brandon Sanderson','High Fantasy','Mistborn',2),
   fa(686,'The Hero of Ages','Brandon Sanderson','High Fantasy','Mistborn',3),
-  // ── Franz Kafka Collection ────────────────────────────────────────────────────
   cl(687,'The Metamorphosis','Franz Kafka','German Lit'),
   cl(688,'The Trial','Franz Kafka','German Lit'),
   cl(689,'The Castle','Franz Kafka','German Lit'),
   cl(690,'Amerika','Franz Kafka','German Lit'),
   cl(691,'In the Penal Colony and Other Short Stories','Franz Kafka','German Lit'),
-  // ── Tracy Wolff — Crave series ────────────────────────────────────────────────
   fa(692,'Crave','Tracy Wolff','Paranormal Romance','Crave',1),
   fa(693,'Crush','Tracy Wolff','Paranormal Romance','Crave',2),
   fa(694,'Covet','Tracy Wolff','Paranormal Romance','Crave',3),
   fa(695,'Court','Tracy Wolff','Paranormal Romance','Crave',4),
   fa(696,'Charm','Tracy Wolff','Paranormal Romance','Crave',5),
   fa(697,'Cherish','Tracy Wolff','Paranormal Romance','Crave',6),
-  // ── Jordan B. Peterson — 12 Rules ────────────────────────────────────────────
   nf(698,'12 Rules for Life','Jordan B. Peterson','Self-Help'),
   nf(699,'Beyond Order','Jordan B. Peterson','Self-Help'),
-
 ];
 
 const seen = new Set<number>();
@@ -823,22 +825,31 @@ for (const b of SEED) {
   if (!seen.has(b.id)) { seen.add(b.id); ALL_BOOKS.push(b); }
 }
 
+// ── StarRating ─────────────────────────────────────────────────────────────────
+function StarRating({ rating, onChange, size = 'sm' }: { rating: number|null; onChange?: (r: number) => void; size?: 'sm'|'md' }) {
+  const [hover, setHover] = useState(0);
+  const sz = size === 'md' ? '1.1rem' : '0.75rem';
+  return (
+    <div style={{ display:'flex', gap:'1px' }}>
+      {[1,2,3,4,5].map(s => (
+        <span key={s}
+          onClick={() => onChange?.(s === rating ? 0 : s)}
+          onMouseEnter={() => onChange && setHover(s)}
+          onMouseLeave={() => onChange && setHover(0)}
+          style={{ fontSize: sz, cursor: onChange ? 'pointer' : 'default', color: s <= (hover || rating || 0) ? '#fbbf24' : 'rgba(255,255,255,0.15)', lineHeight: 1, transition: 'color 0.1s' }}>
+          ★
+        </span>
+      ))}
+    </div>
+  );
+}
+
 // ── Pill ──────────────────────────────────────────────────────────────────────
 function Pill({ label, active, color, onClick }: { label: string; active: boolean; color: string; onClick: () => void }) {
   return (
     <button onClick={onClick} style={{ whiteSpace:'nowrap',fontSize:'0.7rem',padding:'0.3rem 0.75rem',borderRadius:'9999px',border:active?`1px solid ${color}`:'1px solid rgba(255,255,255,0.1)',background:active?color+'25':'transparent',color:active?color:'rgba(255,255,255,0.35)',cursor:'pointer',fontWeight:active?600:400 }}>
       {label}
     </button>
-  );
-}
-
-// ── StatCard ──────────────────────────────────────────────────────────────────
-function StatCard({ label, value, color = '#a78bfa' }: { label: string; value: number; color?: string }) {
-  return (
-    <div style={{ background:'rgba(255,255,255,0.04)',borderRadius:'1rem',border:`1px solid ${color}25`,padding:'1rem 0.75rem',textAlign:'center',flex:1 }}>
-      <div style={{ color,fontSize:'1.6rem',fontWeight:'bold',lineHeight:1 }}>{value}</div>
-      <div style={{ color:'rgba(255,255,255,0.5)',fontSize:'0.65rem',marginTop:'0.25rem' }}>{label}</div>
-    </div>
   );
 }
 
@@ -918,23 +929,70 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
   const readAll = books.filter(b => b.read);
   const tbrCount = books.filter(b => b.status==='tbr').length;
   const readingCount = books.filter(b => b.status==='reading').length;
+  const wishlistCount = books.filter(b => b.status==='wishlist').length;
   const thisYearAuto = readAll.filter(b => b.readYear===THIS_YEAR||(!b.readYear&&b.readAt&&new Date(b.readAt).getFullYear()===THIS_YEAR));
   const goalCount = goals.readProgress!=null ? goals.readProgress : thisYearAuto.length;
   const thisMonthAuto = readAll.filter(b => { if(!b.readAt) return false; const d=new Date(b.readAt); return d.getMonth()===THIS_MONTH&&d.getFullYear()===THIS_YEAR; });
   const monthGoalCount = goals.monthProgress!=null ? goals.monthProgress : thisMonthAuto.length;
   const readPct = books.length ? Math.round((readAll.length/books.length)*100) : 0;
   const unreadPct = 100-readPct;
+
   const genreData = useMemo(()=>{ const c: Record<string,number>={}; readAll.forEach(b=>{c[b.genre]=(c[b.genre]||0)+1;}); return Object.entries(c).map(([g,n])=>({genre:g,count:n,color:GENRE_CFG[g]?.accent||'#a78bfa'})).sort((a,b)=>b.count-a.count); },[readAll]);
   const authorData = useMemo(()=>{ const c: Record<string,number>={}; readAll.forEach(b=>{c[b.author]=(c[b.author]||0)+1;}); return Object.entries(c).map(([a,n])=>({author:a,count:n})).sort((a,b)=>b.count-a.count).slice(0,8); },[readAll]);
+
+  // Year-by-year history
+  const yearData = useMemo(()=>{
+    const c: Record<number,number> = {};
+    readAll.forEach(b => {
+      const y = b.readYear || (b.readAt ? new Date(b.readAt).getFullYear() : null);
+      if (y) c[y] = (c[y]||0)+1;
+    });
+    return Object.entries(c).map(([y,n])=>({year:Number(y),count:n})).sort((a,b)=>a.year-b.year);
+  },[readAll]);
+
+  // Series completion
+  const seriesData = useMemo(()=>{
+    const seriesMap: Record<string,{owned:number,read:number}> = {};
+    books.forEach(b => {
+      if (!b.series) return;
+      if (!seriesMap[b.series]) seriesMap[b.series] = {owned:0,read:0};
+      seriesMap[b.series].owned++;
+      if (b.read) seriesMap[b.series].read++;
+    });
+    return Object.entries(seriesMap)
+      .filter(([,v]) => v.owned > 1)
+      .map(([name,v]) => ({name, ...v, pct: Math.round((v.read/v.owned)*100)}))
+      .sort((a,b) => b.owned - a.owned)
+      .slice(0,8);
+  },[books]);
+
+  // Author collection completeness
+  const authorOwned = useMemo(()=>{
+    const c: Record<string,{owned:number,read:number}> = {};
+    books.forEach(b => {
+      if (!c[b.author]) c[b.author] = {owned:0,read:0};
+      c[b.author].owned++;
+      if (b.read) c[b.author].read++;
+    });
+    return Object.entries(c)
+      .filter(([,v]) => v.owned >= 3)
+      .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
+      .sort((a,b) => b.owned - a.owned)
+      .slice(0,6);
+  },[books]);
+
   const maxGenre = genreData[0]?.count||1;
   const maxAuthor = authorData[0]?.count||1;
+  const maxYear = Math.max(...yearData.map(d=>d.count),1);
   const card: React.CSSProperties = { background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' };
   const currentlyReading = books.filter((b:any)=>b.status==='reading');
   const recentlyRead = [...readAll].sort((a:any,b:any)=>(b.readAt||0)-(a.readAt||0)).slice(0,5);
   const monthLeft = Math.max(0,(goals.monthly||0)-monthGoalCount);
   const greeting = now.getHours()<12?'Good morning':now.getHours()<18?'Good afternoon':'Good evening';
+
   return (
     <div style={{ padding:'1rem',maxWidth:'960px',margin:'0 auto' }}>
+      {/* Hero */}
       <div style={{ ...card,display:'flex',justifyContent:'space-between',alignItems:'center',borderColor:'rgba(167,139,250,0.18)',marginBottom:'0.75rem' }}>
         <div>
           <div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)',marginBottom:'0.15rem' }}>{now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
@@ -960,19 +1018,24 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
           <circle cx="8" cy="44" r="1" fill="#a78bfa" opacity="0.5"/>
         </svg>
       </div>
-      <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'0.5rem',marginBottom:'0.75rem' }}>
+
+      {/* Stat cards — 5 now including Wishlist */}
+      <div style={{ display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'0.5rem',marginBottom:'0.75rem' }}>
         {[
-          { label:'Total',   value:books.length,  color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.25)' },
-          { label:'Read',    value:readAll.length, color:'#34d399', bg:'rgba(52,211,153,0.07)',  border:'rgba(52,211,153,0.25)' },
-          { label:'TBR',     value:tbrCount,       color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)' },
-          { label:'Reading', value:readingCount,   color:'#60a5fa', bg:'rgba(96,165,250,0.07)',  border:'rgba(96,165,250,0.25)' },
+          { label:'Total',    value:books.length,   color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.25)' },
+          { label:'Read',     value:readAll.length,  color:'#34d399', bg:'rgba(52,211,153,0.07)',  border:'rgba(52,211,153,0.25)' },
+          { label:'TBR',      value:tbrCount,        color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)' },
+          { label:'Reading',  value:readingCount,    color:'#60a5fa', bg:'rgba(96,165,250,0.07)',  border:'rgba(96,165,250,0.25)' },
+          { label:'Wishlist', value:wishlistCount,   color:'#f472b6', bg:'rgba(244,114,182,0.07)', border:'rgba(244,114,182,0.25)' },
         ].map(s=>(
-          <div key={s.label} style={{ background:s.bg,border:`1px solid ${s.border}`,borderTop:`2px solid ${s.color}`,borderRadius:'0.75rem',padding:'0.75rem',textAlign:'center' }}>
-            <div style={{ fontSize:'1.5rem',fontWeight:'bold',color:s.color,lineHeight:1 }}>{s.value}</div>
-            <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.35)',marginTop:'0.25rem' }}>{s.label}</div>
+          <div key={s.label} style={{ background:s.bg,border:`1px solid ${s.border}`,borderTop:`2px solid ${s.color}`,borderRadius:'0.75rem',padding:'0.75rem 0.4rem',textAlign:'center' }}>
+            <div style={{ fontSize:'1.3rem',fontWeight:'bold',color:s.color,lineHeight:1 }}>{s.value}</div>
+            <div style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.35)',marginTop:'0.25rem' }}>{s.label}</div>
           </div>
         ))}
       </div>
+
+      {/* Currently Reading */}
       {currentlyReading.length>0&&(
         <div style={{ ...card,borderColor:'rgba(96,165,250,0.15)' }}>
           <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📖 Currently Reading</div>
@@ -987,6 +1050,8 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
           </div>
         </div>
       )}
+
+      {/* Goals + Recently Read */}
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem' }}>
         <div style={card}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.75rem' }}>
@@ -1016,7 +1081,10 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
                   <div style={{ width:'6px',height:'6px',borderRadius:'50%',background:color,flexShrink:0 }}/>
                   <div style={{ flex:1,minWidth:0 }}>
                     <div style={{ fontSize:'0.72rem',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
-                    <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.3)' }}>{b.author}</div>
+                    <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.3)',display:'flex',alignItems:'center',gap:'0.3rem' }}>
+                      {b.author}
+                      {b.rating && <StarRating rating={b.rating} size="sm"/>}
+                    </div>
                   </div>
                   <div style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.2)',flexShrink:0 }}>{dateStr}</div>
                 </div>
@@ -1025,6 +1093,8 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
           )}
         </div>
       </div>
+
+      {/* Read vs Unread + Top Genres */}
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem' }}>
         <div style={card}>
           <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Read vs Unread</div>
@@ -1066,6 +1136,62 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
           </div>
         )}
       </div>
+
+      {/* Year-by-year reading history */}
+      {yearData.length > 0 && (
+        <div style={{ ...card, marginBottom:'0.75rem' }}>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.75rem' }}>📅 Reading History by Year</div>
+          <div style={{ display:'flex',alignItems:'flex-end',gap:'0.5rem',height:'80px' }}>
+            {yearData.map(({year,count})=>(
+              <div key={year} style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.3rem' }}>
+                <span style={{ fontSize:'0.6rem',color:'#a78bfa',fontWeight:600 }}>{count}</span>
+                <div style={{ width:'100%',background:'linear-gradient(to top,#7c3aed,#a78bfa)',borderRadius:'3px 3px 0 0',height:`${(count/maxYear)*60}px`,minHeight:'4px',transition:'height 0.5s' }}/>
+                <span style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.3)' }}>{year}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Series Completion */}
+      {seriesData.length > 0 && (
+        <div style={{ ...card, marginBottom:'0.75rem' }}>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📚 Series Progress</div>
+          <div style={{ display:'flex',flexDirection:'column',gap:'0.5rem' }}>
+            {seriesData.map(({name,owned,read,pct})=>(
+              <div key={name}>
+                <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
+                  <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'70%' }}>{name}</span>
+                  <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{read}/{owned} · {pct}%</span>
+                </div>
+                <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
+                  <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#a78bfa',borderRadius:'9999px',transition:'width 0.5s' }}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Author Collection Completeness */}
+      {authorOwned.length > 0 && (
+        <div style={{ ...card, marginBottom:'0.75rem' }}>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>✍️ Author Collections</div>
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem' }}>
+            {authorOwned.map(({author,owned,read,pct})=>(
+              <div key={author} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize:'0.7rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'0.2rem' }}>{author}</div>
+                <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.35)',marginBottom:'0.3rem' }}>{read} of {owned} read</div>
+                <div style={{ height:'4px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
+                  <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#fb7185',borderRadius:'9999px',transition:'width 0.5s' }}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top Authors */}
       {authorData.length>0&&(
         <div style={card}>
           <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Authors</div>
@@ -1088,6 +1214,86 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
   );
 }
 
+// ── SharePage ─────────────────────────────────────────────────────────────────
+function SharePage({ uid }: { uid: string }) {
+  const [books, setBooks] = useState<any[]|null>(null);
+  const [err, setErr] = useState('');
+
+  useEffect(()=>{
+    (async()=>{
+      try {
+        await initFirebase();
+        const snap = await _getDoc(_doc(_db, 'public', uid));
+        if (snap.exists()) setBooks(snap.data().books || []);
+        else setErr('This shelf is not public or does not exist.');
+      } catch { setErr('Could not load shelf.'); }
+    })();
+  },[uid]);
+
+  const readBooks = books?.filter(b=>b.read) ?? [];
+  const wishlist = books?.filter(b=>b.status==='wishlist') ?? [];
+
+  if (!books && !err) return (
+    <div style={{ background:'#06040f',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'0.75rem' }}>
+      <div style={{ fontSize:'2rem' }}>✦</div>
+      <p style={{ color:'#a78bfa' }}>Loading shelf…</p>
+    </div>
+  );
+
+  if (err) return (
+    <div style={{ background:'#06040f',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center' }}>
+      <p style={{ color:'rgba(255,255,255,0.4)' }}>{err}</p>
+    </div>
+  );
+
+  const card: React.CSSProperties = { background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' };
+
+  return (
+    <div style={{ background:'#06040f',minHeight:'100vh',color:'white',fontFamily:'Georgia,serif' }}>
+      <div style={{ background:'#0d0a1c',borderBottom:'1px solid rgba(255,255,255,0.07)',padding:'1rem',textAlign:'center' }}>
+        <div style={{ color:'#e8d9ff',fontWeight:'bold',fontSize:'1.1rem' }}>✦ My Shelf — Public View</div>
+        <div style={{ color:'rgba(255,255,255,0.3)',fontSize:'0.7rem',marginTop:'0.2rem' }}>{readBooks.length} books read · {wishlist.length} on wishlist</div>
+      </div>
+      <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
+        {readBooks.length > 0 && (
+          <div style={card}>
+            <div style={{ fontSize:'0.85rem',fontWeight:'700',color:'white',marginBottom:'0.75rem' }}>📖 Books Read</div>
+            <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'0.6rem' }}>
+              {readBooks.map((b:any)=>{ const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
+                <div key={b.id} style={{ background:cfg.dim+'55',borderRadius:'0.75rem',borderLeft:`3px solid ${cfg.accent}`,padding:'0.65rem 0.75rem' }}>
+                  <div style={{ fontSize:'0.8rem',fontWeight:'bold',color:'white',marginBottom:'0.1rem' }}>{b.title}</div>
+                  <div style={{ fontSize:'0.7rem',color:cfg.accent+'cc' }}>{b.author}</div>
+                  {b.series && <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',marginTop:'0.1rem' }}>{b.series}{b.sn!=null?` #${b.sn}`:''}</div>}
+                  <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'0.4rem' }}>
+                    {b.rating ? <StarRating rating={b.rating} size="sm"/> : <span/>}
+                    {b.readYear && <span style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.25)' }}>{b.readYear}</span>}
+                  </div>
+                  {b.note && <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.35)',marginTop:'0.3rem',fontStyle:'italic',borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:'0.3rem' }}>"{b.note}"</div>}
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+        {wishlist.length > 0 && (
+          <div style={card}>
+            <div style={{ fontSize:'0.85rem',fontWeight:'700',color:'white',marginBottom:'0.75rem' }}>✨ Wishlist</div>
+            <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'0.6rem' }}>
+              {wishlist.map((b:any)=>{ const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
+                <div key={b.id} style={{ background:'rgba(244,114,182,0.05)',borderRadius:'0.75rem',borderLeft:`3px solid #f472b6`,padding:'0.65rem 0.75rem' }}>
+                  <div style={{ fontSize:'0.8rem',fontWeight:'bold',color:'white',marginBottom:'0.1rem' }}>{b.title}</div>
+                  <div style={{ fontSize:'0.7rem',color:'#f472b6cc' }}>{b.author}</div>
+                  {b.series && <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',marginTop:'0.1rem' }}>{b.series}{b.sn!=null?` #${b.sn}`:''}</div>}
+                  <span style={{ fontSize:'0.6rem',color:cfg.accent,marginTop:'0.3rem',display:'block' }}>{b.genre}</span>
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── ModalForm ─────────────────────────────────────────────────────────────────
 function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks }: {
   book: any; onSave: (b: any) => void; onSaveMany: (bs: any[]) => void; onClose: () => void; tab: string; allSeries: string[]; allBooks: any[];
@@ -1096,8 +1302,8 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   const [shelfGenre, setShelfGenre] = useState('Romance');
   const [shelfStatus, setShelfStatus] = useState(tab==='home'?'shelf':tab);
   const [shelfRead, setShelfRead] = useState(false);
-  const blank = { title:'',author:'',category:'Fiction',genre:'Fantasy',subgenre:'Romantasy',series:'',sn:'',read:false,status:tab==='home'?'shelf':tab,readAt:null,readYear:null };
-  const [f, setF] = useState(book ? {...book,sn:book.sn??'',series:book.series??''} : blank);
+  const blank = { title:'',author:'',category:'Fiction',genre:'Fantasy',subgenre:'Romantasy',series:'',sn:'',read:false,status:tab==='home'?'shelf':tab,readAt:null,readYear:null,rating:null,note:'' };
+  const [f, setF] = useState(book ? {...book,sn:book.sn??'',series:book.series??'',rating:book.rating??null,note:book.note??''} : blank);
   const [identifying, setId] = useState(false);
   const [idMsg, setIdMsg] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -1110,7 +1316,6 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
 
   const set = (k: string, v: any) => setF((p: any) => ({...p,[k]:v}));
 
-  // ── FIXED: Google Books autocomplete with portal-style fixed positioning ──
   const updateDropdownPos = useCallback(() => {
     if (titleInputRef.current) {
       const r = titleInputRef.current.getBoundingClientRect();
@@ -1121,30 +1326,14 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   const searchGoogleBooks = async (query: string) => {
     if (query.length < 3) { setSuggestions([]); setShowSug(false); return; }
     try {
-      // Use intitle: to strongly bias toward title matches, fetch more and filter
-      const res = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=8&printType=books&orderBy=relevance`
-      );
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=8&printType=books&orderBy=relevance`);
       const data = await res.json();
       const items = (data.items || [])
-        .map((item: any) => {
-          const v = item.volumeInfo;
-          return {
-            title: v.title || '',
-            author: (v.authors || []).join(', '),
-            cover: v.imageLinks?.smallThumbnail || '',
-          };
-        })
-        .filter((b: any) => {
-          if (!b.title) return false;
-          // Only show results where the title actually starts with or contains the query
-          return b.title.toLowerCase().includes(query.toLowerCase());
-        })
+        .map((item: any) => { const v = item.volumeInfo; return { title: v.title||'', author: (v.authors||[]).join(', '), cover: v.imageLinks?.smallThumbnail||'' }; })
+        .filter((b: any) => b.title && b.title.toLowerCase().includes(query.toLowerCase()))
         .slice(0, 5);
-  
       setSuggestions(items);
-      if (items.length > 0) { updateDropdownPos(); setShowSug(true); }
-      else setShowSug(false);
+      if (items.length > 0) { updateDropdownPos(); setShowSug(true); } else setShowSug(false);
     } catch { setSuggestions([]); }
   };
 
@@ -1159,29 +1348,26 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
     setSuggestions([]); setShowSug(false);
   };
 
-  // Close dropdown on scroll/resize
   useEffect(() => {
     const hide = () => setShowSug(false);
     window.addEventListener('scroll', hide, true);
     window.addEventListener('resize', hide);
     return () => { window.removeEventListener('scroll', hide, true); window.removeEventListener('resize', hide); };
   }, []);
-  // Dismiss dropdown on outside click
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (titleInputRef.current && !titleInputRef.current.contains(e.target as Node)) {
-        setShowSug(false);
-      }
+      if (titleInputRef.current && !titleInputRef.current.contains(e.target as Node)) setShowSug(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
   const handleCoverPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setId(true); setIdMsg('Identifying…');
     try {
       const b64 = await fileToBase64(file);
-      // FIX: use Netlify proxy instead of direct Anthropic API
       const res = await fetch('/.netlify/functions/claude', { method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:200, messages:[{ role:'user', content:[
           { type:'image', source:{ type:'base64', media_type:file.type, data:b64 } },
@@ -1206,13 +1392,13 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
     onSave({ ...f, sn:f.sn!==''?Number(f.sn):null, series:f.series||null, id:f.id||uid(),
       readAt: f.read&&!f.readAt ? Date.now() : f.readAt,
       readYear: f.read ? (f.readYear||THIS_YEAR) : null,
+      rating: f.rating||null, note: f.note||'',
     });
   };
 
   const [bulkText,setBulkText] = useState('');
   const [bulkDone,setBulkDone] = useState(false);
 
-  // FIX: pipeM declared, byM regex fixed (no junk char)
   const bulkParsed = useMemo(()=>bulkText.split('\n').map(l=>l.trim()).filter(Boolean).map(line=>{
     const byM   = line.match(/^(.+?)\s+by\s+(.+)$/);
     const pipeM = line.match(/^(.+?)\s*\|\s*(.+)$/);
@@ -1225,7 +1411,7 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
 
   const submitBulk = () => {
     const valid=bulkParsed.filter(p=>p.title.trim()); if(!valid.length) return;
-    onSaveMany(valid.map(p=>({id:uid(),title:p.title.trim(),author:p.author.trim(),category:'Fiction',genre:shelfGenre,subgenre:SUBGENRES[shelfGenre]?.[0]||'',series:null,sn:null,read:shelfRead,readAt:shelfRead?Date.now():null,readYear:shelfRead?THIS_YEAR:null,status:shelfStatus})));
+    onSaveMany(valid.map(p=>({id:uid(),title:p.title.trim(),author:p.author.trim(),category:'Fiction',genre:shelfGenre,subgenre:SUBGENRES[shelfGenre]?.[0]||'',series:null,sn:null,read:shelfRead,readAt:shelfRead?Date.now():null,readYear:shelfRead?THIS_YEAR:null,status:shelfStatus,rating:null,note:''})));
     setBulkDone(true); setTimeout(onClose,1200);
   };
 
@@ -1247,7 +1433,6 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   const runScan = async () => {
     if(!shelfB64) return; setScanning(true); setScanErr(''); setScanned([]);
     try {
-      // FIX: use Netlify proxy
       const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:shelfMime,data:shelfB64}},
@@ -1270,7 +1455,7 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
 
   const submitScan=()=>{
     const chosen=scanned.filter(b=>b.selected&&b.title.trim()); if(!chosen.length) return;
-    onSaveMany(chosen.map(b=>({id:uid(),title:b.title.trim(),author:b.author.trim(),category:'Fiction',genre:shelfGenre,subgenre:SUBGENRES[shelfGenre]?.[0]||'',series:null,sn:null,read:shelfRead,readAt:shelfRead?Date.now():null,readYear:shelfRead?THIS_YEAR:null,status:shelfStatus})));
+    onSaveMany(chosen.map(b=>({id:uid(),title:b.title.trim(),author:b.author.trim(),category:'Fiction',genre:shelfGenre,subgenre:SUBGENRES[shelfGenre]?.[0]||'',series:null,sn:null,read:shelfRead,readAt:shelfRead?Date.now():null,readYear:shelfRead?THIS_YEAR:null,status:shelfStatus,rating:null,note:''})));
     setScanDone(true); setTimeout(onClose,1400);
   };
 
@@ -1286,7 +1471,10 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
         <div>
           <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Add to</label>
           <select value={shelfStatus} onChange={e=>setShelfStatus(e.target.value)} style={{...inp,background:'#1a1035'}}>
-            <option value="shelf">📚 Shelf</option><option value="tbr">🔖 TBR</option><option value="reading">📖 Reading</option>
+            <option value="shelf">📚 Shelf</option>
+            <option value="tbr">🔖 TBR</option>
+            <option value="reading">📖 Reading</option>
+            <option value="wishlist">✨ Wishlist</option>
           </select>
         </div>
       </div>
@@ -1301,21 +1489,8 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
 
   return (
     <>
-      {/* FIXED: Autocomplete dropdown rendered outside modal using fixed positioning */}
       {showSug && suggestions.length > 0 && dropdownPos && (
-        <div style={{
-          position:'fixed',
-          top: dropdownPos.top,
-          left: dropdownPos.left,
-          width: dropdownPos.width,
-          zIndex: 9999,
-          background:'#1a1035',
-          border:'1px solid rgba(255,255,255,0.12)',
-          borderRadius:'0.65rem',
-          maxHeight:'220px',
-          overflowY:'auto',
-          boxShadow:'0 8px 32px rgba(0,0,0,0.7)',
-        }}>
+        <div style={{ position:'fixed',top:dropdownPos.top,left:dropdownPos.left,width:dropdownPos.width,zIndex:9999,background:'#1a1035',border:'1px solid rgba(255,255,255,0.12)',borderRadius:'0.65rem',maxHeight:'220px',overflowY:'auto',boxShadow:'0 8px 32px rgba(0,0,0,0.7)' }}>
           {suggestions.map((sug,i)=>(
             <div key={i} onMouseDown={e=>{e.preventDefault();pickSuggestion(sug);}}
               style={{ display:'flex',alignItems:'center',gap:'0.6rem',padding:'0.5rem 0.75rem',cursor:'pointer',borderBottom:'1px solid rgba(255,255,255,0.06)' }}
@@ -1344,7 +1519,6 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
             </div>
           )}
 
-          {/* SINGLE */}
           {mode==='single'&&(
             <>
               {!book&&(
@@ -1357,18 +1531,11 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
                 </div>
               )}
 
-              {/* FIXED: Title input with fixed-position dropdown */}
               <div style={{ marginBottom:'0.65rem' }}>
                 <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Title</label>
-                <input
-                  ref={titleInputRef}
-                  value={f.title}
-                  onChange={e=>handleTitleChange(e.target.value)}
+                <input ref={titleInputRef} value={f.title} onChange={e=>handleTitleChange(e.target.value)}
                   onFocus={()=>{ if(suggestions.length>0){ updateDropdownPos(); setShowSug(true); } }}
-                  placeholder="Book title"
-                  style={inp}
-                  autoComplete="off"
-                />
+                  placeholder="Book title" style={inp} autoComplete="off"/>
                 {dupWarning&&<div style={{ fontSize:'0.7rem',color:'#f87171',marginTop:'0.2rem' }}>⚠ {dupWarning}</div>}
               </div>
 
@@ -1376,6 +1543,7 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
                 <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Author</label>
                 <input value={f.author} onChange={e=>set('author',e.target.value)} placeholder="Author name" style={inp}/>
               </div>
+
               <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem',marginBottom:'0.65rem' }}>
                 <div>
                   <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Genre</label>
@@ -1386,6 +1554,7 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
                   <select value={f.subgenre} onChange={e=>set('subgenre',e.target.value)} style={{...inp,background:'#1a1035'}}>{(SUBGENRES[f.genre]||[]).map((s:string)=><option key={s}>{s}</option>)}</select>
                 </div>
               </div>
+
               <div style={{ display:'grid',gridTemplateColumns:'2fr 1fr',gap:'0.5rem',marginBottom:'0.65rem' }}>
                 <div>
                   <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Series</label>
@@ -1397,16 +1566,18 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
                   <input type="number" value={f.sn} onChange={e=>set('sn',e.target.value)} min={0} step={0.5} style={inp}/>
                 </div>
               </div>
+
               <div style={{ marginBottom:'0.75rem' }}>
                 <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.35rem' }}>Add to</label>
-                <div style={{ display:'flex',gap:'0.4rem' }}>
+                <div style={{ display:'flex',gap:'0.4rem',flexWrap:'wrap' }}>
                   {Object.entries(TAB_CFG).filter(([k])=>k!=='home').map(([k,cfg])=>(
-                    <button key={k} onClick={()=>set('status',k)} style={{ flex:1,padding:'0.4rem 0.2rem',borderRadius:'0.6rem',border:`1px solid ${f.status===k?cfg.color:'rgba(255,255,255,0.1)'}`,background:f.status===k?cfg.color+'25':'transparent',color:f.status===k?cfg.color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.68rem',fontWeight:f.status===k?700:400 }}>
-                      {k==='shelf'?'📚 Shelf':k==='tbr'?'🔖 TBR':'📖 Reading'}
+                    <button key={k} onClick={()=>set('status',k)} style={{ flex:1,minWidth:'70px',padding:'0.4rem 0.2rem',borderRadius:'0.6rem',border:`1px solid ${f.status===k?cfg.color:'rgba(255,255,255,0.1)'}`,background:f.status===k?cfg.color+'25':'transparent',color:f.status===k?cfg.color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.62rem',fontWeight:f.status===k?700:400 }}>
+                      {k==='shelf'?'📚':k==='tbr'?'🔖':k==='reading'?'📖':'✨'} {k.charAt(0).toUpperCase()+k.slice(1)}
                     </button>
                   ))}
                 </div>
               </div>
+
               {f.status==='shelf'&&(
                 <label style={{ display:'flex',alignItems:'center',gap:'0.5rem',cursor:'pointer',marginBottom:'0.65rem' }}>
                   <input type="checkbox" checked={f.read||false} onChange={e=>set('read',e.target.checked)} style={{ accentColor:'#7c3aed' }}/>
@@ -1414,12 +1585,28 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
                 </label>
               )}
               {f.read&&(
-                <div style={{ marginBottom:'1rem' }}>
+                <div style={{ marginBottom:'0.65rem' }}>
                   <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Year read</label>
                   <input type="number" value={f.readYear??''} onChange={e=>set('readYear',e.target.value?Number(e.target.value):null)} placeholder={String(THIS_YEAR)} style={inp}/>
                   <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.25)',marginTop:'0.2rem' }}>Change this for books read in previous years</div>
                 </div>
               )}
+
+              {/* Rating */}
+              <div style={{ marginBottom:'0.65rem' }}>
+                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.35rem' }}>Rating</label>
+                <div style={{ display:'flex',alignItems:'center',gap:'0.75rem' }}>
+                  <StarRating rating={f.rating} onChange={r=>set('rating',r)} size="md"/>
+                  {f.rating && <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)',cursor:'pointer' }} onClick={()=>set('rating',null)}>Clear</span>}
+                </div>
+              </div>
+
+              {/* Note */}
+              <div style={{ marginBottom:'1rem' }}>
+                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Note / Review <span style={{ color:'rgba(255,255,255,0.2)' }}>(optional)</span></label>
+                <textarea value={f.note||''} onChange={e=>set('note',e.target.value)} placeholder="A short thought about this book…" rows={2} style={{...inp,resize:'vertical',lineHeight:'1.5',fontSize:'0.8rem'}}/>
+              </div>
+
               <div style={{ display:'flex',gap:'0.75rem' }}>
                 <button onClick={submitSingle} style={{ flex:1,background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer' }}>{book?'Save':'Add'}</button>
                 <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Cancel</button>
@@ -1427,7 +1614,6 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
             </>
           )}
 
-          {/* BULK */}
           {mode==='bulk'&&(
             <>
               <div style={{ marginBottom:'0.6rem' }}>
@@ -1460,7 +1646,6 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
             </>
           )}
 
-          {/* PHOTO SCAN */}
           {mode==='photo'&&(
             <>
               <input ref={shelfInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleShelfFile}/>
@@ -1531,6 +1716,10 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
+  // Check for share page route
+  const shareMatch = window.location.pathname.match(/^\/share\/(.+)$/);
+  if (shareMatch) return <SharePage uid={shareMatch[1]}/>;
+
   const [books,       setBooks]       = useState<any[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [tab,         setTab]         = useState('home');
@@ -1543,12 +1732,15 @@ export default function App() {
   const [fSub,        setFSub]        = useState('All');
   const [fRead,       setFRead]       = useState('All');
   const [fSeries,     setFSeries]     = useState('All');
+  const [sortBy,      setSortBy]      = useState<'title'|'author'|'dateAdded'|'series'>('title');
   const [showFilters, setShowFilters] = useState(false);
   const [modal,       setModal]       = useState<string|null>(null);
   const [delId,       setDelId]       = useState<any>(null);
   const [editBook,    setEditBook]    = useState<any>(null);
   const [goalModal,   setGoalModal]   = useState(false);
   const [pendingRead, setPendingRead] = useState<{id:any;year:string}|null>(null);
+  const [randomPick,  setRandomPick]  = useState<any>(null);
+  const [shareToast,  setShareToast]  = useState('');
 
   useEffect(()=>{
     (async()=>{
@@ -1562,14 +1754,14 @@ export default function App() {
               const snap=await _getDoc(_doc(_db,'users',u.uid));
               if(snap.exists()){
                 const data=snap.data();
-                const cloudBooks=(data.books||[]).map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null}));
+                const cloudBooks=(data.books||[]).map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null,rating:b.rating??null,note:b.note??''}));
                 const ids=new Set(cloudBooks.map((b:any)=>b.id));
                 setBooks([...cloudBooks,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);
                 if(data.goals) setGoals(data.goals);
               } else {
                 let local=null;
                 try{const raw=localStorage.getItem(STORAGE_KEY);if(raw) local=JSON.parse(raw);}catch{}
-                const base=local?local.map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null})):ALL_BOOKS;
+                const base=local?local.map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null,rating:b.rating??null,note:b.note??''})):ALL_BOOKS;
                 const ids=new Set(base.map((b:any)=>b.id));
                 const merged=[...base,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))];
                 setBooks(merged);
@@ -1583,7 +1775,7 @@ export default function App() {
           } else {
             try{
               const raw=localStorage.getItem(STORAGE_KEY);
-              if(raw){const s=JSON.parse(raw).map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null}));const ids=new Set(s.map((b:any)=>b.id));setBooks([...s,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
+              if(raw){const s=JSON.parse(raw).map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null,rating:b.rating??null,note:b.note??''}));const ids=new Set(s.map((b:any)=>b.id));setBooks([...s,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
               else setBooks(ALL_BOOKS);
             }catch{setBooks(ALL_BOOKS);}
             try{const g=localStorage.getItem(GOALS_KEY);if(g) setGoals(JSON.parse(g));}catch{}
@@ -1596,7 +1788,7 @@ export default function App() {
           const keys=[STORAGE_KEY,'myshelf-v5','myshelf-v4','myshelf-v3','myshelf-v2','myshelf-v1'];
           let stored=null;
           for(const k of keys){try{const raw=localStorage.getItem(k);if(raw){stored=JSON.parse(raw);break;}}catch{}}
-          if(stored){const migrated=stored.map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null}));const ids=new Set(migrated.map((b:any)=>b.id));setBooks([...migrated,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
+          if(stored){const migrated=stored.map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null,rating:b.rating??null,note:b.note??''}));const ids=new Set(migrated.map((b:any)=>b.id));setBooks([...migrated,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
           else setBooks(ALL_BOOKS);
           try{const g=localStorage.getItem(GOALS_KEY);if(g) setGoals(JSON.parse(g));}catch{}
         }catch{setBooks(ALL_BOOKS);}
@@ -1638,21 +1830,55 @@ export default function App() {
 
   const filtered=useMemo(()=>{
     const q=search.toLowerCase();
-    return tabBooks.filter((b:any)=>{
+    const base = tabBooks.filter((b:any)=>{
       if(q&&!b.title.toLowerCase().includes(q)&&!b.author.toLowerCase().includes(q)&&!(b.series||'').toLowerCase().includes(q)) return false;
       if(fGenre!=='All'&&b.genre!==fGenre) return false;
       if(fSub!=='All'&&b.subgenre!==fSub) return false;
       if(tab==='shelf'&&fRead!=='All'&&(fRead==='Read')!==b.read) return false;
       if(fSeries!=='All'&&b.series!==fSeries) return false;
       return true;
-    }).sort((a:any,b:any)=>a.title.localeCompare(b.title));
-  },[tabBooks,search,fGenre,fSub,fRead,fSeries,tab]);
+    });
+    return [...base].sort((a:any,b:any)=>{
+      if(sortBy==='author') return a.author.localeCompare(b.author);
+      if(sortBy==='dateAdded') return (b.readAt||b.id||0)-(a.readAt||a.id||0);
+      if(sortBy==='series') {
+        const sa=a.series||''; const sb=b.series||'';
+        if(sa!==sb) return sa.localeCompare(sb);
+        return (a.sn||999)-(b.sn||999);
+      }
+      return a.title.localeCompare(b.title);
+    });
+  },[tabBooks,search,fGenre,fSub,fRead,fSeries,tab,sortBy]);
 
-  const counts=useMemo(()=>({ shelf:books.length, tbr:books.filter((b:any)=>b.status==='tbr').length, reading:books.filter((b:any)=>b.status==='reading').length, read:books.filter((b:any)=>b.read).length }),[books]);
+  const counts=useMemo(()=>({
+    shelf:books.length,
+    tbr:books.filter((b:any)=>b.status==='tbr').length,
+    reading:books.filter((b:any)=>b.status==='reading').length,
+    read:books.filter((b:any)=>b.read).length,
+    wishlist:books.filter((b:any)=>b.status==='wishlist').length,
+  }),[books]);
+
   const hasFilter=fGenre!=='All'||fSub!=='All'||fRead!=='All'||fSeries!=='All';
   const clearFilters=()=>{setFGenre('All');setFSub('All');setFRead('All');setFSeries('All');};
-  const tabColor=TAB_CFG[tab].color;
-  const switchTab=(t:string)=>{setTab(t);clearFilters();setSearch('');};
+  const tabColor=TAB_CFG[tab]?.color||'#a78bfa';
+  const switchTab=(t:string)=>{setTab(t);clearFilters();setSearch('');setSortBy('title');};
+
+  // Random TBR picker
+  const pickRandom = () => {
+    const tbrBooks = books.filter(b=>b.status==='tbr');
+    if (!tbrBooks.length) return;
+    setRandomPick(tbrBooks[Math.floor(Math.random()*tbrBooks.length)]);
+  };
+
+  // Share link
+  const copyShareLink = () => {
+    if (!user) return;
+    const url = `${window.location.origin}/share/${user.uid}`;
+    navigator.clipboard.writeText(url).then(()=>{
+      setShareToast('Link copied!');
+      setTimeout(()=>setShareToast(''),2500);
+    });
+  };
 
   if(!authReady||loading) return (
     <div style={{ background:'#06040f',minHeight:'100vh',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'0.75rem' }}>
@@ -1684,6 +1910,13 @@ export default function App() {
   return (
     <div style={{ background:'#06040f',minHeight:'100vh',width:'100vw',maxWidth:'100vw',color:'white',fontFamily:'Georgia,serif',overflowX:'hidden' }}>
 
+      {/* Share toast */}
+      {shareToast && (
+        <div style={{ position:'fixed',bottom:'1.5rem',left:'50%',transform:'translateX(-50%)',background:'#059669',color:'white',padding:'0.5rem 1.25rem',borderRadius:'9999px',fontSize:'0.8rem',fontWeight:600,zIndex:100,boxShadow:'0 4px 20px rgba(0,0,0,0.4)' }}>
+          🔗 {shareToast}
+        </div>
+      )}
+
       {/* STICKY HEADER */}
       <div style={{ background:'#0d0a1c',borderBottom:'1px solid rgba(255,255,255,0.07)',position:'sticky',top:0,zIndex:40,width:'100%' }}>
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'0.6rem 1rem 0' }}>
@@ -1693,31 +1926,47 @@ export default function App() {
                 ✦ My Shelf
                 {syncing&&<span style={{ marginLeft:'0.5rem',fontSize:'0.6rem',color:'#a78bfa',opacity:0.7 }}>syncing…</span>}
               </div>
-              <div style={{ color:'rgba(255,255,255,0.3)',fontSize:'0.65rem' }}>{counts.shelf} books · {counts.read} read · {counts.tbr} TBR · {counts.reading} reading</div>
+              <div style={{ color:'rgba(255,255,255,0.3)',fontSize:'0.65rem' }}>{counts.shelf} books · {counts.read} read · {counts.tbr} TBR · {counts.reading} reading · {counts.wishlist} wishlist</div>
             </div>
-            <div style={{ display:'flex',alignItems:'center',gap:'0.5rem' }}>
+            <div style={{ display:'flex',alignItems:'center',gap:'0.4rem' }}>
+              {user && (
+                <button onClick={copyShareLink} title="Copy shareable link" style={{ background:'rgba(244,114,182,0.15)',color:'#f472b6',border:'1px solid rgba(244,114,182,0.3)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>🔗 Share</button>
+              )}
+              <button onClick={()=>exportCSV(books)} title="Export as CSV" style={{ background:'rgba(96,165,250,0.1)',color:'#60a5fa',border:'1px solid rgba(96,165,250,0.2)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>📤 CSV</button>
               <button onClick={()=>setModal('add')} style={{ background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.45rem 0.9rem',fontWeight:'600',cursor:'pointer',fontSize:'0.82rem' }}>+ Add</button>
               {user&&<img src={user.photoURL} alt="avatar" title={`Signed in as ${user.displayName}\nClick to sign out`} onClick={handleSignOut} style={{ width:'30px',height:'30px',borderRadius:'50%',cursor:'pointer',border:'2px solid rgba(167,139,250,0.4)' }}/>}
             </div>
           </div>
 
+          {/* Tabs */}
           <div style={{ display:'flex',gap:'0.3rem',marginBottom:'0.4rem' }}>
             {Object.entries(TAB_CFG).map(([k,cfg])=>(
-              <button key={k} onClick={()=>switchTab(k)} style={{ flex:1,padding:'0.4rem 0.1rem',borderRadius:'0.65rem',border:`1px solid ${tab===k?cfg.color:'rgba(255,255,255,0.08)'}`,background:tab===k?cfg.color+'22':'transparent',color:tab===k?cfg.color:'rgba(255,255,255,0.35)',cursor:'pointer',fontSize:'0.65rem',fontWeight:tab===k?700:400 }}>
+              <button key={k} onClick={()=>switchTab(k)} style={{ flex:1,padding:'0.4rem 0.1rem',borderRadius:'0.65rem',border:`1px solid ${tab===k?cfg.color:'rgba(255,255,255,0.08)'}`,background:tab===k?cfg.color+'22':'transparent',color:tab===k?cfg.color:'rgba(255,255,255,0.35)',cursor:'pointer',fontSize:'0.6rem',fontWeight:tab===k?700:400 }}>
                 {cfg.label}
-                {k!=='home'&&<span style={{ opacity:0.6,fontSize:'0.58rem',display:'block' }}>({k==='shelf'?counts.shelf:k==='tbr'?counts.tbr:counts.reading})</span>}
+                {k!=='home'&&<span style={{ opacity:0.6,fontSize:'0.55rem',display:'block' }}>({k==='shelf'?counts.shelf:k==='tbr'?counts.tbr:k==='reading'?counts.reading:counts.wishlist})</span>}
               </button>
             ))}
           </div>
 
           {tab!=='home'&&(
             <>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  Search title, author, series…" style={{ width:'100%',background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.65rem',padding:'0.45rem 0.85rem',color:'white',fontSize:'0.82rem',boxSizing:'border-box',marginBottom:'0.3rem' }}/>
+              <div style={{ display:'flex',gap:'0.4rem',marginBottom:'0.3rem' }}>
+                <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  Search title, author, series…" style={{ flex:1,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.65rem',padding:'0.45rem 0.85rem',color:'white',fontSize:'0.82rem',boxSizing:'border-box' }}/>
+                <select value={sortBy} onChange={e=>setSortBy(e.target.value as any)} style={{ background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.65rem',padding:'0.45rem 0.5rem',color:'rgba(255,255,255,0.6)',fontSize:'0.72rem',cursor:'pointer' }}>
+                  <option value="title">A–Z Title</option>
+                  <option value="author">Author</option>
+                  <option value="series">Series</option>
+                  <option value="dateAdded">Date Added</option>
+                </select>
+              </div>
               <div style={{ display:'flex',alignItems:'center',gap:'0.5rem',paddingBottom:'0.45rem' }}>
                 <button onClick={()=>setShowFilters(p=>!p)} style={{ fontSize:'0.68rem',padding:'0.25rem 0.65rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.12)',background:'transparent',color:'rgba(255,255,255,0.4)',cursor:'pointer' }}>
                   {showFilters?'▲ Hide':'▼ Filters'}{hasFilter?' ●':''}
                 </button>
                 {hasFilter&&<button onClick={clearFilters} style={{ fontSize:'0.68rem',color:tabColor,background:'none',border:'none',cursor:'pointer' }}>Clear</button>}
+                {tab==='tbr'&&(
+                  <button onClick={pickRandom} style={{ fontSize:'0.68rem',padding:'0.25rem 0.65rem',borderRadius:'9999px',border:'1px solid rgba(251,146,60,0.4)',background:'rgba(251,146,60,0.1)',color:'#fb923c',cursor:'pointer' }}>🎲 Surprise me</button>
+                )}
                 <span style={{ marginLeft:'auto',fontSize:'0.68rem',color:'rgba(255,255,255,0.25)' }}>{filtered.length} shown</span>
               </div>
               {showFilters&&(
@@ -1754,59 +2003,50 @@ export default function App() {
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
           {filtered.length===0?(
             <div style={{ textAlign:'center',padding:'5rem 0',color:'rgba(255,255,255,0.2)' }}>
-              <div style={{ fontSize:'3rem',marginBottom:'0.75rem' }}>{tab==='tbr'?'🔖':tab==='reading'?'📖':'📭'}</div>
-              <p>{tab==='tbr'?'Your TBR pile is empty!':tab==='reading'?'Nothing currently reading.':'No books match your filters.'}</p>
-              {(tab==='tbr'||tab==='reading')&&<p style={{ fontSize:'0.8rem',marginTop:'0.5rem',opacity:0.6 }}>Use the arrow buttons on any card to move books here.</p>}
+              <div style={{ fontSize:'3rem',marginBottom:'0.75rem' }}>{tab==='tbr'?'🔖':tab==='reading'?'📖':tab==='wishlist'?'✨':'📭'}</div>
+              <p>{tab==='tbr'?'Your TBR pile is empty!':tab==='reading'?'Nothing currently reading.':tab==='wishlist'?'Your wishlist is empty!':'No books match your filters.'}</p>
+              {(tab==='tbr'||tab==='reading'||tab==='wishlist')&&<p style={{ fontSize:'0.8rem',marginTop:'0.5rem',opacity:0.6 }}>Use the arrow buttons on any card to move books here.</p>}
             </div>
           ):(
             <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'0.75rem' }}>
               {filtered.map((b:any)=>{
                 const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy'];
                 const bst=b.status||'shelf';
+                const isWishlist = bst==='wishlist';
                 const moves=Object.entries(TAB_CFG).filter(([k])=>k!=='home'&&k!==bst);
                 return(
-                  <div key={b.id} style={{ background:cfg.dim+'66',borderRadius:'1rem',border:`1px solid ${cfg.accent}30`,borderLeft:`3px solid ${cfg.accent}`,padding:'0.875rem',paddingTop:'2.1rem',position:'relative',transition:'transform 0.15s' }}
+                  <div key={b.id} style={{ background:isWishlist?'rgba(244,114,182,0.07)':cfg.dim+'66',borderRadius:'1rem',border:`1px solid ${isWishlist?'rgba(244,114,182,0.25)':cfg.accent+'30'}`,borderLeft:`3px solid ${isWishlist?'#f472b6':cfg.accent}`,padding:'0.875rem',paddingTop:'2.1rem',position:'relative',transition:'transform 0.15s' }}
                     onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.01)')} onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}>
+
+                    {/* Status badge on shelf tab */}
                     {tab==='shelf'&&bst!=='shelf'&&(
                       <div style={{ position:'absolute',top:'0.45rem',left:'0.5rem',fontSize:'0.58rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:(STATUS_COLORS as any)[bst]+'22',border:`1px solid ${(STATUS_COLORS as any)[bst]}`,color:(STATUS_COLORS as any)[bst],fontWeight:600 }}>
-                        {bst==='tbr'?'🔖 TBR':'📖 Reading'}
+                        {bst==='tbr'?'🔖 TBR':bst==='reading'?'📖 Reading':'✨ Wishlist'}
                       </div>
                     )}
+
+                    {/* Move buttons */}
                     {tab!=='shelf'&&(
-                      <div style={{ position:'absolute',top:'0.45rem',left:'0.5rem',display:'flex',gap:'0.25rem' }}>
-                        {moves.map(([k,c2])=>(
-                          <button key={k} onClick={()=>update(b.id,{status:k})} style={{ fontSize:'0.58rem',padding:'0.15rem 0.4rem',borderRadius:'9999px',border:`1px solid ${c2.color}`,background:c2.color+'18',color:c2.color,cursor:'pointer',whiteSpace:'nowrap' }}>
-                            {k==='shelf'?'→ Shelf':k==='tbr'?'→ TBR':'→ Reading'}
+                      <div style={{ position:'absolute',top:'0.45rem',left:'0.5rem',display:'flex',gap:'0.25rem',flexWrap:'wrap' }}>
+                        {moves.slice(0,3).map(([k,c2])=>(
+                          <button key={k} onClick={()=>update(b.id,{status:k})} style={{ fontSize:'0.55rem',padding:'0.15rem 0.35rem',borderRadius:'9999px',border:`1px solid ${c2.color}`,background:c2.color+'18',color:c2.color,cursor:'pointer',whiteSpace:'nowrap' }}>
+                            →{k==='shelf'?'Shelf':k==='tbr'?'TBR':k==='reading'?'Reading':'Wishlist'}
                           </button>
                         ))}
                       </div>
                     )}
                     {tab==='shelf'&&bst==='shelf'&&(
                       <div style={{ position:'absolute',top:'0.45rem',left:'0.5rem',display:'flex',gap:'0.25rem' }}>
-                        {moves.map(([k,c2])=>(
-                          <button key={k} onClick={()=>update(b.id,{status:k})} style={{ fontSize:'0.58rem',padding:'0.15rem 0.4rem',borderRadius:'9999px',border:`1px solid ${c2.color}`,background:c2.color+'18',color:c2.color,cursor:'pointer',whiteSpace:'nowrap' }}>
-                            {k==='tbr'?'→ TBR':'→ Reading'}
+                        {moves.filter(([k])=>k!=='wishlist').map(([k,c2])=>(
+                          <button key={k} onClick={()=>update(b.id,{status:k})} style={{ fontSize:'0.55rem',padding:'0.15rem 0.35rem',borderRadius:'9999px',border:`1px solid ${c2.color}`,background:c2.color+'18',color:c2.color,cursor:'pointer',whiteSpace:'nowrap' }}>
+                            →{k==='tbr'?'TBR':'Reading'}
                           </button>
                         ))}
                       </div>
                     )}
-                    {bst==='shelf'&&(
-                      <>
-                        {pendingRead?.id===b.id?(
-                          <div style={{ position:'absolute',top:'0.4rem',right:'0.5rem',display:'flex',alignItems:'center',gap:'0.3rem' }}>
-                            <input type="number" value={pendingRead.year} onChange={e=>setPendingRead({...pendingRead,year:e.target.value})} placeholder={String(THIS_YEAR)}
-                              style={{ width:'62px',background:'rgba(255,255,255,0.08)',border:'1px solid #34d399',borderRadius:'0.4rem',padding:'0.15rem 0.35rem',color:'white',fontSize:'0.65rem',textAlign:'center' }} autoFocus/>
-                            <button onClick={()=>{ const yr=Number(pendingRead.year)||THIS_YEAR; update(b.id,{read:true,readAt:Date.now(),readYear:yr}); setPendingRead(null); }} style={{ fontSize:'0.62rem',padding:'0.2rem 0.4rem',borderRadius:'9999px',border:'1px solid #34d399',background:'#05653044',color:'#34d399',cursor:'pointer',fontWeight:700 }}>✓</button>
-                            <button onClick={()=>setPendingRead(null)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.35rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.15)',background:'transparent',color:'rgba(255,255,255,0.35)',cursor:'pointer' }}>✕</button>
-                          </div>
-                        ):(
-                          <button onClick={()=>{ if(b.read){update(b.id,{read:false});}else{setPendingRead({id:b.id,year:String(THIS_YEAR)});} }} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.3)'}) }}>
-                            {b.read?`✓ Read ${b.readYear&&b.readYear!==THIS_YEAR?b.readYear:''}`.trim():'Unread'}
-                          </button>
-                        )}
-                      </>
-                    )}
-                    {bst==='reading'&&(
+
+                    {/* Read toggle for shelf + reading */}
+                    {(bst==='shelf'||bst==='reading')&&(
                       <>
                         {pendingRead?.id===b.id?(
                           <div style={{ position:'absolute',top:'0.4rem',right:'0.5rem',display:'flex',alignItems:'center',gap:'0.3rem' }}>
@@ -1816,16 +2056,27 @@ export default function App() {
                             <button onClick={()=>setPendingRead(null)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.35rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.15)',background:'transparent',color:'rgba(255,255,255,0.35)',cursor:'pointer' }}>✕</button>
                           </div>
                         ):(
-                          <button onClick={()=>setPendingRead({id:b.id,year:String(THIS_YEAR)})} style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',background:'#05653044',borderColor:'#34d399',color:'#34d399' }}>✓ Finished</button>
+                          <button onClick={()=>{ if(bst==='shelf'&&b.read){update(b.id,{read:false});}else{setPendingRead({id:b.id,year:String(THIS_YEAR)});} }}
+                            style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.3)'}) }}>
+                            {b.read?`✓ Read ${b.readYear&&b.readYear!==THIS_YEAR?b.readYear:''}`.trim():bst==='reading'?'✓ Finished':'Unread'}
+                          </button>
                         )}
                       </>
                     )}
+
                     <div style={{ fontWeight:'bold',color:'white',fontSize:'0.875rem',lineHeight:'1.3',paddingRight:'3.5rem',marginBottom:'0.2rem' }}>{b.title}</div>
-                    <div style={{ fontSize:'0.75rem',color:cfg.accent+'bb',marginBottom:'0.2rem' }}>{b.author}</div>
+                    <div style={{ fontSize:'0.75rem',color:isWishlist?'#f472b6bb':cfg.accent+'bb',marginBottom:'0.2rem' }}>{b.author}</div>
                     {b.series&&<div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.28)' }}>{b.series}{b.sn!=null?` #${b.sn}`:''}</div>}
+
+                    {/* Rating display */}
+                    {b.rating && <div style={{ marginTop:'0.3rem' }}><StarRating rating={b.rating} size="sm"/></div>}
+
+                    {/* Note snippet */}
+                    {b.note && <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',marginTop:'0.3rem',fontStyle:'italic',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>"{b.note}"</div>}
+
                     <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'0.5rem' }}>
                       <div style={{ display:'flex',gap:'0.35rem',flexWrap:'wrap',alignItems:'center' }}>
-                        <span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:cfg.dim,color:cfg.accent }}>{b.genre}</span>
+                        <span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:isWishlist?'rgba(244,114,182,0.15)':cfg.dim,color:isWishlist?'#f472b6':cfg.accent }}>{b.genre}</span>
                         {b.subgenre&&<span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.22)' }}>{b.subgenre}</span>}
                       </div>
                       <div style={{ display:'flex',gap:'0.4rem' }}>
@@ -1844,6 +2095,24 @@ export default function App() {
       {modal==='add'&&<ModalForm book={null} tab={tab==='home'?'shelf':tab} allSeries={allSeries} allBooks={books} onSave={b=>{persist([...books,b]);setModal(null);}} onSaveMany={bs=>{persist([...books,...bs]);setModal(null);}} onClose={()=>setModal(null)}/>}
       {editBook&&<ModalForm book={editBook} tab={tab==='home'?'shelf':tab} allSeries={allSeries} allBooks={books} onSave={b=>{persist(books.map((x:any)=>x.id===b.id?b:x));setEditBook(null);}} onSaveMany={()=>{}} onClose={()=>setEditBook(null)}/>}
       {goalModal&&<GoalSetModal goals={goals} onSave={g=>{persistGoals(g);setGoalModal(false);}} onClose={()=>setGoalModal(false)}/>}
+
+      {/* Random pick modal */}
+      {randomPick&&(
+        <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.8)',padding:'1rem' }}>
+          <div style={{ background:'#0e0b1a',border:'1px solid rgba(251,146,60,0.3)',borderRadius:'1rem',padding:'1.75rem',width:'100%',maxWidth:'360px',textAlign:'center' }}>
+            <div style={{ fontSize:'2rem',marginBottom:'0.5rem' }}>🎲</div>
+            <div style={{ fontSize:'0.75rem',color:'rgba(255,255,255,0.4)',marginBottom:'0.75rem' }}>Your next read should be…</div>
+            <div style={{ fontSize:'1.1rem',fontWeight:'bold',color:'white',marginBottom:'0.3rem' }}>{randomPick.title}</div>
+            <div style={{ fontSize:'0.85rem',color:GENRE_CFG[randomPick.genre]?.accent||'#a78bfa',marginBottom:'0.25rem' }}>{randomPick.author}</div>
+            {randomPick.series&&<div style={{ fontSize:'0.75rem',color:'rgba(255,255,255,0.3)',marginBottom:'1rem' }}>{randomPick.series}{randomPick.sn!=null?` #${randomPick.sn}`:''}</div>}
+            <div style={{ display:'flex',gap:'0.75rem',marginTop:'1rem' }}>
+              <button onClick={pickRandom} style={{ flex:1,background:'rgba(251,146,60,0.15)',color:'#fb923c',border:'1px solid rgba(251,146,60,0.3)',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer',fontWeight:600 }}>Try again 🎲</button>
+              <button onClick={()=>setRandomPick(null)} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {delId&&(
         <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.75)',padding:'1rem' }}>
           <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'320px' }}>
