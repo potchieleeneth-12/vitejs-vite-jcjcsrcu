@@ -124,8 +124,8 @@ const SEED = [
   m(21,'The Naturals','Jennifer Lynn Barnes','YA Mystery','The Naturals',1),
   m(22,'Stalking Jack the Ripper','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',1),
   m(23,'Escaping from Houdini','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',2),
-  m(24,'Capturing the Devil','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',3),
-  m(25,'Becoming the Devil','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',4),
+  m(24,'Hunting Prince Dracula','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',3),
+  m(25,'Capturing the Devil','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',4),
   fa(26,'Kingdom of the Wicked','Kerri Maniscalco','Dark Fantasy','Kingdom of the Wicked',1),
   fa(27,'Kingdom of the Cursed','Kerri Maniscalco','Dark Fantasy','Kingdom of the Wicked',2),
   fa(28,'Kingdom of the Feared','Kerri Maniscalco','Dark Fantasy','Kingdom of the Wicked',3),
@@ -185,7 +185,7 @@ const SEED = [
   fa(67,'I Will Not Let Them Take Me','Unknown','Dark Fantasy',null,null),
   fa(68,'The Wrath of the Fallen','Amber V. Nicole','Dark Fantasy','Gods & Monsters',4),
   rt(69,'Behooved','M. Stevenson',null,null),
-  fa(70,'Heat of the Everiane','Penn Cole','Dark Fantasy',null,null),
+  fa(70,'Heat of Everflame','Penn Cole','High Fantasy','Forging of Light',3),
   rt(71,'When the Moon Hatched','Sarah A. Parker','The Moonfall Series',1),
   fa(102,'Chaos & Flame','Tessa Gratton & Justina Ireland','YA Fantasy','Chaos & Flame',1),
   fa(103,'Blood & Fury','Tessa Gratton & Justina Ireland','YA Fantasy','Chaos & Flame',2),
@@ -195,7 +195,7 @@ const SEED = [
   fa(107,'A Forgery of Fate','Elizabeth Lim','Historical Fantasy',null,null),
   fa(109,'A Forbidden Alchemy','Stacey McEwan','Dark Fantasy',null,null),
   fa(111,'Hush, Hush','Becca Fitzpatrick','Paranormal Romance','Hush Hush',1),
-  fa(160,'A Theory of Dreaming','K. Ancrum','YA Fantasy',null,null),
+  fa(160,'A Theory of Dreaming','Ava Reid','YA Fantasy','A Study in Drowning',2),
   fa(161,'Dawn of the Firebird','Sarah Mughal Rana','YA Fantasy',null,null),
   fa(162,'Coldwire','Chloe Gong','YA Fantasy',null,null),
   rt(163,'Thorn Season','Kiera Azar',null,null),
@@ -357,15 +357,12 @@ const SEED = [
   cl(210,'The Picture of Dorian Gray','Oscar Wilde','British Lit'),
   cl(211,'The Jungle Book','Rudyard Kipling','British Lit'),
   cl(212,"Grimm's Fairy Tales",'J.L.C. & W.C. Grimm','Fairy Tales'),
-  cl(213,'Madame Bovary','Gustave Flaubert','French Lit'),
   cl(214,'A Christmas Carol','Charles Dickens','British Lit'),
   cl(215,'Crime and Punishment','Fyodor Dostoevsky','Russian Lit'),
   cl(216,'Great Expectations','Charles Dickens','British Lit'),
   cl(217,'Frankenstein','Mary Shelley','Gothic Classic'),
   cl(218,'For Whom the Bell Tolls','Ernest Hemingway','American Lit'),
-  cl(219,'Of Mice and Men','John Steinbeck','American Lit'),
-  cl(220,'The Sorrows of Young Werther','Goethe','British Lit'),
-  cl(221,'The Importance of Being Earnest','Oscar Wilde','British Lit'),
+  
   co(112,'Legends & Lattes','Travis Baldree','Cozy Fiction',null,null),
   co(329,'Bookshops & Bonedust','Travis Baldree','Cozy Fiction',null,null),
   co(173,'The Wedding Witch','Erin Sterling','Cozy Fiction','Graves Glen',null),
@@ -416,7 +413,7 @@ const SEED = [
   r(149,'The Initiation','Nikki Sloane','Dark Romance',null,null),
   r(150,'Insatiable','Leigh Rivers','Dark Romance','Edge of Darkness',1),
   r(151,'Priest','Sierra Simone','Dark Romance','New Camelot',1),
-  r(152,'That Girl Luv','Jescie Hall','Dark Romance',null,null),
+  r(152,'That Sik Luv','Jescie Hall','Dark Romance',null,null),
   r(185,'Promises & Pomegranates','Sav R. Miller','Dark Romance','Monsters & Muses',1),
   r(189,'Beautiful Villain','Rebecca Kenney','Dark Romance',null,null),
   r(305,'American Queen','Sierra Simone','Dark Romance','New Camelot',1),
@@ -598,7 +595,7 @@ const SEED = [
   r(494,'Say You Swear','Meagan Brandy','Contemporary Romance',null,null),
   fa(495,'The Book of Azrael','Amber V. Nicole','Dark Fantasy','Gods & Monsters',1),
   fa(496,'Bury Our Bones in the Midnight Soil','V.E. Schwab','Dark Fantasy',null,null),
-  fa(497,'For This Wrath','Emsey Varga','Dark Fantasy',null,null),
+  fa(497,'For She is Wrath','Emily Varga','Dark Fantasy',null,null),
   fa(498,'The Gods Below','Andrea Stewart','High Fantasy','The Hollow Covenant',1),
   co(499,'The Seven Husbands of Evelyn Hugo','Taylor Jenkins Reid','Literary Fiction',null,null),
   fa(500,'Immortal','Sue Lynn Tan','High Fantasy',null,null),
@@ -613,7 +610,7 @@ const SEED = [
   m(509,'The Last One','Rachel Howzell Hall','Thriller',null,null),
   fa(510,'Hollow','C. Peckham & S. Valenti','Paranormal Romance','Crown of Hearts & Chaos',1),
   fa(511,'Never Keep','C. Peckham & S. Valenti','Paranormal Romance','Sins of the Zodiac',1),
-  fa(512,'Filthy Rich Fae','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',null),
+  fa(512,'Filthy Rich Fae','Geneva Lee','Dark Romantasy','Filthy Rich Fae',null),
   fa(513,'Filthy Rich Vampire','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',1),
   fa(514,'Godkiller','Hannah Kaner','High Fantasy','Fallen Gods',1),
   fa(515,'The Gilded Crown','Marianne Gordon','High Fantasy',null,null),
@@ -684,7 +681,7 @@ const SEED = [
   r(581,"Life's Too Short",'K. Bromberg','Contemporary Romance',null,null),
   r(582,'The Dead Romantics','Ashley Poston','Contemporary Romance',null,null),
   r(583,'Grey','E.L. James','Contemporary Romance','Fifty Shades',null),
-  r(584,'Cross My Heart','Roxy Stone','Contemporary Romance',null,null),
+  r(584,'Cross My Heart','Roxy Sloane','Contemporary Romance',null,null),
   r(585,'That Prince is Mine','Jacy Lee','Contemporary Romance',null,null),
   r(586,'The Long Game','Elena Armas','Contemporary Romance',null,null),
   r(587,'The Spanish Love Deception','Elena Armas','Contemporary Romance',null,null),
@@ -717,7 +714,7 @@ const SEED = [
   fa(614,'Never Ever After','Sue Lynn Tan','High Fantasy',null,null),
   fa(615,'The Rose Bargain','Sasha Peyton Smith','YA Fantasy',null,null),
   fa(616,'The Floating World','Axie Oh','YA Fantasy',null,null),
-  fa(617,'Babel','R.F. Kuang','Historical Fantasy',null,null),
+  fa(617,'Katabasis','R.F. Kuang','Historical Fantasy',null,null),
   fa(618,'A Language of Dragons','S.F. Williamson','YA Fantasy',null,null),
   fa(619,'Sleep Like Death','Kalynn Bayron','YA Fantasy',null,null),
   r(620,'Nocticadia','Keri Lake','Dark Romance',null,null),
@@ -730,6 +727,78 @@ const SEED = [
   fa(627,'The Darkness Within Us','Tricia Levenseller','YA Fantasy',null,null),
   r(628,'Rose in Chains','Julie Soto','Contemporary Romance',null,null),
   r(629,'Repeat After Me','Jessica Warman','Contemporary Romance',null,null),
+  // ── New Books (March 2026 — final additions) ──────────────────────────────────
+  fa(630,'One Dark Window','Rachel Gillig','Dark Fantasy','The Shepherd King',1),
+  fa(631,'Two Twisted Crowns','Rachel Gillig','Dark Fantasy','The Shepherd King',2),
+  nf(632,'On the Origins and History of Consciousness','Erich Neumann','Philosophy'),
+  rt(633,'Grim and Oro: Dueling Crowns Edition','Alex Aster','Lightlark',null),
+  fa(634,'Taken to the Fae','Jesse Elliott','Dark Fantasy',null,null),
+  rt(635,'The Wingless King','K.C. Wayssem',null,null),
+  fa(636,'The Ever King','LJ Andrews','Dark Fantasy','The Ever King',1),
+  fa(637,'The Ever Queen','LJ Andrews','Dark Fantasy','The Ever King',2),
+  fa(638,'Phantasma','Kaylie Smith','Dark Fantasy',null,null),
+  fa(639,'Enchantry','Kaylie Smith','Dark Fantasy',null,null),
+  fa(640,'Blacksilver','Callie Hart','Dark Fantasy',null,null),
+  fa(641,'Brimstone','Callie Hart','Dark Fantasy','Brimstone',null),
+  co(642,'The Spellshop','Sarah Henning','Cozy Fiction',null,null),
+  co(643,'The Enchanted Greenhouse','Unknown','Cozy Fiction',null,null),
+  fa(644,'A Study in Drowning','Ava Reid','YA Fantasy','A Study in Drowning',1),
+  rt(645,'A Court of Thorns and Roses','Sarah J. Maas','A Court of Thorns and Roses',1),
+  rt(646,'A Court of Mist and Fury','Sarah J. Maas','A Court of Thorns and Roses',2),
+  rt(647,'A Court of Wings and Ruin','Sarah J. Maas','A Court of Thorns and Roses',3),
+  rt(648,'A Court of Frost and Starlight','Sarah J. Maas','A Court of Thorns and Roses',3.5),
+  rt(649,'A Court of Silver Flames','Sarah J. Maas','A Court of Thorns and Roses',4),
+  rt(650,'House of Earth and Blood','Sarah J. Maas','Crescent City',1),
+  rt(651,'House of Sky and Breath','Sarah J. Maas','Crescent City',2),
+  rt(652,'House of Flame and Shadow','Sarah J. Maas','Crescent City',3),
+  fa(653,'Spark of the Everflame','Penn Cole','High Fantasy','Forging of Light',1),
+  fa(654,'Glow of Everflame','Penn Cole','High Fantasy','Forging of Light',2),
+  // ── Sabaa Tahir — An Ember in the Ashes ──────────────────────────────────────
+  fa(656,'An Ember in the Ashes','Sabaa Tahir','High Fantasy','An Ember in the Ashes',1),
+  fa(657,'A Torch Against the Night','Sabaa Tahir','High Fantasy','An Ember in the Ashes',2),
+  fa(658,'A Reaper at the Gates','Sabaa Tahir','High Fantasy','An Ember in the Ashes',3),
+  fa(659,'A Sky Beyond the Storm','Sabaa Tahir','High Fantasy','An Ember in the Ashes',4),
+
+  // ── Becca Fitzpatrick — Hush Hush (rest of series, book 1 already in seed) ───
+  fa(660,'Crescendo','Becca Fitzpatrick','Paranormal Romance','Hush Hush',2),
+  fa(661,'Silence','Becca Fitzpatrick','Paranormal Romance','Hush Hush',3),
+  fa(662,'Finale','Becca Fitzpatrick','Paranormal Romance','Hush Hush',4),
+
+  // ── Jay Kristoff — Empire of the Vampire ─────────────────────────────────────
+  fa(663,'Empire of the Vampire','Jay Kristoff','Dark Fantasy','Empire of the Vampire',1),
+  fa(664,'Empire of the Damned','Jay Kristoff','Dark Fantasy','Empire of the Vampire',2),
+
+  // ── Brigid Kemmerer ───────────────────────────────────────────────────────────
+  fa(665,'Forging Silver into Stars','Brigid Kemmerer','YA Fantasy','Forging Silver into Stars',1),
+  fa(666,'Carving Shadows into Gold','Brigid Kemmerer','YA Fantasy','Forging Silver into Stars',2),
+
+  // ── Melissa Blair — Halfling series ──────────────────────────────────────────
+  fa(667,'A Broken Blade','Melissa Blair','Dark Fantasy','The Halfling series',1),
+  fa(668,'A Vicious Game','Melissa Blair','Dark Fantasy','The Halfling series',3),
+  fa(669,'An Honored Vow','Melissa Blair','Dark Fantasy','The Halfling series',4),
+  
+  // ── Sophie Lark — Brutal Birthright ──────────────────────────────────────────
+  r(671,'Brutal Prince','Sophie Lark','Dark Romance','Brutal Birthright',1),
+  r(672,'Stolen Heir','Sophie Lark','Dark Romance','Brutal Birthright',2),
+  r(673,'Savage Lover','Sophie Lark','Dark Romance','Brutal Birthright',3),
+  r(674,'Bloody Heart','Sophie Lark','Dark Romance','Brutal Birthright',4),
+  r(675,'Broken Vow','Sophie Lark','Dark Romance','Brutal Birthright',5),
+  r(676,'Heavy Crown','Sophie Lark','Dark Romance','Brutal Birthright',6),
+
+  // ── Sophie Lark — Sinners Duet ────────────────────────────────────────────────
+  r(677,'There Are No Saints','Sophie Lark','Dark Romance','Sinners Duet',1),
+  r(678,'There Is No Devil','Sophie Lark','Dark Romance','Sinners Duet',2),
+  fa(679,'Sword Catcher','Cassandra Clare','High Fantasy','Sword Catcher',1),
+  fa(680,'What Lies Beyond the Veil','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',1),
+  fa(681,'What Hunts Inside the Shadows','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',2),
+  fa(682,'What Lurks Between the Fates','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',3),
+  fa(683,'What Sleeps Within the Cove','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',4),
+
+
+
+
+
+
 ];
 
 const seen = new Set<number>();
@@ -1036,14 +1105,30 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   const searchGoogleBooks = async (query: string) => {
     if (query.length < 3) { setSuggestions([]); setShowSug(false); return; }
     try {
-      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=6&printType=books`);
+      // Use intitle: to strongly bias toward title matches, fetch more and filter
+      const res = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=8&printType=books&orderBy=relevance`
+      );
       const data = await res.json();
-      const items = (data.items||[]).map((item: any) => {
-        const v = item.volumeInfo;
-        return { title:v.title||'', author:(v.authors||[]).join(', '), cover:v.imageLinks?.smallThumbnail||'' };
-      }).filter((b: any) => b.title);
+      const items = (data.items || [])
+        .map((item: any) => {
+          const v = item.volumeInfo;
+          return {
+            title: v.title || '',
+            author: (v.authors || []).join(', '),
+            cover: v.imageLinks?.smallThumbnail || '',
+          };
+        })
+        .filter((b: any) => {
+          if (!b.title) return false;
+          // Only show results where the title actually starts with or contains the query
+          return b.title.toLowerCase().includes(query.toLowerCase());
+        })
+        .slice(0, 5);
+  
       setSuggestions(items);
       if (items.length > 0) { updateDropdownPos(); setShowSug(true); }
+      else setShowSug(false);
     } catch { setSuggestions([]); }
   };
 
@@ -1065,7 +1150,16 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
     window.addEventListener('resize', hide);
     return () => { window.removeEventListener('scroll', hide, true); window.removeEventListener('resize', hide); };
   }, []);
-
+  // Dismiss dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (titleInputRef.current && !titleInputRef.current.contains(e.target as Node)) {
+        setShowSug(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
   const handleCoverPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setId(true); setIdMsg('Identifying…');
@@ -1255,7 +1349,6 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
                   value={f.title}
                   onChange={e=>handleTitleChange(e.target.value)}
                   onFocus={()=>{ if(suggestions.length>0){ updateDropdownPos(); setShowSug(true); } }}
-                  onBlur={()=>setTimeout(()=>setShowSug(false),150)}
                   placeholder="Book title"
                   style={inp}
                   autoComplete="off"
