@@ -202,7 +202,7 @@ const SEED = [
   fa(442,'Obsidian','Jennifer L. Armentrout','Paranormal Romance','Lux',1),
   fa(443,'Onyx','Jennifer L. Armentrout','Paranormal Romance','Lux',2),
   fa(444,'Opal','Jennifer L. Armentrout','Paranormal Romance','Lux',3),
-  rt(58,'Shield of Sparrows','Devney Perry',null,null),
+  rt(58,'Shield of Sparrows','Devney Perry','Shield of Sparrows',1),
   rt(59,'The Hurricane Wars','Thea Guanzon','The Hurricane Wars',1),
   fa(60,'A Tempest of Tea','Hafsah Faizal','YA Fantasy','Blood and Tea',1),
   fa(61,'Sweet Nightmare','Tracy Wolff','Dark Fantasy',null,null),
@@ -210,7 +210,6 @@ const SEED = [
   fa(64,'House of Blight','Mayen R. Martineau','Dark Fantasy',null,null),
   fa(65,'Daughter of No Worlds','Carissa Broadbent','Dark Fantasy','War of Lost Hearts',1),
   fa(66,'Mother of Death & Dawn','Carissa Broadbent','Dark Fantasy','War of Lost Hearts',3),
-  fa(67,'I Will Not Let Them Take Me','Unknown','Dark Fantasy',null,null),
   fa(68,'The Wrath of the Fallen','Amber V. Nicole','Dark Fantasy','Gods & Monsters',4),
   rt(69,'Behooved','M. Stevenson',null,null),
   fa(70,'Heat of Everflame','Penn Cole','High Fantasy','Forging of Light',3),
@@ -226,7 +225,7 @@ const SEED = [
   fa(160,'A Theory of Dreaming','Ava Reid','YA Fantasy','A Study in Drowning',2),
   fa(161,'Dawn of the Firebird','Sarah Mughal Rana','YA Fantasy',null,null),
   fa(162,'Coldwire','Chloe Gong','YA Fantasy',null,null),
-  rt(163,'Thorn Season','Kiera Azar',null,null),
+  rt(163,'Thorn Season','Kiera Azar','Thirn Season',1),
   fa(164,'Fallen City','Adrienne Young','YA Fantasy',null,null),
   fa(165,'Seven Deadly Thorns','Amber Hamilton','Dark Fantasy',null,null),
   rt(166,'Alchemised','Senlinyu',null,null),
@@ -315,8 +314,7 @@ const SEED = [
   fa(323,'Glint','Raven Kennedy','Mythology Romance','The Plated Prisoner',2),
   fa(324,'Gleam','Raven Kennedy','Mythology Romance','The Plated Prisoner',3),
   fa(325,'Glow','Raven Kennedy','Mythology Romance','The Plated Prisoner',4),
-  fa(326,'The Wolves of Ruin','Raven Kennedy','Mythology Romance','The Plated Prisoner',null),
-  rt(327,'Dire Bound','Sable Sorensen',null,null),
+  rt(327,'Dire Bound','Sable Sorensen','Wolves of Ruin',1),
   rt(330,'Assistant to the Villain','Hannah Nicole Maehren','The Villain',1),
   rt(331,'Apprentice to the Villain','Hannah Nicole Maehren','The Villain',2),
   rt(332,'Accomplice to the Villain','Hannah Nicole Maehren','The Villain',3),
@@ -349,7 +347,7 @@ const SEED = [
   fa(441,'Three Stolen Oaths','Mai Corland','High Fantasy','Five Broken Blades',3),
   rt(434,'A Dawn of Onyx','Kate Golden','Sacred Stones',1),
   rt(435,'A Promise of Peridot','Kate Golden','Sacred Stones',2),
-  rt(436,'Metal Signer','Rachel Schneider',null,null),
+  rt(436,'Metal Slinger','Rachel Schneider',null,null),
   h(72,'House of Hollow','Krystal Sutherland','Dark Fiction',null,null),
   h(119,'Tourist Season','Brynne Weaver','Horror Comedy','Seasons of Carnage',1),
   h(120,'Butcher & Blackbird','Brynne Weaver','Dark Fiction','The Ruinous Love Trilogy',1),
@@ -440,7 +438,7 @@ const SEED = [
   r(148,'Does It Hurt','H.D. Carlton','Dark Romance',null,null),
   r(149,'The Initiation','Nikki Sloane','Dark Romance',null,null),
   r(150,'Insatiable','Leigh Rivers','Dark Romance','Edge of Darkness',1),
-  r(151,'Priest','Sierra Simone','Dark Romance','New Camelot',1),
+  r(151,'Priest','Sierra Simone','Dark Romance','Priest',1),
   r(152,'That Sik Luv','Jescie Hall','Dark Romance',null,null),
   r(185,'Promises & Pomegranates','Sav R. Miller','Dark Romance','Monsters & Muses',1),
   r(189,'Beautiful Villain','Rebecca Kenney','Dark Romance',null,null),
@@ -476,13 +474,13 @@ const SEED = [
   r(291,'Unsteady','Peyton Corinne','New Adult Romance',null,null),
   r(292,'Unloved','Peyton Corinne','New Adult Romance',null,null),
   r(293,'All Rhodes Lead Here','Mariana Zapata','Contemporary Romance',null,null),
-  r(294,'It Happened One Christmas','Hannah Bonam-Young','Holiday Romance',null,null),
+  r(294,'It Happened One Christmas','Chantel Guertin','Holiday Romance',null,null),
   r(295,'Fifty Shades of Grey','E.L. James','Contemporary Romance','Fifty Shades',1),
   r(296,'Fifty Shades Darker','E.L. James','Contemporary Romance','Fifty Shades',2),
   r(297,'Fifty Shades Freed','E.L. James','Contemporary Romance','Fifty Shades',3),
   r(302,'The Trouble with Dating Lexi','Madyn Rose','Contemporary Romance',null,null),
   r(303,'The Enchanted Hacienda','J.C. Cervantes','Contemporary Romance',null,null),
-  r(314,'The Striker','Unknown','Sports Romance',null,null),
+  r(314,'The Striker','Ana Huang','Sports Romance','Gods of the Game',1),
   r(316,'Ruling Destiny','Alyson Noel','Contemporary Romance',null,null),
   r(271,'Twisted Games','Ana Huang','Contemporary Romance','Twisted',2),
   r(272,'Twisted Hate','Ana Huang','Contemporary Romance','Twisted',3),
@@ -492,10 +490,10 @@ const SEED = [
   r(362,'King of Greed','Ana Huang','Contemporary Romance','Kings of Sin',3),
   r(363,'King of Sloth','Ana Huang','Contemporary Romance','Kings of Sin',4),
   r(364,'King of Envy','Ana Huang','Contemporary Romance','Kings of Sin',5),
-  r(365,'If We Ever Meet Again','Ana Huang','Contemporary Romance','Dirty Air',1),
-  r(366,'If the Sun Never Sets','Ana Huang','Contemporary Romance','Dirty Air',2),
-  r(367,'If Love Had a Price','Ana Huang','Contemporary Romance','Dirty Air',3),
-  r(368,'If We Were Perfect','Ana Huang','Contemporary Romance','Dirty Air',4),
+  r(365,'If We Ever Meet Again','Ana Huang','Contemporary Romance','If Love',1),
+  r(366,'If the Sun Never Sets','Ana Huang','Contemporary Romance','If Love',2),
+  r(367,'If Love Had a Price','Ana Huang','Contemporary Romance','If Love',3),
+  r(368,'If We Were Perfect','Ana Huang','Contemporary Romance','If Love',4),
   r(369,'Binding 13','Chloe Walsh','New Adult Romance','Boys of Tommen',1),
   r(370,'Keeping 13','Chloe Walsh','New Adult Romance','Boys of Tommen',2),
   r(371,'Saving 6','Chloe Walsh','New Adult Romance','Boys of Tommen',3),
@@ -519,7 +517,6 @@ const SEED = [
   r(389,'Caught Up','Liz Tomforde','Sports Romance','Windy City',3),
   r(390,'Play Along','Liz Tomforde','Sports Romance','Windy City',4),
   r(391,'Rewind It Back','Liz Tomforde','Sports Romance','Windy City',5),
-  r(392,'Garrett & Hannah','Liz Tomforde','Sports Romance',null,null),
   r(393,'Mr. Charming','Piper Rayne','Contemporary Romance','Whoever Next Door',1),
   r(394,'Mr. Swoony','Piper Rayne','Contemporary Romance','Whoever Next Door',2),
   r(395,'Mr. Broody','Piper Rayne','Contemporary Romance','Whoever Next Door',3),
@@ -548,14 +545,9 @@ const SEED = [
   r(421,'Love on the Brain','Ali Hazelwood','Contemporary Romance',null,null),
   r(422,'Love, Theoretically','Ali Hazelwood','Contemporary Romance',null,null),
   r(423,'Loathe to Love You','Ali Hazelwood','Contemporary Romance',null,null),
-  r(424,'Deep End','Unknown','Contemporary Romance',null,null),
-  r(425,'It Happened in a Heartbeat','Unknown','Contemporary Romance',null,null),
   r(426,'Hook, Line, and Sinker','Tessa Bailey','Contemporary Romance',null,null),
   r(427,'Secretly Yours','Helena Hunting','Contemporary Romance',null,null),
   r(428,'Unfortunately Yours','Tessa Bailey','Contemporary Romance',null,null),
-  r(429,'Things We Never Got','Unknown','Contemporary Romance',null,null),
-  r(430,'Things We Hide from the Fire','Unknown','Contemporary Romance',null,null),
-  r(431,'Things We Left','Unknown','Contemporary Romance',null,null),
   r(432,'Dishonestly Yours','Krista & Becca Ritchie','Contemporary Romance',null,null),
   nf(307,'The Glass Castle','Jeannette Walls','Memoir'),
   nf(309,'The Present Age','Soren Kierkegaard','Philosophy'),
@@ -628,8 +620,8 @@ const SEED = [
   m(509,'The Last One','Rachel Howzell Hall','Thriller',null,null),
   fa(510,'Hollow','C. Peckham & S. Valenti','Paranormal Romance','Crown of Hearts & Chaos',1),
   fa(511,'Never Keep','C. Peckham & S. Valenti','Paranormal Romance','Sins of the Zodiac',1),
-  fa(512,'Filthy Rich Fae','Geneva Lee','Dark Romantasy','Filthy Rich Fae',null),
-  fa(513,'Filthy Rich Vampire','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',1),
+  rt(512,'Filthy Rich Fae','Geneva Lee','Dark Romantasy','Filthy Rich Fae',null),
+  rt(513,'Filthy Rich Vampire','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',1),
   fa(514,'Godkiller','Hannah Kaner','High Fantasy','Fallen Gods',1),
   fa(515,'The Gilded Crown','Marianne Gordon','High Fantasy',null,null),
   fa(516,'House of Bone and Blood','Alexis L. Menard','Dark Fantasy',null,null),
@@ -685,10 +677,10 @@ const SEED = [
   r(566,'Collide','Bal Khabra','Sports Romance',null,null),
   r(567,'Canadian Boyfriend','Jenny Holiday','Contemporary Romance',null,null),
   r(568,'Love Your Life','Sophie Kinsella','Contemporary Romance',null,null),
-  r(569,'Pretty Reckless','L.J. Shen','New Adult Romance','All Saints',1),
-  r(570,'Broken Knight','L.J. Shen','New Adult Romance','All Saints',2),
-  r(571,'Angry God','L.J. Shen','New Adult Romance','All Saints',3),
-  r(572,'Damaged Goods','L.J. Shen','New Adult Romance','All Saints',4),
+  r(569,'Pretty Reckless','L.J. Shen','New Adult Romance','All Saints High',1),
+  r(570,'Broken Knight','L.J. Shen','New Adult Romance','All Saints High',2),
+  r(571,'Angry God','L.J. Shen','New Adult Romance','All Saints High',3),
+  r(572,'Damaged Goods','L.J. Shen','New Adult Romance','All Saints High',4),
   r(573,'Psyche and Eros','Luna McNamara','Contemporary Romance',null,null),
   fa(575,'The Invisible Life of Addie LaRue','V.E. Schwab','Dark Fantasy',null,null),
   r(576,'Tweet Cute','Emma Lord','Contemporary Romance',null,null),
@@ -715,11 +707,11 @@ const SEED = [
   fa(597,'The Monster and the Last Blood Match','K.A. Linde','Dark Fantasy',null,null),
   fa(598,'Blood of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',1),
   fa(599,'Bonds of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',2),
-  fa(600,'The Games Gods Play','Abigail Owen','Paranormal Romance',null,null),
+  fa(600,'The Games Gods Play','Abigail Owen','Paranormal Romance','The Crucible',1),
   fa(601,'Three Shattered Souls','Mai Corland','High Fantasy','Five Broken Blades',null),
   fa(602,'The Bond That Burns','Briar Boleyn','Dark Fantasy',null,null),
   fa(603,'On Wings of Blood','Briar Boleyn','Dark Fantasy',null,null),
-  fa(604,'The Things Gods Break','Abigail Owen','Paranormal Romance',null,null),
+  fa(604,'The Things Gods Break','Abigail Owen','Paranormal Romance','The Crucible',2),
   fa(605,'A Dance of Lies','Brittney Arena','YA Fantasy',null,null),
   fa(606,'Sorcery and Small Magics','Maiga Doocy','YA Fantasy',null,null),
   fa(607,'Graceless Heart','Isabel Ibanez','YA Fantasy',null,null),
@@ -757,8 +749,8 @@ const SEED = [
   fa(639,'Enchantry','Kaylie Smith','Dark Fantasy',null,null),
   fa(640,'Blacksilver','Callie Hart','Dark Fantasy',null,null),
   fa(641,'Brimstone','Callie Hart','Dark Fantasy','Brimstone',null),
-  co(642,'The Spellshop','Sarah Henning','Cozy Fiction',null,null),
-  co(643,'The Enchanted Greenhouse','Unknown','Cozy Fiction',null,null),
+  co(642,'The Spellshop','Sarah Beth Durst','Cozy Fiction',null,null),
+  co(643,'The Enchanted Greenhouse','Sarah Beth Durst','Cozy Fiction',null,null),
   fa(644,'A Study in Drowning','Ava Reid','YA Fantasy','A Study in Drowning',1),
   rt(645,'A Court of Thorns and Roses','Sarah J. Maas','A Court of Thorns and Roses',1),
   rt(646,'A Court of Mist and Fury','Sarah J. Maas','A Court of Thorns and Roses',2),
@@ -827,6 +819,7 @@ const SEED = [
   m(711,'The Housemaid','Freida McFadden','Thriller','The Housemaid',1),
   m(712,"The Housemaid's Secret",'Freida McFadden','Thriller','The Housemaid',2),
   m(713,"The Housemaid's Husband",'Freida McFadden','Thriller','The Housemaid',3),
+  r(714,'Out on a Limb','Hannah Bonam-Young','Contemporary Romance',null,null),
 ];
 
 const seen = new Set<number>();
@@ -1857,7 +1850,20 @@ export default function App() {
       return true;
     });
     return [...base].sort((a:any,b:any)=>{
-      if(sortBy==='author') return a.author.localeCompare(b.author);
+      if(sortBy==='author') {
+        const authCmp = a.author.localeCompare(b.author);
+        if(authCmp !== 0) return authCmp;
+        // Same author: series books sorted by series name then number; standalones by title
+        const sa = a.series || '';
+        const sb = b.series || '';
+        if(sa && sb) {
+          if(sa !== sb) return sa.localeCompare(sb);
+          return (a.sn ?? 999) - (b.sn ?? 999);
+        }
+        if(sa) return -1; // series books before standalones
+        if(sb) return 1;
+        return a.title.localeCompare(b.title); // both standalones → A–Z title
+      };
       if(sortBy==='dateAdded') return (b.readAt||b.id||0)-(a.readAt||a.id||0);
       if(sortBy==='series') {
         const sa=a.series||''; const sb=b.series||'';
