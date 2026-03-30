@@ -817,6 +817,9 @@ const SEED = [
   fa(697,'Cherish','Tracy Wolff','Paranormal Romance','Crave',6),
   nf(698,'12 Rules for Life','Jordan B. Peterson','Self-Help'),
   nf(699,'Beyond Order','Jordan B. Peterson','Self-Help'),
+  fa(700,'Once Upon a Broken Heart','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',1),
+  fa(701,'The Ballad of Never After','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',2),
+  fa(702,'A Curse for True Love','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',3),
 ];
 
 const seen = new Set<number>();
@@ -1326,15 +1329,19 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   const searchGoogleBooks = async (query: string) => {
     if (query.length < 3) { setSuggestions([]); setShowSug(false); return; }
     try {
-      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=8&printType=books&orderBy=relevance`);
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8&printType=books&orderBy=relevance&langRestrict=en`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const items = (data.items || [])
-        .map((item: any) => { const v = item.volumeInfo; return { title: v.title||'', author: (v.authors||[]).join(', '), cover: v.imageLinks?.smallThumbnail||'' }; })
-        .filter((b: any) => b.title && b.title.toLowerCase().includes(query.toLowerCase()))
+        .map((item: any) => {
+          const v = item.volumeInfo;
+          return { title: v.title||'', author: (v.authors||[]).join(', '), cover: v.imageLinks?.smallThumbnail||'' };
+        })
+        .filter((b: any) => b.title)
         .slice(0, 5);
       setSuggestions(items);
       if (items.length > 0) { updateDropdownPos(); setShowSug(true); } else setShowSug(false);
-    } catch { setSuggestions([]); }
+    } catch(e) { console.error('Books API error:', e); setSuggestions([]); setShowSug(false); }
   };
 
   const handleTitleChange = (val: string) => {
@@ -1829,9 +1836,12 @@ export default function App() {
   const allSeries=useMemo(()=>[...new Set(books.map((b:any)=>b.series).filter(Boolean))].sort() as string[],[books]);
 
   const filtered=useMemo(()=>{
-    const q=search.toLowerCase();
+    const q=search.toLowerCase().trim();
+    const qWords=q.split(/\s+/).filter(Boolean);
     const base = tabBooks.filter((b:any)=>{
-      if(q&&!b.title.toLowerCase().includes(q)&&!b.author.toLowerCase().includes(q)&&!(b.series||'').toLowerCase().includes(q)) return false;
+      if(qWords.length>0){
+        const haystack=`${b.title} ${b.author} ${b.series||''} ${b.subgenre||''}`.toLowerCase();
+      if(!qWords.every(w=>haystack.includes(w))) return false;
       if(fGenre!=='All'&&b.genre!==fGenre) return false;
       if(fSub!=='All'&&b.subgenre!==fSub) return false;
       if(tab==='shelf'&&fRead!=='All'&&(fRead==='Read')!==b.read) return false;
