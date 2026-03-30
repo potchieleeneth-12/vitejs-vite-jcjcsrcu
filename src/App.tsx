@@ -820,6 +820,11 @@ const SEED = [
   fa(700,'Once Upon a Broken Heart','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',1),
   fa(701,'The Ballad of Never After','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',2),
   fa(702,'A Curse for True Love','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',3),
+  fa(703,'Red Queen','Victoria Aveyard','YA Fantasy','Red Queen',1),
+  fa(704,'Glass Sword','Victoria Aveyard','YA Fantasy','Red Queen',2),
+  fa(705,'King\'s Cage','Victoria Aveyard','YA Fantasy','Red Queen',3),
+  fa(706,'War Storm','Victoria Aveyard','YA Fantasy','Red Queen',4),
+  fa(707,'Broken Throne','Victoria Aveyard','YA Fantasy','Red Queen',4.5),
 ];
 
 const seen = new Set<number>();
