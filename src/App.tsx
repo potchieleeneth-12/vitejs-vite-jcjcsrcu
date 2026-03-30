@@ -1841,7 +1841,8 @@ export default function App() {
     const base = tabBooks.filter((b:any)=>{
       if(qWords.length>0){
         const haystack=`${b.title} ${b.author} ${b.series||''} ${b.subgenre||''}`.toLowerCase();
-      if(!qWords.every(w=>haystack.includes(w))) return false;
+        if(!qWords.every(w=>haystack.includes(w))) return false;
+      }
       if(fGenre!=='All'&&b.genre!==fGenre) return false;
       if(fSub!=='All'&&b.subgenre!==fSub) return false;
       if(tab==='shelf'&&fRead!=='All'&&(fRead==='Read')!==b.read) return false;
