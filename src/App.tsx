@@ -825,6 +825,12 @@ const SEED = [
   fa(705,'King\'s Cage','Victoria Aveyard','YA Fantasy','Red Queen',3),
   fa(706,'War Storm','Victoria Aveyard','YA Fantasy','Red Queen',4),
   fa(707,'Broken Throne','Victoria Aveyard','YA Fantasy','Red Queen',4.5),
+  m(708,"A Good Girl's Guide to Murder",'Holly Jackson','YA Mystery',"A Good Girl's Guide to Murder",1),
+  m(709,'Good Girl, Bad Blood','Holly Jackson','YA Mystery',"A Good Girl's Guide to Murder",2),
+  m(710,'As Good as Dead','Holly Jackson','YA Mystery',"A Good Girl's Guide to Murder",3),
+  m(711,'The Housemaid','Freida McFadden','Thriller','The Housemaid',1),
+  m(712,"The Housemaid's Secret",'Freida McFadden','Thriller','The Housemaid',2),
+  m(713,"The Housemaid's Husband",'Freida McFadden','Thriller','The Housemaid',3),
 ];
 
 const seen = new Set<number>();
