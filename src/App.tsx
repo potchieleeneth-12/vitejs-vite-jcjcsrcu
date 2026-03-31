@@ -313,7 +313,7 @@ const SEED = [
   fa(269,'Belladonna','Adalyn Grace','Dark Fantasy','Belladonna',1),
   fa(574,'Foxglove','Adalyn Grace','Dark Fantasy','Belladonna',2),
   fa(270,'Wisteria','Adalyn Grace','Dark Fantasy','Belladonna',3),
-  fa(159,'Holly','Adalyn Grace','Dark Fantasy','Belladonna',null),
+  fa(159,'Holly','Adalyn Grace','Dark Fantasy','Belladonna',3.5),
   fa(306,'The Phoenix King','Aparna Verma','High Fantasy','The Ravence Trilogy',1),
   fa(317,'Ninth House','Leigh Bardugo','Dark Fantasy','Alex Stern',1),
   fa(318,'Hell Bent','Leigh Bardugo','Dark Fantasy','Alex Stern',2),
