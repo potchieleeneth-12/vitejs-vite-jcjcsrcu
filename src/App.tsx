@@ -76,7 +76,7 @@ const SUBGENRES: Record<string, string[]> = {
   'Non-Fiction':      ['Memoir','Self-Help','Philosophy','Language Learning'],
 };
 
-const STORAGE_KEY = 'myshelf-v6';
+const STORAGE_KEY = 'myshelf-v7';
 const GOALS_KEY   = 'myshelf-goals-v1';
 
 const TAB_CFG: Record<string, { label: string; color: string }> = {
@@ -96,7 +96,16 @@ const THIS_MONTH = new Date().getMonth();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const uid = () => Date.now() + Math.random();
-const base = (extra: any) => ({ read: false, status: 'shelf', readAt: null, readYear: null, rating: null, note: '' , ...extra });
+const base = (extra: any) => ({ read: false, status: 'shelf', readAt: null, readYear: null, rating: null, note: '', rereads: [], ...extra });
+const migrateBooks = (books: any[]) => books.map((b: any) => ({
+  ...b,
+  status: b.status || 'shelf',
+  readAt: b.readAt || null,
+  readYear: b.readYear || null,
+  rating: b.rating ?? null,
+  note: b.note ?? '',
+  rereads: b.rereads ?? [],
+}));
 const fa  = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Fantasy',         subgenre: sg, series: sr, sn });
 const rt  = (id: number, t: string, a: string, sr: string | null, sn: number | null)              => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romantasy',        subgenre: 'Romantasy', series: sr, sn });
 const r   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romance',          subgenre: sg, series: sr, sn });
@@ -139,7 +148,7 @@ const SEED = [
   fa(8,'Sorrow and Starlight','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',8),
   fa(9,'Beyond the Veil','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',8.5),
   fa(10,'Restless Stars','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',9),
-  fa(11,'The Big Ass Party','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',null),
+  fa(11,'The Big Ass Party','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',5.5),
   fa(12,'Caraval','Stephanie Garber','YA Fantasy','Caraval',1),
   fa(13,'Legendary','Stephanie Garber','YA Fantasy','Caraval',2),
   fa(14,'Finale','Stephanie Garber','YA Fantasy','Caraval',3),
@@ -202,7 +211,7 @@ const SEED = [
   fa(442,'Obsidian','Jennifer L. Armentrout','Paranormal Romance','Lux',1),
   fa(443,'Onyx','Jennifer L. Armentrout','Paranormal Romance','Lux',2),
   fa(444,'Opal','Jennifer L. Armentrout','Paranormal Romance','Lux',3),
-  rt(58,'Shield of Sparrows','Devney Perry','Shield of Sparrows',1),
+  rt(58,'Shield of Sparrows','Devney Perry',null,null),
   rt(59,'The Hurricane Wars','Thea Guanzon','The Hurricane Wars',1),
   fa(60,'A Tempest of Tea','Hafsah Faizal','YA Fantasy','Blood and Tea',1),
   fa(61,'Sweet Nightmare','Tracy Wolff','Dark Fantasy',null,null),
@@ -210,6 +219,7 @@ const SEED = [
   fa(64,'House of Blight','Mayen R. Martineau','Dark Fantasy',null,null),
   fa(65,'Daughter of No Worlds','Carissa Broadbent','Dark Fantasy','War of Lost Hearts',1),
   fa(66,'Mother of Death & Dawn','Carissa Broadbent','Dark Fantasy','War of Lost Hearts',3),
+  fa(67,'I Will Not Let Them Take Me','Unknown','Dark Fantasy',null,null),
   fa(68,'The Wrath of the Fallen','Amber V. Nicole','Dark Fantasy','Gods & Monsters',4),
   rt(69,'Behooved','M. Stevenson',null,null),
   fa(70,'Heat of Everflame','Penn Cole','High Fantasy','Forging of Light',3),
@@ -225,7 +235,7 @@ const SEED = [
   fa(160,'A Theory of Dreaming','Ava Reid','YA Fantasy','A Study in Drowning',2),
   fa(161,'Dawn of the Firebird','Sarah Mughal Rana','YA Fantasy',null,null),
   fa(162,'Coldwire','Chloe Gong','YA Fantasy',null,null),
-  rt(163,'Thorn Season','Kiera Azar','Thirn Season',1),
+  rt(163,'Thorn Season','Kiera Azar',null,null),
   fa(164,'Fallen City','Adrienne Young','YA Fantasy',null,null),
   fa(165,'Seven Deadly Thorns','Amber Hamilton','Dark Fantasy',null,null),
   rt(166,'Alchemised','Senlinyu',null,null),
@@ -303,7 +313,7 @@ const SEED = [
   fa(269,'Belladonna','Adalyn Grace','Dark Fantasy','Belladonna',1),
   fa(574,'Foxglove','Adalyn Grace','Dark Fantasy','Belladonna',2),
   fa(270,'Wisteria','Adalyn Grace','Dark Fantasy','Belladonna',3),
-  fa(159,'Holly','Adalyn Grace','Dark Fantasy','Belladonna',3.5),
+  fa(159,'Holly','Adalyn Grace','Dark Fantasy','Belladonna',null),
   fa(306,'The Phoenix King','Aparna Verma','High Fantasy','The Ravence Trilogy',1),
   fa(317,'Ninth House','Leigh Bardugo','Dark Fantasy','Alex Stern',1),
   fa(318,'Hell Bent','Leigh Bardugo','Dark Fantasy','Alex Stern',2),
@@ -314,7 +324,8 @@ const SEED = [
   fa(323,'Glint','Raven Kennedy','Mythology Romance','The Plated Prisoner',2),
   fa(324,'Gleam','Raven Kennedy','Mythology Romance','The Plated Prisoner',3),
   fa(325,'Glow','Raven Kennedy','Mythology Romance','The Plated Prisoner',4),
-  rt(327,'Dire Bound','Sable Sorensen','Wolves of Ruin',1),
+  fa(326,'The Wolves of Ruin','Raven Kennedy','Mythology Romance','The Plated Prisoner',null),
+  rt(327,'Dire Bound','Sable Sorensen',null,null),
   rt(330,'Assistant to the Villain','Hannah Nicole Maehren','The Villain',1),
   rt(331,'Apprentice to the Villain','Hannah Nicole Maehren','The Villain',2),
   rt(332,'Accomplice to the Villain','Hannah Nicole Maehren','The Villain',3),
@@ -347,7 +358,7 @@ const SEED = [
   fa(441,'Three Stolen Oaths','Mai Corland','High Fantasy','Five Broken Blades',3),
   rt(434,'A Dawn of Onyx','Kate Golden','Sacred Stones',1),
   rt(435,'A Promise of Peridot','Kate Golden','Sacred Stones',2),
-  rt(436,'Metal Slinger','Rachel Schneider',null,null),
+  rt(436,'Metal Signer','Rachel Schneider',null,null),
   h(72,'House of Hollow','Krystal Sutherland','Dark Fiction',null,null),
   h(119,'Tourist Season','Brynne Weaver','Horror Comedy','Seasons of Carnage',1),
   h(120,'Butcher & Blackbird','Brynne Weaver','Dark Fiction','The Ruinous Love Trilogy',1),
@@ -438,7 +449,7 @@ const SEED = [
   r(148,'Does It Hurt','H.D. Carlton','Dark Romance',null,null),
   r(149,'The Initiation','Nikki Sloane','Dark Romance',null,null),
   r(150,'Insatiable','Leigh Rivers','Dark Romance','Edge of Darkness',1),
-  r(151,'Priest','Sierra Simone','Dark Romance','Priest',1),
+  r(151,'Priest','Sierra Simone','Dark Romance','New Camelot',1),
   r(152,'That Sik Luv','Jescie Hall','Dark Romance',null,null),
   r(185,'Promises & Pomegranates','Sav R. Miller','Dark Romance','Monsters & Muses',1),
   r(189,'Beautiful Villain','Rebecca Kenney','Dark Romance',null,null),
@@ -474,13 +485,13 @@ const SEED = [
   r(291,'Unsteady','Peyton Corinne','New Adult Romance',null,null),
   r(292,'Unloved','Peyton Corinne','New Adult Romance',null,null),
   r(293,'All Rhodes Lead Here','Mariana Zapata','Contemporary Romance',null,null),
-  r(294,'It Happened One Christmas','Chantel Guertin','Holiday Romance',null,null),
+  r(294,'It Happened One Christmas','Hannah Bonam-Young','Holiday Romance',null,null),
   r(295,'Fifty Shades of Grey','E.L. James','Contemporary Romance','Fifty Shades',1),
   r(296,'Fifty Shades Darker','E.L. James','Contemporary Romance','Fifty Shades',2),
   r(297,'Fifty Shades Freed','E.L. James','Contemporary Romance','Fifty Shades',3),
   r(302,'The Trouble with Dating Lexi','Madyn Rose','Contemporary Romance',null,null),
   r(303,'The Enchanted Hacienda','J.C. Cervantes','Contemporary Romance',null,null),
-  r(314,'The Striker','Ana Huang','Sports Romance','Gods of the Game',1),
+  r(314,'The Striker','Unknown','Sports Romance',null,null),
   r(316,'Ruling Destiny','Alyson Noel','Contemporary Romance',null,null),
   r(271,'Twisted Games','Ana Huang','Contemporary Romance','Twisted',2),
   r(272,'Twisted Hate','Ana Huang','Contemporary Romance','Twisted',3),
@@ -490,10 +501,10 @@ const SEED = [
   r(362,'King of Greed','Ana Huang','Contemporary Romance','Kings of Sin',3),
   r(363,'King of Sloth','Ana Huang','Contemporary Romance','Kings of Sin',4),
   r(364,'King of Envy','Ana Huang','Contemporary Romance','Kings of Sin',5),
-  r(365,'If We Ever Meet Again','Ana Huang','Contemporary Romance','If Love',1),
-  r(366,'If the Sun Never Sets','Ana Huang','Contemporary Romance','If Love',2),
-  r(367,'If Love Had a Price','Ana Huang','Contemporary Romance','If Love',3),
-  r(368,'If We Were Perfect','Ana Huang','Contemporary Romance','If Love',4),
+  r(365,'If We Ever Meet Again','Ana Huang','Contemporary Romance','Dirty Air',1),
+  r(366,'If the Sun Never Sets','Ana Huang','Contemporary Romance','Dirty Air',2),
+  r(367,'If Love Had a Price','Ana Huang','Contemporary Romance','Dirty Air',3),
+  r(368,'If We Were Perfect','Ana Huang','Contemporary Romance','Dirty Air',4),
   r(369,'Binding 13','Chloe Walsh','New Adult Romance','Boys of Tommen',1),
   r(370,'Keeping 13','Chloe Walsh','New Adult Romance','Boys of Tommen',2),
   r(371,'Saving 6','Chloe Walsh','New Adult Romance','Boys of Tommen',3),
@@ -517,6 +528,7 @@ const SEED = [
   r(389,'Caught Up','Liz Tomforde','Sports Romance','Windy City',3),
   r(390,'Play Along','Liz Tomforde','Sports Romance','Windy City',4),
   r(391,'Rewind It Back','Liz Tomforde','Sports Romance','Windy City',5),
+  r(392,'Garrett & Hannah','Liz Tomforde','Sports Romance',null,null),
   r(393,'Mr. Charming','Piper Rayne','Contemporary Romance','Whoever Next Door',1),
   r(394,'Mr. Swoony','Piper Rayne','Contemporary Romance','Whoever Next Door',2),
   r(395,'Mr. Broody','Piper Rayne','Contemporary Romance','Whoever Next Door',3),
@@ -541,13 +553,22 @@ const SEED = [
   r(413,'Juniper Hill','Devney Perry','Contemporary Romance','Edens',2),
   r(414,'Whiskey Business','K.A. Tucker','Contemporary Romance',null,null),
   r(415,'The Simple Wild','K.A. Tucker','Contemporary Romance','Wild',1),
+  r(416,'Pretty Reckless','Penelope Douglas','New Adult Romance','All Saints High',1),
+  r(417,'Broken Knight','Penelope Douglas','New Adult Romance','All Saints High',2),
+  r(418,'Angry God','Penelope Douglas','New Adult Romance','All Saints High',3),
+  r(419,'Damaged Goods','Penelope Douglas','New Adult Romance','All Saints High',4),
   r(420,'The Love Hypothesis','Ali Hazelwood','Contemporary Romance',null,null),
   r(421,'Love on the Brain','Ali Hazelwood','Contemporary Romance',null,null),
   r(422,'Love, Theoretically','Ali Hazelwood','Contemporary Romance',null,null),
   r(423,'Loathe to Love You','Ali Hazelwood','Contemporary Romance',null,null),
+  r(424,'Deep End','Unknown','Contemporary Romance',null,null),
+  r(425,'It Happened in a Heartbeat','Unknown','Contemporary Romance',null,null),
   r(426,'Hook, Line, and Sinker','Tessa Bailey','Contemporary Romance',null,null),
   r(427,'Secretly Yours','Helena Hunting','Contemporary Romance',null,null),
   r(428,'Unfortunately Yours','Tessa Bailey','Contemporary Romance',null,null),
+  r(429,'Things We Never Got','Unknown','Contemporary Romance',null,null),
+  r(430,'Things We Hide from the Fire','Unknown','Contemporary Romance',null,null),
+  r(431,'Things We Left','Unknown','Contemporary Romance',null,null),
   r(432,'Dishonestly Yours','Krista & Becca Ritchie','Contemporary Romance',null,null),
   nf(307,'The Glass Castle','Jeannette Walls','Memoir'),
   nf(309,'The Present Age','Soren Kierkegaard','Philosophy'),
@@ -620,8 +641,8 @@ const SEED = [
   m(509,'The Last One','Rachel Howzell Hall','Thriller',null,null),
   fa(510,'Hollow','C. Peckham & S. Valenti','Paranormal Romance','Crown of Hearts & Chaos',1),
   fa(511,'Never Keep','C. Peckham & S. Valenti','Paranormal Romance','Sins of the Zodiac',1),
-  rt(512,'Filthy Rich Fae','Geneva Lee','Dark Romantasy','Filthy Rich Fae',null),
-  rt(513,'Filthy Rich Vampire','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',1),
+  fa(512,'Filthy Rich Fae','Geneva Lee','Dark Romantasy','Filthy Rich Fae',null),
+  fa(513,'Filthy Rich Vampire','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',1),
   fa(514,'Godkiller','Hannah Kaner','High Fantasy','Fallen Gods',1),
   fa(515,'The Gilded Crown','Marianne Gordon','High Fantasy',null,null),
   fa(516,'House of Bone and Blood','Alexis L. Menard','Dark Fantasy',null,null),
@@ -677,10 +698,10 @@ const SEED = [
   r(566,'Collide','Bal Khabra','Sports Romance',null,null),
   r(567,'Canadian Boyfriend','Jenny Holiday','Contemporary Romance',null,null),
   r(568,'Love Your Life','Sophie Kinsella','Contemporary Romance',null,null),
-  r(569,'Pretty Reckless','L.J. Shen','New Adult Romance','All Saints High',1),
-  r(570,'Broken Knight','L.J. Shen','New Adult Romance','All Saints High',2),
-  r(571,'Angry God','L.J. Shen','New Adult Romance','All Saints High',3),
-  r(572,'Damaged Goods','L.J. Shen','New Adult Romance','All Saints High',4),
+  r(569,'Pretty Reckless','L.J. Shen','New Adult Romance','All Saints',1),
+  r(570,'Broken Knight','L.J. Shen','New Adult Romance','All Saints',2),
+  r(571,'Angry God','L.J. Shen','New Adult Romance','All Saints',3),
+  r(572,'Damaged Goods','L.J. Shen','New Adult Romance','All Saints',4),
   r(573,'Psyche and Eros','Luna McNamara','Contemporary Romance',null,null),
   fa(575,'The Invisible Life of Addie LaRue','V.E. Schwab','Dark Fantasy',null,null),
   r(576,'Tweet Cute','Emma Lord','Contemporary Romance',null,null),
@@ -707,11 +728,11 @@ const SEED = [
   fa(597,'The Monster and the Last Blood Match','K.A. Linde','Dark Fantasy',null,null),
   fa(598,'Blood of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',1),
   fa(599,'Bonds of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',2),
-  fa(600,'The Games Gods Play','Abigail Owen','Paranormal Romance','The Crucible',1),
+  fa(600,'The Games Gods Play','Abigail Owen','Paranormal Romance',null,null),
   fa(601,'Three Shattered Souls','Mai Corland','High Fantasy','Five Broken Blades',null),
   fa(602,'The Bond That Burns','Briar Boleyn','Dark Fantasy',null,null),
   fa(603,'On Wings of Blood','Briar Boleyn','Dark Fantasy',null,null),
-  fa(604,'The Things Gods Break','Abigail Owen','Paranormal Romance','The Crucible',2),
+  fa(604,'The Things Gods Break','Abigail Owen','Paranormal Romance',null,null),
   fa(605,'A Dance of Lies','Brittney Arena','YA Fantasy',null,null),
   fa(606,'Sorcery and Small Magics','Maiga Doocy','YA Fantasy',null,null),
   fa(607,'Graceless Heart','Isabel Ibanez','YA Fantasy',null,null),
@@ -747,10 +768,10 @@ const SEED = [
   fa(637,'The Ever Queen','LJ Andrews','Dark Fantasy','The Ever King',2),
   fa(638,'Phantasma','Kaylie Smith','Dark Fantasy',null,null),
   fa(639,'Enchantry','Kaylie Smith','Dark Fantasy',null,null),
-  fa(640,'Blacksilver','Callie Hart','Dark Fantasy',null,null),
-  fa(641,'Brimstone','Callie Hart','Dark Fantasy','Brimstone',null),
-  co(642,'The Spellshop','Sarah Beth Durst','Cozy Fiction',null,null),
-  co(643,'The Enchanted Greenhouse','Sarah Beth Durst','Cozy Fiction',null,null),
+  rt(640,'Quicksilver','Callie Hart','Fae & Alchemy',1),
+  rt(641,'Brimstone','Callie Hart','Fae & Alchemy',2),
+  co(642,'The Spellshop','Sarah Henning','Cozy Fiction',null,null),
+  co(643,'The Enchanted Greenhouse','Unknown','Cozy Fiction',null,null),
   fa(644,'A Study in Drowning','Ava Reid','YA Fantasy','A Study in Drowning',1),
   rt(645,'A Court of Thorns and Roses','Sarah J. Maas','A Court of Thorns and Roses',1),
   rt(646,'A Court of Mist and Fury','Sarah J. Maas','A Court of Thorns and Roses',2),
@@ -810,7 +831,7 @@ const SEED = [
   fa(702,'A Curse for True Love','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',3),
   fa(703,'Red Queen','Victoria Aveyard','YA Fantasy','Red Queen',1),
   fa(704,'Glass Sword','Victoria Aveyard','YA Fantasy','Red Queen',2),
-  fa(705,'King\'s Cage','Victoria Aveyard','YA Fantasy','Red Queen',3),
+  fa(705,"King's Cage",'Victoria Aveyard','YA Fantasy','Red Queen',3),
   fa(706,'War Storm','Victoria Aveyard','YA Fantasy','Red Queen',4),
   fa(707,'Broken Throne','Victoria Aveyard','YA Fantasy','Red Queen',4.5),
   m(708,"A Good Girl's Guide to Murder",'Holly Jackson','YA Mystery',"A Good Girl's Guide to Murder",1),
@@ -820,6 +841,72 @@ const SEED = [
   m(712,"The Housemaid's Secret",'Freida McFadden','Thriller','The Housemaid',2),
   m(713,"The Housemaid's Husband",'Freida McFadden','Thriller','The Housemaid',3),
   r(714,'Out on a Limb','Hannah Bonam-Young','Contemporary Romance',null,null),
+  nf(715,'Tao Te Ching','Lao Tzu (trans. Stephen Mitchell)','Philosophy'),
+  nf(716,'Meditations','Marcus Aurelius','Philosophy'),
+  nf(717,'The Psychology of Love','Sigmund Freud','Philosophy'),
+  nf(718,'The Uncanny','Sigmund Freud','Philosophy'),
+  nf(719,'The Undiscovered Self','C.G. Jung','Philosophy'),
+  nf(720,'The Story of Philosophy','Will Durant','Philosophy'),
+  nf(721,'The Cosmic Serpent','Jeremy Narby','Philosophy'),
+  nf(722,'Cosmic Consciousness','Richard Maurice Bucke','Philosophy'),
+  nf(723,'Greek Philosophy','Walter Kaufmann','Philosophy'),
+  nf(724,'Existentialism: From Dostoevsky to Sartre','Walter Kaufmann','Philosophy'),
+  nf(725,'The Essential Schopenhauer','Arthur Schopenhauer','Philosophy'),
+  nf(726,'The Birth of Tragedy and The Genealogy of Morals','Friedrich Nietzsche','Philosophy'),
+  nf(727,'Basic Writings of Nietzsche','Friedrich Nietzsche','Philosophy'),
+  nf(728,'On Truth and Untruth','Friedrich Nietzsche','Philosophy'),
+  nf(729,'Thus Spoke Zarathustra','Friedrich Nietzsche','Philosophy'),
+  nf(730,'Works of Love','Søren Kierkegaard','Philosophy'),
+  nf(731,'The Last Superstition','Edward Feser','Philosophy'),
+  nf(732,'Capital Volume I','Karl Marx','Philosophy'),
+  nf(733,'The Communist Manifesto','Karl Marx & Friedrich Engels','Philosophy'),
+  nf(734,'Lenin in Zurich','Aleksandr Solzhenitsyn','Memoir'),
+  nf(735,'Designing Your Life','Bill Burnett & Dave Evans','Self-Help'),
+  nf(736,'When','Daniel H. Pink','Self-Help'),
+  nf(737,'Purposeful Empathy','Anita Nowak','Self-Help'),
+  nf(738,'To Sell Is Human','Daniel H. Pink','Self-Help'),
+  nf(739,'Mycelium Running','Paul Stamets','Self-Help'),
+  nf(740,'How to Change Your Mind','Michael Pollan','Self-Help'),
+  nf(741,'The Subtle Art of Not Giving a F*ck','Mark Manson','Self-Help'),
+  nf(742,'The Abolition of Man','C.S. Lewis','Philosophy'),
+  nf(743,'Groundwork of the Metaphysics of Morals','Immanuel Kant','Philosophy'),
+  nf(744,"It's Not Luck",'Eliyahu Goldratt','Self-Help'),
+  nf(745,'Christianity for Modern Pagans','Peter Kreeft','Philosophy'),
+  nf(746,'The Rationalists','Descartes, Spinoza & Leibniz','Philosophy'),
+  nf(747,'The Art of Living','Epictetus','Philosophy'),
+  nf(748,'Mythology','Edith Hamilton','Philosophy'),
+  cl(749,'Purgatorio','Dante','Italian Lit'),
+  cl(750,'Women','Charles Bukowski','American Lit'),
+  cl(751,'Post Office','Charles Bukowski','American Lit'),
+  cl(752,'Ham on Rye','Charles Bukowski','American Lit'),
+  fa(753,'Her Radiant Curse','Elizabeth Lim','Historical Fantasy','Six Crimson Cranes',0),
+  fa(754,"The Dragon's Promise",'Elizabeth Lim','Historical Fantasy','Six Crimson Cranes',2),
+  fa(755,'Blood and Moonlight','Erin Beaty','YA Fantasy','Blood and Moonlight',1),
+  fa(756,'Blood & Honey','Shelby Mahurin','Dark Fantasy','Serpent & Dove',2),
+  fa(757,'Gods & Monsters','Shelby Mahurin','Dark Fantasy','Serpent & Dove',3),
+  fa(758,'The Bone Season','Samantha Shannon','Dark Fantasy','The Bone Season',1),
+  fa(759,'The Priory of the Orange Tree','Samantha Shannon','High Fantasy',null,null),
+  fa(760,'A Day of Fallen Night','Samantha Shannon','High Fantasy',null,null),
+  fa(761,'What Feasts at Night','T. Kingfisher','Dark Fantasy','Sworn Soldier',2),
+  fa(762,'Sun of Blood and Ruin','Mariely Lares','Historical Fantasy','Sun of Blood and Ruin',1),
+  fa(763,'Dawn of Fate and Fire','Mariely Lares','Historical Fantasy','Sun of Blood and Ruin',2),
+  fa(764,'Foul Lady Fortune','Chloe Gong','Historical Fantasy','Foul Lady Fortune',1),
+  fa(765,'Foul Heart Huntsman','Chloe Gong','Historical Fantasy','Foul Lady Fortune',2),
+  fa(766,'The Hobbit','J.R.R. Tolkien','High Fantasy','Middle-earth',0),
+  fa(767,'The Fellowship of the Ring','J.R.R. Tolkien','High Fantasy','The Lord of the Rings',1),
+  fa(768,'The Two Towers','J.R.R. Tolkien','High Fantasy','The Lord of the Rings',2),
+  fa(769,'The Return of the King','J.R.R. Tolkien','High Fantasy','The Lord of the Rings',3),
+  m(773,'Five Survive','Holly Jackson','Thriller',null,null),
+  fa(774,'Blood Scion','Deborah Falaye','YA Fantasy',null,null),
+  fa(775,'Serpent & Dove','Shelby Mahurin','Dark Fantasy','Serpent & Dove',1),
+  fa(776,'A Touch of Darkness','Scarlett St. Clair','Mythology Romance','Hades x Persephone',1),
+  fa(777,'A Game of Fate','Scarlett St. Clair','Mythology Romance','Hades Saga',1),
+  fa(778,'Six Crimson Cranes','Elizabeth Lim','Historical Fantasy','Six Crimson Cranes',1),
+  fa(779,'Dark Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',1),
+  fa(780,'Savage Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',2),
+  fa(781,'Vicious Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',3),
+  fa(782,'Broken Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',4),
+  fa(783,'Warrior Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',5),
 ];
 
 const seen = new Set<number>();
@@ -890,6 +977,317 @@ function GoalRing({ count, goal, label, emoji, gradStart, gradEnd, gradId }: {
   );
 }
 
+// ── PaceGauge ──────────────────────────────────────────────────────────────────
+function PaceGauge({ read, goal, year }: { read: number; goal: number; year: number }) {
+  if (!goal) return null;
+  const now = new Date();
+  const dayOfYear = Math.floor((now.getTime() - new Date(year,0,0).getTime()) / 86400000);
+  const daysInYear = ((year%4===0&&year%100!==0)||year%400===0) ? 366 : 365;
+  const expectedByNow = Math.round((dayOfYear / daysInYear) * goal);
+  const pct = Math.min(100, Math.round((read/goal)*100));
+  const ahead = read >= expectedByNow;
+  const diff = Math.abs(read - expectedByNow);
+  const monthsLeft = 12 - now.getMonth();
+  const booksLeft = Math.max(0, goal - read);
+  const needPerMonth = monthsLeft > 0 ? Math.ceil(booksLeft / monthsLeft) : booksLeft;
+  const arcR = 52; const cx = 70; const cy = 70;
+  const startAngle = -210; const endAngle = 30; const sweep = endAngle - startAngle;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const arcX = (a: number) => cx + arcR * Math.cos(toRad(a));
+  const arcY = (a: number) => cy + arcR * Math.sin(toRad(a));
+  const pctAngle = startAngle + (pct/100)*sweep;
+  const expectedAngle = startAngle + (Math.min(1,expectedByNow/goal))*sweep;
+  const largeArc = (pct/100)*sweep > 180 ? 1 : 0;
+  return (
+    <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
+      <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.5rem' }}>📈 {year} Reading Pace</div>
+      <div style={{ display:'flex',alignItems:'center',gap:'1rem' }}>
+        <svg width="140" height="110" viewBox="0 0 140 110">
+          <path d={`M ${arcX(startAngle)} ${arcY(startAngle)} A ${arcR} ${arcR} 0 1 1 ${arcX(endAngle)} ${arcY(endAngle)}`} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" strokeLinecap="round"/>
+          {pct > 0 && <path d={`M ${arcX(startAngle)} ${arcY(startAngle)} A ${arcR} ${arcR} 0 ${largeArc} 1 ${arcX(pctAngle)} ${arcY(pctAngle)}`} fill="none" stroke="url(#gaugeGrad)" strokeWidth="10" strokeLinecap="round"/>}
+          <line x1={cx} y1={cy} x2={cx + (arcR+8)*Math.cos(toRad(expectedAngle))} y2={cy + (arcR+8)*Math.sin(toRad(expectedAngle))} stroke="#fb923c" strokeWidth="2" strokeLinecap="round"/>
+          <circle cx={cx + (arcR-4)*Math.cos(toRad(expectedAngle))} cy={cy + (arcR-4)*Math.sin(toRad(expectedAngle))} r="3" fill="#fb923c"/>
+          <circle cx={cx} cy={cy} r="4" fill="rgba(255,255,255,0.2)"/>
+          <text x={cx} y={cy-14} textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">{read}</text>
+          <text x={cx} y={cy-2} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="8">of {goal}</text>
+          <defs><linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#4ade80"/><stop offset="100%" stopColor="#a78bfa"/></linearGradient></defs>
+          <text x={arcX(startAngle)-6} y={arcY(startAngle)+4} fill="rgba(255,255,255,0.25)" fontSize="7">0</text>
+          <text x={arcX(endAngle)+2} y={arcY(endAngle)+4} fill="rgba(255,255,255,0.25)" fontSize="7">{goal}</text>
+        </svg>
+        <div style={{ flex:1 }}>
+          <div style={{ background:ahead?'rgba(52,211,153,0.1)':'rgba(251,146,60,0.1)',border:`1px solid ${ahead?'rgba(52,211,153,0.3)':'rgba(251,146,60,0.3)'}`,borderRadius:'0.5rem',padding:'0.4rem 0.6rem',marginBottom:'0.4rem' }}>
+            <div style={{ fontSize:'0.7rem',color:ahead?'#34d399':'#fb923c',fontWeight:700 }}>{ahead?`✦ ${diff} ahead of pace`:`${diff} behind pace`}</div>
+          </div>
+          <div style={{ background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:'0.5rem',padding:'0.4rem 0.6rem',marginBottom:'0.4rem' }}>
+            <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)' }}>Expected by now</div>
+            <div style={{ fontSize:'0.85rem',color:'#fb923c',fontWeight:700 }}>{expectedByNow} books</div>
+          </div>
+          <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)' }}>need ~{needPerMonth}/mo to finish</div>
+          <div style={{ display:'flex',gap:'0.5rem',marginTop:'0.3rem',fontSize:'0.6rem',color:'rgba(255,255,255,0.25)' }}>
+            <span>🟠 Expected &nbsp;🟣 Actual</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── BookshelfVisual ────────────────────────────────────────────────────────────
+function BookshelfVisual({ books }: { books: any[] }) {
+  const total = books.length;
+  const readCount = books.filter(b => b.read).length;
+  const pct = total ? Math.round((readCount/total)*100) : 0;
+  const spines = useMemo(() => {
+    const arr = [...books];
+    // stable order by id
+    arr.sort((a,b) => a.id - b.id);
+    return arr.map(b => ({
+      read: b.read,
+      height: 48 + (b.id % 28),
+      width: 10 + (b.id % 8),
+      color: GENRE_CFG[b.genre]?.accent || '#a78bfa',
+    }));
+  }, [books.length, readCount]);
+  const SHELF_H = 90;
+  const SPINE_GAP = 2;
+  const totalW = spines.reduce((s,sp) => s + sp.width + SPINE_GAP, 0);
+  return (
+    <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
+      <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.65rem' }}>
+        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>📚 Your Library</div>
+        <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>{pct}% read</div>
+      </div>
+      <div style={{ overflowX:'auto',overflowY:'hidden',paddingBottom:'4px' }}>
+        <svg width={Math.max(totalW,300)} height={SHELF_H+8} style={{ display:'block' }}>
+          <rect x={0} y={SHELF_H} width={Math.max(totalW,300)} height={6} fill="rgba(255,255,255,0.08)" rx={2}/>
+          {(() => { let x=0; return spines.map((sp,i) => { const el=(<rect key={i} x={x} y={SHELF_H-sp.height} width={sp.width} height={sp.height} fill={sp.read?sp.color:sp.color+'28'} rx={1}/>); x+=sp.width+SPINE_GAP; return el; }); })()}
+        </svg>
+      </div>
+      <div style={{ display:'flex',gap:'0.5rem',flexWrap:'wrap',marginTop:'0.4rem' }}>
+        {Object.entries(GENRE_CFG).map(([g,cfg])=>(<span key={g} style={{ display:'flex',alignItems:'center',gap:'0.25rem',fontSize:'0.6rem',color:'rgba(255,255,255,0.4)' }}><span style={{ display:'inline-block',width:'8px',height:'8px',borderRadius:'2px',background:cfg.accent }}/>{g}</span>))}
+      </div>
+      <div style={{ display:'flex',gap:'1.5rem',marginTop:'0.4rem' }}>
+        <span style={{ fontSize:'0.72rem',color:'white',fontWeight:700 }}>{total} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>total</span></span>
+        <span style={{ fontSize:'0.72rem',color:'#4ade80',fontWeight:700 }}>{readCount} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>read</span></span>
+      </div>
+    </div>
+  );
+}
+
+// ── YearBooksModal ─────────────────────────────────────────────────────────────
+function YearBooksModal({ year, books, onClose, onBookClick }: { year: number; books: any[]; onClose: () => void; onBookClick: (b: any) => void }) {
+  const yearBooks = books.filter(b => {
+    const yr = b.readYear || (b.readAt ? new Date(b.readAt).getFullYear() : null);
+    const rr: number[] = b.rereads || [];
+    return yr === year || rr.includes(year);
+  });
+  return (
+    <div style={{ position:'fixed',inset:0,zIndex:55,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.85)',padding:'1rem' }}>
+      <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'520px',maxHeight:'85vh',overflowY:'auto' }}>
+        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem' }}>
+          <h3 style={{ color:'white',fontWeight:'bold',fontSize:'1rem' }}>📅 {year} — {yearBooks.length} books</h3>
+          <button onClick={onClose} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'1.2rem' }}>✕</button>
+        </div>
+        {yearBooks.length===0?(<p style={{ color:'rgba(255,255,255,0.3)',textAlign:'center',padding:'2rem 0' }}>No books for {year}</p>):(
+          <div style={{ display:'flex',flexDirection:'column',gap:'0.4rem' }}>
+            {yearBooks.map(b => {
+              const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy'];
+              const isReread=(b.rereads||[]).includes(year)&&b.readYear!==year;
+              return (<div key={b.id} onClick={()=>onBookClick(b)} style={{ display:'flex',alignItems:'center',gap:'0.65rem',padding:'0.55rem 0.75rem',background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',borderLeft:`3px solid ${cfg.accent}`,cursor:'pointer' }} onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')} onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
+                <div style={{ flex:1,minWidth:0 }}>
+                  <div style={{ fontSize:'0.8rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}{isReread&&<span style={{ marginLeft:'0.4rem',fontSize:'0.6rem',color:'#a78bfa' }}>🔁 re-read</span>}</div>
+                  <div style={{ fontSize:'0.68rem',color:cfg.accent+'bb' }}>{b.author}</div>
+                </div>
+                {b.rating&&<StarRating rating={b.rating} size="sm"/>}
+                <span style={{ fontSize:'0.6rem',padding:'0.1rem 0.4rem',borderRadius:'9999px',background:cfg.dim,color:cfg.accent,flexShrink:0 }}>{b.genre}</span>
+              </div>);
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── SeriesModal ────────────────────────────────────────────────────────────────
+function SeriesModal({ seriesName, books, onClose, onUpdate, onBookDetail }: { seriesName: string; books: any[]; onClose: () => void; onUpdate: (id: any, patch: any) => void; onBookDetail: (b: any) => void }) {
+  const sb = books.filter(b=>b.series===seriesName).sort((a,b)=>(a.sn??999)-(b.sn??999));
+  return (
+    <div style={{ position:'fixed',inset:0,zIndex:55,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.85)',padding:'1rem' }}>
+      <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'560px',maxHeight:'85vh',overflowY:'auto' }}>
+        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem' }}>
+          <div><h3 style={{ color:'white',fontWeight:'bold',fontSize:'1rem',marginBottom:'0.2rem' }}>{seriesName}</h3><div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>{sb.filter(b=>b.read).length}/{sb.length} read</div></div>
+          <button onClick={onClose} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'1.2rem' }}>✕</button>
+        </div>
+        <div style={{ display:'flex',flexDirection:'column',gap:'0.5rem' }}>
+          {sb.map(b => { const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
+            <div key={b.id} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.75rem',borderLeft:`3px solid ${cfg.accent}`,padding:'0.65rem 0.75rem' }}>
+              <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start' }}>
+                <div style={{ flex:1,minWidth:0,cursor:'pointer' }} onClick={()=>onBookDetail(b)}>
+                  <div style={{ fontSize:'0.82rem',fontWeight:'bold',color:'white' }}>{b.title}</div>
+                  <div style={{ fontSize:'0.7rem',color:cfg.accent+'bb',marginBottom:'0.1rem' }}>{b.author}</div>
+                  {b.sn!=null&&<div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>#{b.sn}</div>}
+                </div>
+                <div style={{ display:'flex',flexDirection:'column',gap:'0.3rem',alignItems:'flex-end' }}>
+                  <button onClick={()=>onUpdate(b.id,{read:!b.read,readYear:!b.read?THIS_YEAR:null,readAt:!b.read?Date.now():null})} style={{ fontSize:'0.62rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',border:'1px solid',cursor:'pointer',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.4)'}) }}>{b.read?'✓ Read':'Unread'}</button>
+                  {b.rating&&<StarRating rating={b.rating} size="sm"/>}
+                </div>
+              </div>
+              {b.note&&<div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',marginTop:'0.3rem',fontStyle:'italic' }}>"{b.note}"</div>}
+            </div>
+          ); })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── AuthorModal ────────────────────────────────────────────────────────────────
+function AuthorModal({ author, books, onClose, onUpdate, onBookDetail }: { author: string; books: any[]; onClose: () => void; onUpdate: (id: any, patch: any) => void; onBookDetail: (b: any) => void }) {
+  const ab = books.filter(b=>b.author===author).sort((a,b)=>{ if(a.series&&b.series){if(a.series!==b.series)return a.series.localeCompare(b.series);return(a.sn??999)-(b.sn??999);}if(a.series)return -1;if(b.series)return 1;return a.title.localeCompare(b.title); });
+  const groups = useMemo(()=>{ const g: Record<string,any[]>={}; ab.forEach(b=>{const k=b.series||'__standalone__';if(!g[k])g[k]=[];g[k].push(b);}); return g; },[ab]);
+  return (
+    <div style={{ position:'fixed',inset:0,zIndex:55,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.85)',padding:'1rem' }}>
+      <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'560px',maxHeight:'85vh',overflowY:'auto' }}>
+        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem' }}>
+          <div><h3 style={{ color:'white',fontWeight:'bold',fontSize:'1rem',marginBottom:'0.2rem' }}>{author}</h3><div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>{ab.filter(b=>b.read).length}/{ab.length} read</div></div>
+          <button onClick={onClose} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'1.2rem' }}>✕</button>
+        </div>
+        {Object.entries(groups).map(([key,bks])=>(
+          <div key={key} style={{ marginBottom:'1rem' }}>
+            {key!=='__standalone__'&&<div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.4)',marginBottom:'0.4rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em' }}>{key}</div>}
+            <div style={{ display:'flex',flexDirection:'column',gap:'0.4rem' }}>
+              {bks.map(b=>{ const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
+                <div key={b.id} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.75rem',borderLeft:`3px solid ${cfg.accent}`,padding:'0.55rem 0.75rem',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+                  <div style={{ flex:1,minWidth:0,cursor:'pointer' }} onClick={()=>onBookDetail(b)}>
+                    <div style={{ fontSize:'0.8rem',fontWeight:'bold',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
+                    {b.sn!=null&&<div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)' }}>#{b.sn}</div>}
+                  </div>
+                  <button onClick={()=>onUpdate(b.id,{read:!b.read,readYear:!b.read?THIS_YEAR:null,readAt:!b.read?Date.now():null})} style={{ fontSize:'0.6rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',border:'1px solid',cursor:'pointer',flexShrink:0,...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.4)'}) }}>{b.read?'✓':'Unread'}</button>
+                </div>
+              ); })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── BookDetailModal ────────────────────────────────────────────────────────────
+function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: any; onClose: () => void; onUpdate: (id: any, patch: any) => void; onReread: (id: any) => void }) {
+  const [synopsis, setSynopsis] = useState('');
+  const [loadingSyn, setLoadingSyn] = useState(false);
+  const [tropes, setTropes] = useState<string[]>(book.tropes || []);
+  const [loadingTropes, setLoadingTropes] = useState(false);
+  const [newTrope, setNewTrope] = useState('');
+  const [note, setNote] = useState(book.note || '');
+  const [rating, setRating] = useState<number|null>(book.rating ?? null);
+  const [editingNote, setEditingNote] = useState(false);
+  const cfg = GENRE_CFG[book.genre] || GENRE_CFG['Fantasy'];
+  const rereads: number[] = book.rereads || [];
+  const inp: React.CSSProperties = { width:'100%',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.6rem',padding:'0.5rem 0.75rem',color:'white',fontSize:'0.85rem',boxSizing:'border-box' };
+
+  useEffect(()=>{
+    (async()=>{
+      setLoadingSyn(true);
+      try {
+        const res=await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(book.author)}&maxResults=1`);
+        const data=await res.json();
+        const desc=data.items?.[0]?.volumeInfo?.description;
+        if(desc) setSynopsis(desc.replace(/<[^>]*>/g,'').slice(0,600)+(desc.length>600?'…':''));
+        else setSynopsis('No synopsis available.');
+      } catch { setSynopsis('Could not load synopsis.'); }
+      setLoadingSyn(false);
+    })();
+  },[book.id]);
+
+  const fetchTropes=async()=>{
+    setLoadingTropes(true);
+    try {
+      const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:`List 5 common tropes for "${book.title}" by ${book.author}. Return ONLY a JSON array of short trope names (2-4 words each): ["trope1","trope2",...]`}]})});
+      const data=await res.json();
+      const text=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+      const parsed=JSON.parse(text);
+      if(Array.isArray(parsed)) setTropes([...new Set([...tropes,...parsed])]);
+    } catch {}
+    setLoadingTropes(false);
+  };
+
+  const saveNote=()=>{ onUpdate(book.id,{note,rating}); setEditingNote(false); };
+
+  return (
+    <div style={{ position:'fixed',inset:0,zIndex:60,display:'flex',alignItems:'flex-end',justifyContent:'center',background:'rgba(0,0,0,0.85)' }} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{ background:'#0d0a1c',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1.25rem 1.25rem 0 0',padding:'1.5rem',width:'100%',maxWidth:'600px',maxHeight:'90vh',overflowY:'auto' }}>
+        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'1rem' }}>
+          <div style={{ flex:1,minWidth:0,paddingRight:'1rem' }}>
+            <div style={{ fontSize:'1.05rem',fontWeight:'bold',color:'white',lineHeight:1.3,marginBottom:'0.25rem' }}>{book.title}</div>
+            <div style={{ fontSize:'0.8rem',color:cfg.accent+'cc',marginBottom:'0.2rem' }}>{book.author}</div>
+            {book.series&&<div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)' }}>{book.series}{book.sn!=null?` #${book.sn}`:''}</div>}
+          </div>
+          <button onClick={onClose} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'1.3rem',flexShrink:0 }}>✕</button>
+        </div>
+        <div style={{ display:'flex',gap:'0.4rem',flexWrap:'wrap',marginBottom:'1rem' }}>
+          <span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:cfg.dim,color:cfg.accent }}>{book.genre}</span>
+          {book.subgenre&&<span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.4)' }}>{book.subgenre}</span>}
+          {book.read&&<span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:'rgba(52,211,153,0.1)',color:'#34d399' }}>✓ Read {book.readYear||''}</span>}
+          {rereads.length>0&&<span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:'rgba(167,139,250,0.1)',color:'#a78bfa' }}>🔁 ×{rereads.length} re-read</span>}
+        </div>
+        <div style={{ display:'flex',alignItems:'center',gap:'0.75rem',marginBottom:'1rem' }}>
+          <StarRating rating={rating} onChange={r=>{ const nr=r===rating?null:r; setRating(nr); onUpdate(book.id,{rating:nr}); }} size="md"/>
+          {rating&&<span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)' }}>{rating}/5</span>}
+        </div>
+        <div style={{ marginBottom:'1rem' }}>
+          <div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.4)',marginBottom:'0.35rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em' }}>Synopsis</div>
+          {loadingSyn?(<div style={{ color:'rgba(255,255,255,0.2)',fontSize:'0.78rem' }}>Loading…</div>):(<div style={{ fontSize:'0.78rem',color:'rgba(255,255,255,0.6)',lineHeight:1.6 }}>{synopsis}</div>)}
+        </div>
+        <div style={{ marginBottom:'1rem' }}>
+          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.35rem' }}>
+            <div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em' }}>Tropes</div>
+            <button onClick={fetchTropes} disabled={loadingTropes} style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',border:'1px solid rgba(167,139,250,0.4)',background:'rgba(167,139,250,0.1)',color:'#a78bfa',cursor:'pointer' }}>{loadingTropes?'…':'✦ AI suggest'}</button>
+          </div>
+          <div style={{ display:'flex',gap:'0.35rem',flexWrap:'wrap',marginBottom:'0.4rem' }}>
+            {tropes.map((t,i)=>(<span key={i} style={{ display:'flex',alignItems:'center',gap:'0.25rem',fontSize:'0.68rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.6)',border:'1px solid rgba(255,255,255,0.1)' }}>{t}<span onClick={()=>{const nt=tropes.filter((_,j)=>j!==i);setTropes(nt);onUpdate(book.id,{tropes:nt});}} style={{ cursor:'pointer',color:'rgba(255,255,255,0.3)',fontSize:'0.7rem' }}>×</span></span>))}
+            {tropes.length===0&&<span style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.2)' }}>No tropes yet</span>}
+          </div>
+          <div style={{ display:'flex',gap:'0.4rem' }}>
+            <input value={newTrope} onChange={e=>setNewTrope(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newTrope.trim()){const nt=[...tropes,newTrope.trim()];setTropes(nt);onUpdate(book.id,{tropes:nt});setNewTrope('');}}} placeholder="Add a trope…" style={{...inp,fontSize:'0.78rem',padding:'0.35rem 0.65rem'}}/>
+            <button onClick={()=>{if(newTrope.trim()){const nt=[...tropes,newTrope.trim()];setTropes(nt);onUpdate(book.id,{tropes:nt});setNewTrope('');}}} style={{ background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.1)',color:'white',borderRadius:'0.5rem',padding:'0.35rem 0.65rem',cursor:'pointer',fontSize:'0.78rem' }}>+</button>
+          </div>
+        </div>
+        <div style={{ marginBottom:'1rem' }}>
+          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.35rem' }}>
+            <div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em' }}>Your Review</div>
+            {!editingNote&&<button onClick={()=>setEditingNote(true)} style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>✎ Edit</button>}
+          </div>
+          {editingNote?(
+            <div>
+              <textarea value={note} onChange={e=>setNote(e.target.value)} rows={3} style={{...inp,resize:'vertical',lineHeight:1.5,marginBottom:'0.4rem'}}/>
+              <div style={{ display:'flex',gap:'0.5rem' }}>
+                <button onClick={saveNote} style={{ background:'#6d28d9',color:'white',border:'none',borderRadius:'0.5rem',padding:'0.35rem 0.75rem',cursor:'pointer',fontSize:'0.78rem' }}>Save</button>
+                <button onClick={()=>{setEditingNote(false);setNote(book.note||'');}} style={{ background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.4)',border:'none',borderRadius:'0.5rem',padding:'0.35rem 0.75rem',cursor:'pointer',fontSize:'0.78rem' }}>Cancel</button>
+              </div>
+            </div>
+          ):note?(<div style={{ fontSize:'0.78rem',color:'rgba(255,255,255,0.55)',fontStyle:'italic',lineHeight:1.6,background:'rgba(255,255,255,0.03)',borderRadius:'0.5rem',padding:'0.6rem 0.75rem' }}>"{note}"</div>):(<div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.2)',cursor:'pointer' }} onClick={()=>setEditingNote(true)}>Tap to add a review…</div>)}
+        </div>
+        {(book.read||rereads.length>0)&&(
+          <div style={{ marginBottom:'1rem' }}>
+            <div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:'0.35rem' }}>Reading History</div>
+            <div style={{ display:'flex',gap:'0.35rem',flexWrap:'wrap' }}>
+              {book.read&&<span style={{ fontSize:'0.68rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',background:'rgba(52,211,153,0.1)',color:'#34d399',border:'1px solid rgba(52,211,153,0.2)' }}>Read {book.readYear||'(year unknown)'}</span>}
+              {rereads.map((yr,i)=>(<span key={i} style={{ fontSize:'0.68rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',background:'rgba(167,139,250,0.1)',color:'#a78bfa',border:'1px solid rgba(167,139,250,0.2)' }}>🔁 Re-read {yr}</span>))}
+            </div>
+          </div>
+        )}
+        <div style={{ display:'flex',gap:'0.5rem',flexWrap:'wrap' }}>
+          {book.read&&(<button onClick={()=>onReread(book.id)} style={{ flex:1,minWidth:'120px',background:'rgba(167,139,250,0.1)',color:'#a78bfa',border:'1px solid rgba(167,139,250,0.3)',borderRadius:'0.75rem',padding:'0.55rem',fontWeight:600,cursor:'pointer',fontSize:'0.78rem' }}>🔁 Re-read in {THIS_YEAR}</button>)}
+          <button onClick={()=>{onUpdate(book.id,{read:!book.read,readYear:!book.read?THIS_YEAR:null,readAt:!book.read?Date.now():null});onClose();}} style={{ flex:1,minWidth:'120px',background:book.read?'rgba(239,68,68,0.1)':'rgba(52,211,153,0.1)',color:book.read?'#f87171':'#34d399',border:`1px solid ${book.read?'rgba(239,68,68,0.3)':'rgba(52,211,153,0.3)'}`,borderRadius:'0.75rem',padding:'0.55rem',fontWeight:600,cursor:'pointer',fontSize:'0.78rem' }}>{book.read?'Mark Unread':'✓ Mark Read'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── GoalSetModal ──────────────────────────────────────────────────────────────
 function GoalSetModal({ goals, onSave, onClose }: { goals: any; onSave: (g: any) => void; onClose: () => void }) {
   const [y,setY] = useState(goals.yearly||'');
@@ -927,7 +1325,7 @@ function GoalSetModal({ goals, onSave, onClose }: { goals: any; onSave: (g: any)
 }
 
 // ── HomeTab ───────────────────────────────────────────────────────────────────
-function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals: any; onEditGoals: () => void; userName: string }) {
+function HomeTab({ books, goals, onEditGoals, userName, onBookDetail, onUpdate }: { books: any[]; goals: any; onEditGoals: () => void; userName: string; onBookDetail: (b: any) => void; onUpdate: (id: any, patch: any) => void }) {
   const now = new Date();
   const readAll = books.filter(b => b.read);
   const tbrCount = books.filter(b => b.status==='tbr').length;
@@ -940,18 +1338,25 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
   const readPct = books.length ? Math.round((readAll.length/books.length)*100) : 0;
   const unreadPct = 100-readPct;
 
+  const [yearModal, setYearModal] = useState<number|null>(null);
+  const [seriesModal, setSeriesModal] = useState<string|null>(null);
+  const [authorModal, setAuthorModal] = useState<string|null>(null);
+
   const genreData = useMemo(()=>{ const c: Record<string,number>={}; readAll.forEach(b=>{c[b.genre]=(c[b.genre]||0)+1;}); return Object.entries(c).map(([g,n])=>({genre:g,count:n,color:GENRE_CFG[g]?.accent||'#a78bfa'})).sort((a,b)=>b.count-a.count); },[readAll]);
   const authorData = useMemo(()=>{ const c: Record<string,number>={}; readAll.forEach(b=>{c[b.author]=(c[b.author]||0)+1;}); return Object.entries(c).map(([a,n])=>({author:a,count:n})).sort((a,b)=>b.count-a.count).slice(0,8); },[readAll]);
 
-  // Year-by-year history
+  // Year-by-year history — includes rereads
   const yearData = useMemo(()=>{
     const c: Record<number,number> = {};
-    readAll.forEach(b => {
-      const y = b.readYear || (b.readAt ? new Date(b.readAt).getFullYear() : null);
-      if (y) c[y] = (c[y]||0)+1;
+    books.forEach(b => {
+      if (b.read) {
+        const y = b.readYear || (b.readAt ? new Date(b.readAt).getFullYear() : null);
+        if (y) c[y] = (c[y]||0)+1;
+      }
+      (b.rereads||[]).forEach((ry: number) => { c[ry] = (c[ry]||0)+1; });
     });
     return Object.entries(c).map(([y,n])=>({year:Number(y),count:n})).sort((a,b)=>a.year-b.year);
-  },[readAll]);
+  },[books]);
 
   // Series completion
   const seriesData = useMemo(()=>{
@@ -995,6 +1400,10 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
 
   return (
     <div style={{ padding:'1rem',maxWidth:'960px',margin:'0 auto' }}>
+      {/* Modals */}
+      {yearModal!==null&&<YearBooksModal year={yearModal} books={books} onClose={()=>setYearModal(null)} onBookClick={b=>{setYearModal(null);onBookDetail(b);}}/>}
+      {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onUpdate={onUpdate} onBookDetail={b=>{setSeriesModal(null);onBookDetail(b);}}/>}
+      {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onUpdate={onUpdate} onBookDetail={b=>{setAuthorModal(null);onBookDetail(b);}}/>}
       {/* Hero */}
       <div style={{ ...card,display:'flex',justifyContent:'space-between',alignItems:'center',borderColor:'rgba(167,139,250,0.18)',marginBottom:'0.75rem' }}>
         <div>
@@ -1037,6 +1446,9 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
           </div>
         ))}
       </div>
+
+      {/* Bookshelf Visual */}
+      <BookshelfVisual books={books}/>
 
       {/* Currently Reading */}
       {currentlyReading.length>0&&(
@@ -1140,15 +1552,18 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
         )}
       </div>
 
-      {/* Year-by-year reading history */}
+      {/* Pace Gauge */}
+      {goals.yearly>0&&<PaceGauge read={goalCount} goal={goals.yearly} year={THIS_YEAR}/>}
+
+      {/* Year-by-year reading history — clickable */}
       {yearData.length > 0 && (
         <div style={{ ...card, marginBottom:'0.75rem' }}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.75rem' }}>📅 Reading History by Year</div>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.75rem' }}>📅 Reading History by Year <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to see books)</span></div>
           <div style={{ display:'flex',alignItems:'flex-end',gap:'0.5rem',height:'80px' }}>
             {yearData.map(({year,count})=>(
-              <div key={year} style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.3rem' }}>
+              <div key={year} style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.3rem',cursor:'pointer' }} onClick={()=>setYearModal(year)}>
                 <span style={{ fontSize:'0.6rem',color:'#a78bfa',fontWeight:600 }}>{count}</span>
-                <div style={{ width:'100%',background:'linear-gradient(to top,#7c3aed,#a78bfa)',borderRadius:'3px 3px 0 0',height:`${(count/maxYear)*60}px`,minHeight:'4px',transition:'height 0.5s' }}/>
+                <div style={{ width:'100%',background:'linear-gradient(to top,#7c3aed,#a78bfa)',borderRadius:'3px 3px 0 0',height:`${(count/maxYear)*60}px`,minHeight:'4px',transition:'height 0.5s' }} onMouseEnter={e=>(e.currentTarget.style.opacity='0.7')} onMouseLeave={e=>(e.currentTarget.style.opacity='1')}/>
                 <span style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.3)' }}>{year}</span>
               </div>
             ))}
@@ -1156,13 +1571,13 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
         </div>
       )}
 
-      {/* Series Completion */}
+      {/* Series Completion — clickable */}
       {seriesData.length > 0 && (
         <div style={{ ...card, marginBottom:'0.75rem' }}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📚 Series Progress</div>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📚 Series Progress <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to explore)</span></div>
           <div style={{ display:'flex',flexDirection:'column',gap:'0.5rem' }}>
             {seriesData.map(({name,owned,read,pct})=>(
-              <div key={name}>
+              <div key={name} style={{ cursor:'pointer' }} onClick={()=>setSeriesModal(name)}>
                 <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
                   <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'70%' }}>{name}</span>
                   <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{read}/{owned} · {pct}%</span>
@@ -1176,13 +1591,15 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
         </div>
       )}
 
-      {/* Author Collection Completeness */}
+      {/* Author Collection Completeness — clickable */}
       {authorOwned.length > 0 && (
         <div style={{ ...card, marginBottom:'0.75rem' }}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>✍️ Author Collections</div>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>✍️ Author Collections <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to explore)</span></div>
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem' }}>
             {authorOwned.map(({author,owned,read,pct})=>(
-              <div key={author} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)' }}>
+              <div key={author} onClick={()=>setAuthorModal(author)} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer' }}
+                onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}
+                onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
                 <div style={{ fontSize:'0.7rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'0.2rem' }}>{author}</div>
                 <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.35)',marginBottom:'0.3rem' }}>{read} of {owned} read</div>
                 <div style={{ height:'4px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
@@ -1194,13 +1611,13 @@ function HomeTab({ books, goals, onEditGoals, userName }: { books: any[]; goals:
         </div>
       )}
 
-      {/* Top Authors */}
+      {/* Top Authors — clickable */}
       {authorData.length>0&&(
         <div style={card}>
           <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Authors</div>
           <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
             {authorData.map(({author,count})=>(
-              <div key={author} style={{ marginBottom:'0.35rem' }}>
+              <div key={author} style={{ marginBottom:'0.35rem',cursor:'pointer' }} onClick={()=>setAuthorModal(author)}>
                 <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
                   <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.65)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'75%' }}>{author}</span>
                   <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{count} {count===1?'book':'books'}</span>
@@ -1305,7 +1722,7 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   const [shelfGenre, setShelfGenre] = useState('Romance');
   const [shelfStatus, setShelfStatus] = useState(tab==='home'?'shelf':tab);
   const [shelfRead, setShelfRead] = useState(false);
-  const blank = { title:'',author:'',category:'Fiction',genre:'Fantasy',subgenre:'Romantasy',series:'',sn:'',read:false,status:tab==='home'?'shelf':tab,readAt:null,readYear:null,rating:null,note:'' };
+  const blank = { title:'',author:'',category:'Fiction',genre:'Fantasy',subgenre:'Romantasy',series:'',sn:'',read:false,status:tab==='home'?'shelf':tab,readAt:null,readYear:null,rating:null,note:'',rereads:[] };
   const [f, setF] = useState(book ? {...book,sn:book.sn??'',series:book.series??'',rating:book.rating??null,note:book.note??''} : blank);
   const [identifying, setId] = useState(false);
   const [idMsg, setIdMsg] = useState('');
@@ -1329,19 +1746,15 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
   const searchGoogleBooks = async (query: string) => {
     if (query.length < 3) { setSuggestions([]); setShowSug(false); return; }
     try {
-      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8&printType=books&orderBy=relevance&langRestrict=en`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=8&printType=books&orderBy=relevance`);
       const data = await res.json();
       const items = (data.items || [])
-        .map((item: any) => {
-          const v = item.volumeInfo;
-          return { title: v.title||'', author: (v.authors||[]).join(', '), cover: v.imageLinks?.smallThumbnail||'' };
-        })
-        .filter((b: any) => b.title)
+        .map((item: any) => { const v = item.volumeInfo; return { title: v.title||'', author: (v.authors||[]).join(', '), cover: v.imageLinks?.smallThumbnail||'' }; })
+        .filter((b: any) => b.title && b.title.toLowerCase().includes(query.toLowerCase()))
         .slice(0, 5);
       setSuggestions(items);
       if (items.length > 0) { updateDropdownPos(); setShowSug(true); } else setShowSug(false);
-    } catch(e) { console.error('Books API error:', e); setSuggestions([]); setShowSug(false); }
+    } catch { setSuggestions([]); }
   };
 
   const handleTitleChange = (val: string) => {
@@ -1748,6 +2161,7 @@ export default function App() {
   const [pendingRead, setPendingRead] = useState<{id:any;year:string}|null>(null);
   const [randomPick,  setRandomPick]  = useState<any>(null);
   const [shareToast,  setShareToast]  = useState('');
+  const [detailBook,  setDetailBook]  = useState<any>(null);
 
   useEffect(()=>{
     (async()=>{
@@ -1761,14 +2175,14 @@ export default function App() {
               const snap=await _getDoc(_doc(_db,'users',u.uid));
               if(snap.exists()){
                 const data=snap.data();
-                const cloudBooks=(data.books||[]).map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null,rating:b.rating??null,note:b.note??''}));
+                const cloudBooks=migrateBooks(data.books||[]);
                 const ids=new Set(cloudBooks.map((b:any)=>b.id));
                 setBooks([...cloudBooks,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);
                 if(data.goals) setGoals(data.goals);
               } else {
                 let local=null;
                 try{const raw=localStorage.getItem(STORAGE_KEY);if(raw) local=JSON.parse(raw);}catch{}
-                const base=local?local.map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null,rating:b.rating??null,note:b.note??''})):ALL_BOOKS;
+                const base=local?migrateBooks(local):ALL_BOOKS;
                 const ids=new Set(base.map((b:any)=>b.id));
                 const merged=[...base,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))];
                 setBooks(merged);
@@ -1782,7 +2196,7 @@ export default function App() {
           } else {
             try{
               const raw=localStorage.getItem(STORAGE_KEY);
-              if(raw){const s=JSON.parse(raw).map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null,rating:b.rating??null,note:b.note??''}));const ids=new Set(s.map((b:any)=>b.id));setBooks([...s,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
+              if(raw){const s=migrateBooks(JSON.parse(raw));const ids=new Set(s.map((b:any)=>b.id));setBooks([...s,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
               else setBooks(ALL_BOOKS);
             }catch{setBooks(ALL_BOOKS);}
             try{const g=localStorage.getItem(GOALS_KEY);if(g) setGoals(JSON.parse(g));}catch{}
@@ -1792,10 +2206,10 @@ export default function App() {
         return()=>unsub();
       } else {
         try{
-          const keys=[STORAGE_KEY,'myshelf-v5','myshelf-v4','myshelf-v3','myshelf-v2','myshelf-v1'];
+          const keys=[STORAGE_KEY,'myshelf-v6','myshelf-v5','myshelf-v4','myshelf-v3','myshelf-v2','myshelf-v1'];
           let stored=null;
           for(const k of keys){try{const raw=localStorage.getItem(k);if(raw){stored=JSON.parse(raw);break;}}catch{}}
-          if(stored){const migrated=stored.map((b:any)=>({...b,status:b.status||'shelf',readAt:b.readAt||null,readYear:b.readYear||null,rating:b.rating??null,note:b.note??''}));const ids=new Set(migrated.map((b:any)=>b.id));setBooks([...migrated,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
+          if(stored){const migrated=migrateBooks(stored);const ids=new Set(migrated.map((b:any)=>b.id));setBooks([...migrated,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
           else setBooks(ALL_BOOKS);
           try{const g=localStorage.getItem(GOALS_KEY);if(g) setGoals(JSON.parse(g));}catch{}
         }catch{setBooks(ALL_BOOKS);}
@@ -1822,7 +2236,15 @@ export default function App() {
     const extra:any={};
     if(patch.read===true && patch.readYear==null){ extra.readAt=Date.now(); extra.readYear=THIS_YEAR; }
     if(patch.read===false){ extra.readAt=null; extra.readYear=null; }
-    persist(books.map(b=>b.id===id?{...b,...patch,...extra}:b));
+    const updated = books.map(b=>b.id===id?{...b,...patch,...extra}:b);
+    persist(updated);
+    if(detailBook?.id===id) setDetailBook((prev:any)=>({...prev,...patch,...extra}));
+  };
+
+  const handleReread=(id:any)=>{
+    const book=books.find(b=>b.id===id); if(!book) return;
+    const rr:number[]=book.rereads||[];
+    if(!rr.includes(THIS_YEAR)) update(id,{rereads:[...rr,THIS_YEAR]});
   };
 
   const tabBooks=useMemo(()=>{
@@ -1836,13 +2258,9 @@ export default function App() {
   const allSeries=useMemo(()=>[...new Set(books.map((b:any)=>b.series).filter(Boolean))].sort() as string[],[books]);
 
   const filtered=useMemo(()=>{
-    const q=search.toLowerCase().trim();
-    const qWords=q.split(/\s+/).filter(Boolean);
+    const q=search.toLowerCase();
     const base = tabBooks.filter((b:any)=>{
-      if(qWords.length>0){
-        const haystack=`${b.title} ${b.author} ${b.series||''} ${b.subgenre||''}`.toLowerCase();
-        if(!qWords.every(w=>haystack.includes(w))) return false;
-      }
+      if(q&&!b.title.toLowerCase().includes(q)&&!b.author.toLowerCase().includes(q)&&!(b.series||'').toLowerCase().includes(q)) return false;
       if(fGenre!=='All'&&b.genre!==fGenre) return false;
       if(fSub!=='All'&&b.subgenre!==fSub) return false;
       if(tab==='shelf'&&fRead!=='All'&&(fRead==='Read')!==b.read) return false;
@@ -1850,20 +2268,7 @@ export default function App() {
       return true;
     });
     return [...base].sort((a:any,b:any)=>{
-      if(sortBy==='author') {
-        const authCmp = a.author.localeCompare(b.author);
-        if(authCmp !== 0) return authCmp;
-        // Same author: series books sorted by series name then number; standalones by title
-        const sa = a.series || '';
-        const sb = b.series || '';
-        if(sa && sb) {
-          if(sa !== sb) return sa.localeCompare(sb);
-          return (a.sn ?? 999) - (b.sn ?? 999);
-        }
-        if(sa) return -1; // series books before standalones
-        if(sb) return 1;
-        return a.title.localeCompare(b.title); // both standalones → A–Z title
-      };
+      if(sortBy==='author') return a.author.localeCompare(b.author);
       if(sortBy==='dateAdded') return (b.readAt||b.id||0)-(a.readAt||a.id||0);
       if(sortBy==='series') {
         const sa=a.series||''; const sb=b.series||'';
@@ -1940,6 +2345,9 @@ export default function App() {
           🔗 {shareToast}
         </div>
       )}
+
+      {/* Book Detail Modal */}
+      {detailBook&&<BookDetailModal book={detailBook} onClose={()=>setDetailBook(null)} onUpdate={update} onReread={handleReread}/>}
 
       {/* STICKY HEADER */}
       <div style={{ background:'#0d0a1c',borderBottom:'1px solid rgba(255,255,255,0.07)',position:'sticky',top:0,zIndex:40,width:'100%' }}>
@@ -2021,7 +2429,7 @@ export default function App() {
         </div>
       </div>
 
-      {tab==='home'&&<HomeTab books={books} goals={goals} onEditGoals={()=>setGoalModal(true)} userName="Elle"/>}
+      {tab==='home'&&<HomeTab books={books} goals={goals} onEditGoals={()=>setGoalModal(true)} userName="Elle" onBookDetail={setDetailBook} onUpdate={update}/>}
 
       {tab!=='home'&&(
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
@@ -2088,12 +2496,15 @@ export default function App() {
                       </>
                     )}
 
-                    <div style={{ fontWeight:'bold',color:'white',fontSize:'0.875rem',lineHeight:'1.3',paddingRight:'3.5rem',marginBottom:'0.2rem' }}>{b.title}</div>
+                    <div onClick={()=>setDetailBook(b)} style={{ fontWeight:'bold',color:'white',fontSize:'0.875rem',lineHeight:'1.3',paddingRight:'3.5rem',marginBottom:'0.2rem',cursor:'pointer' }}>{b.title}</div>
                     <div style={{ fontSize:'0.75rem',color:isWishlist?'#f472b6bb':cfg.accent+'bb',marginBottom:'0.2rem' }}>{b.author}</div>
                     {b.series&&<div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.28)' }}>{b.series}{b.sn!=null?` #${b.sn}`:''}</div>}
 
                     {/* Rating display */}
                     {b.rating && <div style={{ marginTop:'0.3rem' }}><StarRating rating={b.rating} size="sm"/></div>}
+
+                    {/* Rereads badge */}
+                    {(b.rereads||[]).length > 0 && <div style={{ fontSize:'0.6rem',color:'#a78bfa',marginTop:'0.2rem' }}>🔁 ×{b.rereads.length} re-read</div>}
 
                     {/* Note snippet */}
                     {b.note && <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',marginTop:'0.3rem',fontStyle:'italic',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>"{b.note}"</div>}
@@ -2104,6 +2515,7 @@ export default function App() {
                         {b.subgenre&&<span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.22)' }}>{b.subgenre}</span>}
                       </div>
                       <div style={{ display:'flex',gap:'0.4rem' }}>
+                        <button onClick={()=>setDetailBook(b)} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.25)',cursor:'pointer',fontSize:'0.9rem' }}>📖</button>
                         <button onClick={()=>setEditBook(b)} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.25)',cursor:'pointer',fontSize:'0.9rem' }}>✎</button>
                         <button onClick={()=>setDelId(b.id)} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.25)',cursor:'pointer',fontSize:'0.9rem' }}>✕</button>
                       </div>
