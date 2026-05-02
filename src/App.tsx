@@ -1036,44 +1036,119 @@ function PaceGauge({ read, goal, year }: { read: number; goal: number; year: num
 function BookshelfVisual({ books }: { books: any[] }) {
   const total = books.length;
   const readCount = books.filter(b => b.read).length;
-  const pct = total ? Math.round((readCount/total)*100) : 0;
+  const pct = total ? Math.round((readCount / total) * 100) : 0;
+
   const spines = useMemo(() => {
-    const arr = [...books];
-    // stable order by id
-    arr.sort((a,b) => a.id - b.id);
+    const arr = [...books].sort((a, b) => a.id - b.id);
     return arr.map(b => ({
       read: b.read,
-      height: 48 + (b.id % 28),
-      width: 10 + (b.id % 8),
+      h: 52 + (b.id % 28),
+      w: 11 + (b.id % 9),
       color: GENRE_CFG[b.genre]?.accent || '#a78bfa',
     }));
   }, [books.length, readCount]);
-  const SHELF_H = 90;
+
+  const third = Math.ceil(spines.length / 3);
+  const rows = [
+    spines.slice(0, third),
+    spines.slice(third, third * 2),
+    spines.slice(third * 2),
+  ];
+
+  const SHELF_H = 88;
   const SPINE_GAP = 2;
-  const totalW = spines.reduce((s,sp) => s + sp.width + SPINE_GAP, 0);
+
+  const renderRow = (rowSpines: typeof spines) => {
+    const els: JSX.Element[] = [];
+    let x = 0;
+    let i = 0;
+    while (i < rowSpines.length) {
+      if (i % 9 === 8 && i + 2 < rowSpines.length) {
+        // Horizontal stack of 3
+        const stackW = Math.max(...rowSpines.slice(i, i + 3).map(s => s.h - 14));
+        const stackEls = rowSpines.slice(i, i + 3).map((s, j) => (
+          <rect
+            key={`h${i}_${j}`}
+            x={x}
+            y={SHELF_H - (j + 1) * (s.w) - j}
+            width={s.h - 14}
+            height={Math.round(s.w * 0.85)}
+            fill={s.read ? s.color : s.color + '35'}
+            rx={1}
+          />
+        ));
+        els.push(...stackEls);
+        x += stackW + SPINE_GAP + 2;
+        i += 3;
+      } else {
+        const s = rowSpines[i];
+        const tilt = (i % 13 === 12) ? (i % 26 === 12 ? 5 : -5) : 0;
+        els.push(
+          <g key={`s${i}`} transform={tilt !== 0 ? `rotate(${tilt}, ${x + s.w / 2}, ${SHELF_H})` : undefined}>
+            <rect
+              x={x}
+              y={SHELF_H - s.h}
+              width={s.w}
+              height={s.h}
+              fill={s.read ? s.color : s.color + '35'}
+              rx={1}
+            />
+            <rect
+              x={x}
+              y={SHELF_H - s.h}
+              width={s.w}
+              height={2}
+              fill={s.read ? s.color + 'bb' : s.color + '15'}
+              rx={1}
+            />
+          </g>
+        );
+        x += s.w + SPINE_GAP;
+        i++;
+      }
+    }
+    return { els, totalW: x };
+  };
+
+  const rowData = rows.map(r => renderRow(r));
+  const maxW = Math.max(...rowData.map(r => r.totalW), 300);
+
   return (
-    <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-      <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.65rem' }}>
-        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>📚 Your Library</div>
-        <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>{pct}% read</div>
+    <div style={{ background:'#0e0b1e', borderRadius:'0.875rem', border:'1px solid rgba(255,255,255,0.07)', padding:'1rem', marginBottom:'0.75rem' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.65rem' }}>
+        <div style={{ fontSize:'0.78rem', fontWeight:'600', color:'white' }}>📚 Your Library</div>
+        <div style={{ fontSize:'0.65rem', color:'rgba(255,255,255,0.3)' }}>{pct}% read</div>
       </div>
-      <div style={{ overflowX:'auto',overflowY:'hidden',paddingBottom:'4px' }}>
-        <svg width={Math.max(totalW,300)} height={SHELF_H+8} style={{ display:'block' }}>
-          <rect x={0} y={SHELF_H} width={Math.max(totalW,300)} height={6} fill="rgba(255,255,255,0.08)" rx={2}/>
-          {(() => { let x=0; return spines.map((sp,i) => { const el=(<rect key={i} x={x} y={SHELF_H-sp.height} width={sp.width} height={sp.height} fill={sp.read?sp.color:sp.color+'28'} rx={1}/>); x+=sp.width+SPINE_GAP; return el; }); })()}
-        </svg>
+
+      <div style={{ overflowX:'auto', paddingBottom:'4px' }}>
+        {rowData.map((row, ri) => (
+          <div key={ri}>
+            <svg width={maxW} height={SHELF_H + 8} style={{ display:'block' }}>
+              <rect x={0} y={SHELF_H} width={maxW} height={6} fill="#5a3e2b" rx={2}/>
+              <rect x={0} y={SHELF_H + 6} width={maxW} height={2} fill="#3d2a1c" rx={1}/>
+              {row.els}
+            </svg>
+            {ri < rowData.length - 1 && <div style={{ height:'8px' }}/>}
+          </div>
+        ))}
       </div>
-      <div style={{ display:'flex',gap:'0.5rem',flexWrap:'wrap',marginTop:'0.4rem' }}>
-        {Object.entries(GENRE_CFG).map(([g,cfg])=>(<span key={g} style={{ display:'flex',alignItems:'center',gap:'0.25rem',fontSize:'0.6rem',color:'rgba(255,255,255,0.4)' }}><span style={{ display:'inline-block',width:'8px',height:'8px',borderRadius:'2px',background:cfg.accent }}/>{g}</span>))}
+
+      <div style={{ display:'flex', gap:'0.5rem', flexWrap:'wrap', marginTop:'0.5rem' }}>
+        {Object.entries(GENRE_CFG).map(([g, cfg]) => (
+          <span key={g} style={{ display:'flex', alignItems:'center', gap:'0.25rem', fontSize:'0.6rem', color:'rgba(255,255,255,0.4)' }}>
+            <span style={{ display:'inline-block', width:'8px', height:'8px', borderRadius:'2px', background:cfg.accent }}/>
+            {g}
+          </span>
+        ))}
       </div>
-      <div style={{ display:'flex',gap:'1.5rem',marginTop:'0.4rem' }}>
-        <span style={{ fontSize:'0.72rem',color:'white',fontWeight:700 }}>{total} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>total</span></span>
-        <span style={{ fontSize:'0.72rem',color:'#4ade80',fontWeight:700 }}>{readCount} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>read</span></span>
+
+      <div style={{ display:'flex', gap:'1.5rem', marginTop:'0.4rem' }}>
+        <span style={{ fontSize:'0.72rem', color:'white', fontWeight:700 }}>{total} <span style={{ color:'rgba(255,255,255,0.3)', fontWeight:400 }}>total</span></span>
+        <span style={{ fontSize:'0.72rem', color:'#4ade80', fontWeight:700 }}>{readCount} <span style={{ color:'rgba(255,255,255,0.3)', fontWeight:400 }}>read</span></span>
       </div>
     </div>
   );
 }
-
 // ── YearBooksModal ─────────────────────────────────────────────────────────────
 function YearBooksModal({ year, books, onClose, onBookClick }: { year: number; books: any[]; onClose: () => void; onBookClick: (b: any) => void }) {
   const yearBooks = books.filter(b => {
