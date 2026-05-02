@@ -1043,8 +1043,8 @@ function BookshelfVisual({ books }: { books: any[] }) {
     const arr = [...books].sort((a, b) => a.id - b.id);
     return arr.map(b => ({
       read: b.read,
-      h: 52 + (b.id % 28),
-      w: 11 + (b.id % 9),
+      h: 44 + (b.id % 22),
+      w: 9 + (b.id % 7),
       color: GENRE_CFG[b.genre]?.accent || '#a78bfa',
     }));
   }, [books.length, readCount]);
@@ -1056,7 +1056,7 @@ function BookshelfVisual({ books }: { books: any[] }) {
     spines.slice(third * 2),
   ];
 
-  const SHELF_H = 88;
+  const SHELF_H = 80;
   const SPINE_GAP = 2;
 
   const renderRow = (rowSpines: typeof spines) => {
@@ -1065,45 +1065,44 @@ function BookshelfVisual({ books }: { books: any[] }) {
     let i = 0;
     while (i < rowSpines.length) {
       if (i % 9 === 8 && i + 2 < rowSpines.length) {
-        // Horizontal stack of 3
-        const stackW = Math.max(...rowSpines.slice(i, i + 3).map(s => s.h - 14));
-        const stackEls = rowSpines.slice(i, i + 3).map((s, j) => (
-          <rect
-            key={`h${i}_${j}`}
-            x={x}
-            y={SHELF_H - (j + 1) * (s.w) - j}
-            width={s.h - 14}
-            height={Math.round(s.w * 0.85)}
-            fill={s.read ? s.color : s.color + '35'}
-            rx={1}
-          />
-        ));
-        els.push(...stackEls);
+        const s0 = rowSpines[i];
+        const s1 = rowSpines[i + 1];
+        const s2 = rowSpines[i + 2];
+        const stackW = Math.max(s0.h - 14, s1.h - 14, s2.h - 14);
+        const h0 = Math.round(s0.w * 0.85);
+        const h1 = Math.round(s1.w * 0.85);
+        const h2 = Math.round(s2.w * 0.85);
+        const totalStackH = h0 + h1 + h2 + 2;
+        const stackY = SHELF_H - totalStackH;
+        els.push(
+          <g key={`stack${i}`}>
+            <rect x={x} y={stackY}            width={s0.h - 14} height={h0} fill={s0.read ? s0.color : s0.color + '35'} rx={1}/>
+            <rect x={x} y={stackY + h0 + 1}   width={s1.h - 14} height={h1} fill={s1.read ? s1.color : s1.color + '35'} rx={1}/>
+            <rect x={x} y={stackY + h0 + h1 + 2} width={s2.h - 14} height={h2} fill={s2.read ? s2.color : s2.color + '35'} rx={1}/>
+          </g>
+        );
         x += stackW + SPINE_GAP + 2;
         i += 3;
       } else {
         const s = rowSpines[i];
         const tilt = (i % 13 === 12) ? (i % 26 === 12 ? 5 : -5) : 0;
-        els.push(
-          <g key={`s${i}`} transform={tilt !== 0 ? `rotate(${tilt}, ${x + s.w / 2}, ${SHELF_H})` : undefined}>
+        const spineEl = (
+          <g key={`sp${i}`} transform={tilt !== 0 ? `rotate(${tilt}, ${x + s.w / 2}, ${SHELF_H})` : undefined}>
             <rect
-              x={x}
-              y={SHELF_H - s.h}
-              width={s.w}
-              height={s.h}
-              fill={s.read ? s.color : s.color + '35'}
+              x={x} y={SHELF_H - s.h}
+              width={s.w} height={s.h}
+              fill={s.read ? s.color : s.color + '30'}
               rx={1}
             />
             <rect
-              x={x}
-              y={SHELF_H - s.h}
-              width={s.w}
-              height={2}
-              fill={s.read ? s.color + 'bb' : s.color + '15'}
+              x={x} y={SHELF_H - s.h}
+              width={s.w} height={2}
+              fill={s.read ? s.color + 'cc' : s.color + '18'}
               rx={1}
             />
           </g>
         );
+        els.push(spineEl);
         x += s.w + SPINE_GAP;
         i++;
       }
@@ -1124,17 +1123,25 @@ function BookshelfVisual({ books }: { books: any[] }) {
       <div style={{ overflowX:'auto', paddingBottom:'4px' }}>
         {rowData.map((row, ri) => (
           <div key={ri}>
-            <svg width={maxW} height={SHELF_H + 8} style={{ display:'block' }}>
-              <rect x={0} y={SHELF_H} width={maxW} height={6} fill="#5a3e2b" rx={2}/>
-              <rect x={0} y={SHELF_H + 6} width={maxW} height={2} fill="#3d2a1c" rx={1}/>
+            <svg
+              width={maxW}
+              height={SHELF_H + 8}
+              style={{ display:'block', borderRadius: ri === 0 ? '4px 4px 0 0' : '0' }}
+            >
+              {/* Dark shelf wall background */}
+              <rect x={0} y={0} width={maxW} height={SHELF_H} fill="#120d20" rx={ri === 0 ? 4 : 0}/>
+              {/* Books */}
               {row.els}
+              {/* Shelf plank */}
+              <rect x={0} y={SHELF_H} width={maxW} height={6} fill="#5a3e2b"/>
+              <rect x={0} y={SHELF_H + 6} width={maxW} height={2} fill="#3d2a1c"/>
             </svg>
-            {ri < rowData.length - 1 && <div style={{ height:'8px' }}/>}
+            {ri < rowData.length - 1 && <div style={{ height:'6px', background:'#0e0b1e' }}/>}
           </div>
         ))}
       </div>
 
-      <div style={{ display:'flex', gap:'0.5rem', flexWrap:'wrap', marginTop:'0.5rem' }}>
+      <div style={{ display:'flex', gap:'0.5rem', flexWrap:'wrap', marginTop:'0.6rem' }}>
         {Object.entries(GENRE_CFG).map(([g, cfg]) => (
           <span key={g} style={{ display:'flex', alignItems:'center', gap:'0.25rem', fontSize:'0.6rem', color:'rgba(255,255,255,0.4)' }}>
             <span style={{ display:'inline-block', width:'8px', height:'8px', borderRadius:'2px', background:cfg.accent }}/>
@@ -1150,6 +1157,7 @@ function BookshelfVisual({ books }: { books: any[] }) {
     </div>
   );
 }
+
 // ── YearBooksModal ─────────────────────────────────────────────────────────────
 function YearBooksModal({ year, books, onClose, onBookClick }: { year: number; books: any[]; onClose: () => void; onBookClick: (b: any) => void }) {
   const yearBooks = books.filter(b => {
@@ -1646,6 +1654,10 @@ function HomeTab({ books, goals, onEditGoals, userName, onBookDetail, onUpdate }
           </div>
         </div>
       )}
+
+    </div>
+  );
+}
 
 // ── SharePage ─────────────────────────────────────────────────────────────────
 function SharePage({ uid }: { uid: string }) {
@@ -2259,6 +2271,43 @@ export default function App() {
     const rr:number[]=book.rereads||[];
     if(!rr.includes(THIS_YEAR)) update(id,{rereads:[...rr,THIS_YEAR]});
   };
+  const readAll_app = books.filter(b => b.read);
+
+  const seriesData = useMemo(()=>{
+    const seriesMap: Record<string,{owned:number,read:number}> = {};
+    books.forEach(b => {
+      if (!b.series) return;
+      if (!seriesMap[b.series]) seriesMap[b.series] = {owned:0,read:0};
+      seriesMap[b.series].owned++;
+      if (b.read) seriesMap[b.series].read++;
+    });
+    return Object.entries(seriesMap).filter(([,v]) => v.owned > 1)
+      .map(([name,v]) => ({name, ...v, pct: Math.round((v.read/v.owned)*100)}))
+      .sort((a,b) => b.owned - a.owned).slice(0,8);
+  },[books]);
+
+  const authorOwned = useMemo(()=>{
+    const c: Record<string,{owned:number,read:number}> = {};
+    books.forEach(b => {
+      if (!c[b.author]) c[b.author] = {owned:0,read:0};
+      c[b.author].owned++;
+      if (b.read) c[b.author].read++;
+    });
+    return Object.entries(c).filter(([,v]) => v.owned >= 3)
+      .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
+      .sort((a,b) => b.owned - a.owned).slice(0,6);
+  },[books]);
+
+  const authorData = useMemo(()=>{
+    const c: Record<string,number> = {};
+    readAll_app.forEach(b=>{c[b.author]=(c[b.author]||0)+1;});
+    return Object.entries(c).map(([a,n])=>({author:a,count:n})).sort((a,b)=>b.count-a.count).slice(0,8);
+  },[readAll_app]);
+
+  const maxAuthor = authorData[0]?.count||1;
+
+  const [seriesModal, setSeriesModal] = useState<string|null>(null);
+  const [authorModal, setAuthorModal] = useState<string|null>(null);
 
   const tabBooks=useMemo(()=>{
     if(tab==='home') return [];
@@ -2361,7 +2410,9 @@ export default function App() {
 
       {/* Book Detail Modal */}
       {detailBook&&<BookDetailModal book={detailBook} onClose={()=>setDetailBook(null)} onUpdate={update} onReread={handleReread}/>}
-
+      {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onUpdate={update} onBookDetail={b=>{setSeriesModal(null);setDetailBook(b);}}/>}
+      {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onUpdate={update} onBookDetail={b=>{setAuthorModal(null);setDetailBook(b);}}/>}
+      
       {/* STICKY HEADER */}
       <div style={{ background:'#0d0a1c',borderBottom:'1px solid rgba(255,255,255,0.07)',position:'sticky',top:0,zIndex:40,width:'100%' }}>
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'0.6rem 1rem 0' }}>
