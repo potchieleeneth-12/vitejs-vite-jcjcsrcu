@@ -2444,7 +2444,7 @@ export default function App() {
             ))}
           </div>
 
-          {tab!=='home'&&tab!=='insights'&&(
+         {tab!=='home'&&tab!=='insights'&&(
             <>
               <div style={{ display:'flex',gap:'0.4rem',marginBottom:'0.3rem' }}>
                 <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  Search title, author, series…" style={{ flex:1,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.65rem',padding:'0.45rem 0.85rem',color:'white',fontSize:'0.82rem',boxSizing:'border-box' }}/>
@@ -2559,7 +2559,7 @@ export default function App() {
   </div>
 )}
 
-      {tab!=='home'&&(
+      {tab!=='home'&&tab!=='insights'&&(
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
           {filtered.length===0?(
             <div style={{ textAlign:'center',padding:'5rem 0',color:'rgba(255,255,255,0.2)' }}>
