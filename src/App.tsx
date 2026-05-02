@@ -84,6 +84,7 @@ const TAB_CFG: Record<string, { label: string; color: string }> = {
   shelf:    { label: '📚 Shelf',     color: '#a78bfa' },
   tbr:      { label: '🔖 TBR',       color: '#fb923c' },
   reading:  { label: '📖 Reading',   color: '#34d399' },
+  insights: { label: '📊 Insights',  color: '#c084fc' },
   wishlist: { label: '✨ Wishlist',  color: '#f472b6' },
 };
 
@@ -1646,69 +1647,6 @@ function HomeTab({ books, goals, onEditGoals, userName, onBookDetail, onUpdate }
         </div>
       )}
 
-      {/* Series Completion — clickable */}
-      {seriesData.length > 0 && (
-        <div style={{ ...card, marginBottom:'0.75rem' }}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📚 Series Progress <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to explore)</span></div>
-          <div style={{ display:'flex',flexDirection:'column',gap:'0.5rem' }}>
-            {seriesData.map(({name,owned,read,pct})=>(
-              <div key={name} style={{ cursor:'pointer' }} onClick={()=>setSeriesModal(name)}>
-                <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
-                  <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'70%' }}>{name}</span>
-                  <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{read}/{owned} · {pct}%</span>
-                </div>
-                <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
-                  <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#a78bfa',borderRadius:'9999px',transition:'width 0.5s' }}/>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Author Collection Completeness — clickable */}
-      {authorOwned.length > 0 && (
-        <div style={{ ...card, marginBottom:'0.75rem' }}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>✍️ Author Collections <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to explore)</span></div>
-          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem' }}>
-            {authorOwned.map(({author,owned,read,pct})=>(
-              <div key={author} onClick={()=>setAuthorModal(author)} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer' }}
-                onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}
-                onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
-                <div style={{ fontSize:'0.7rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'0.2rem' }}>{author}</div>
-                <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.35)',marginBottom:'0.3rem' }}>{read} of {owned} read</div>
-                <div style={{ height:'4px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
-                  <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#fb7185',borderRadius:'9999px',transition:'width 0.5s' }}/>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Top Authors — clickable */}
-      {authorData.length>0&&(
-        <div style={card}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Authors</div>
-          <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
-            {authorData.map(({author,count})=>(
-              <div key={author} style={{ marginBottom:'0.35rem',cursor:'pointer' }} onClick={()=>setAuthorModal(author)}>
-                <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
-                  <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.65)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'75%' }}>{author}</span>
-                  <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{count} {count===1?'book':'books'}</span>
-                </div>
-                <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.05)',overflow:'hidden' }}>
-                  <div style={{ width:`${(count/maxAuthor)*100}%`,height:'100%',background:'#a78bfa',borderRadius:'9999px',transition:'width 0.5s' }}/>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── SharePage ─────────────────────────────────────────────────────────────────
 function SharePage({ uid }: { uid: string }) {
   const [books, setBooks] = useState<any[]|null>(null);
@@ -2505,6 +2443,70 @@ export default function App() {
       </div>
 
       {tab==='home'&&<HomeTab books={books} goals={goals} onEditGoals={()=>setGoalModal(true)} userName="Elle" onBookDetail={setDetailBook} onUpdate={update}/>}
+
+      {tab==='insights'&&(
+  <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
+    {/* Series Completion */}
+    {seriesData.length>0&&(
+      <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
+        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📚 Series Progress <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to explore)</span></div>
+        <div style={{ display:'flex',flexDirection:'column',gap:'0.5rem' }}>
+          {seriesData.map(({name,owned,read,pct})=>(
+            <div key={name} style={{ cursor:'pointer' }} onClick={()=>setSeriesModal(name)}>
+              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
+                <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'70%' }}>{name}</span>
+                <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{read}/{owned} · {pct}%</span>
+              </div>
+              <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
+                <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#a78bfa',borderRadius:'9999px',transition:'width 0.5s' }}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* Author Collections */}
+    {authorOwned.length>0&&(
+      <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
+        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>✍️ Author Collections <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to explore)</span></div>
+        <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem' }}>
+          {authorOwned.map(({author,owned,read,pct})=>(
+            <div key={author} onClick={()=>setAuthorModal(author)} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer' }}
+              onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}
+              onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
+              <div style={{ fontSize:'0.7rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'0.2rem' }}>{author}</div>
+              <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.35)',marginBottom:'0.3rem' }}>{read} of {owned} read</div>
+              <div style={{ height:'4px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
+                <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#fb7185',borderRadius:'9999px',transition:'width 0.5s' }}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* Top Authors */}
+    {authorData.length>0&&(
+      <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
+        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Authors</div>
+        <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
+          {authorData.map(({author,count})=>(
+            <div key={author} style={{ marginBottom:'0.35rem',cursor:'pointer' }} onClick={()=>setAuthorModal(author)}>
+              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
+                <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.65)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'75%' }}>{author}</span>
+                <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{count} {count===1?'book':'books'}</span>
+              </div>
+              <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.05)',overflow:'hidden' }}>
+                <div style={{ width:`${(count/maxAuthor)*100}%`,height:'100%',background:'#a78bfa',borderRadius:'9999px',transition:'width 0.5s' }}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+)}
 
       {tab!=='home'&&(
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
