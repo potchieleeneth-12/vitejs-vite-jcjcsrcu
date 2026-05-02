@@ -1059,7 +1059,7 @@ function BookshelfVisual({ books }: { books: any[] }) {
   const SPINE_GAP = 2;
 
   const renderRow = (rowSpines: typeof spines) => {
-    const els: JSX.Element[] = [];
+    const els: React.ReactElement[] = [];
     let x = 0;
     let i = 0;
     while (i < rowSpines.length) {
