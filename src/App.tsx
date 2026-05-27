@@ -1473,7 +1473,6 @@ function HomeTab({ books, goals, onEditGoals, userName, onBookDetail, onUpdate }
   const [authorModal, setAuthorModal] = useState<string|null>(null);
 
   const genreData = useMemo(()=>{ const c: Record<string,number>={}; readAll.forEach(b=>{c[b.genre]=(c[b.genre]||0)+1;}); return Object.entries(c).map(([g,n])=>({genre:g,count:n,color:GENRE_CFG[g]?.accent||'#a78bfa'})).sort((a,b)=>b.count-a.count); },[readAll]);
-  const authorData = useMemo(()=>{ const c: Record<string,number>={}; readAll.forEach(b=>{c[b.author]=(c[b.author]||0)+1;}); return Object.entries(c).map(([a,n])=>({author:a,count:n})).sort((a,b)=>b.count-a.count).slice(0,8); },[readAll]);
 
   // Year-by-year history — includes rereads
   const yearData = useMemo(()=>{
@@ -1490,7 +1489,6 @@ function HomeTab({ books, goals, onEditGoals, userName, onBookDetail, onUpdate }
 
 
   const maxGenre = genreData[0]?.count||1;
-  const maxAuthor = authorData[0]?.count||1;
   const maxYear = Math.max(...yearData.map(d=>d.count),1);
   const card: React.CSSProperties = { background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' };
   const currentlyReading = books.filter((b:any)=>b.status==='reading');
@@ -2287,31 +2285,6 @@ export default function App() {
     const rr:number[]=book.rereads||[];
     if(!rr.includes(THIS_YEAR)) update(id,{rereads:[...rr,THIS_YEAR]});
   };
-
-  const seriesData = useMemo(()=>{
-    const seriesMap: Record<string,{owned:number,read:number}> = {};
-    books.forEach(b => {
-      if (!b.series) return;
-      if (!seriesMap[b.series]) seriesMap[b.series] = {owned:0,read:0};
-      seriesMap[b.series].owned++;
-      if (b.read) seriesMap[b.series].read++;
-    });
-    return Object.entries(seriesMap).filter(([,v]) => v.owned > 1)
-      .map(([name,v]) => ({name, ...v, pct: Math.round((v.read/v.owned)*100)}))
-      .sort((a,b) => b.owned - a.owned).slice(0,8);
-  },[books]);
-
-  const authorOwned = useMemo(()=>{
-    const c: Record<string,{owned:number,read:number}> = {};
-    books.forEach(b => {
-      if (!c[b.author]) c[b.author] = {owned:0,read:0};
-      c[b.author].owned++;
-      if (b.read) c[b.author].read++;
-    });
-    return Object.entries(c).filter(([,v]) => v.owned >= 3)
-      .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
-      .sort((a,b) => b.owned - a.owned).slice(0,6);
-  },[books]);
 
   const [seriesModal, setSeriesModal] = useState<string|null>(null);
   const [authorModal, setAuthorModal] = useState<string|null>(null);
