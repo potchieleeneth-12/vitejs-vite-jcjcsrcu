@@ -1488,36 +1488,6 @@ function HomeTab({ books, goals, onEditGoals, userName, onBookDetail, onUpdate }
     return Object.entries(c).map(([y,n])=>({year:Number(y),count:n})).sort((a,b)=>a.year-b.year);
   },[books]);
 
-  // Series completion
-  const seriesData = useMemo(()=>{
-    const seriesMap: Record<string,{owned:number,read:number}> = {};
-    books.forEach(b => {
-      if (!b.series) return;
-      if (!seriesMap[b.series]) seriesMap[b.series] = {owned:0,read:0};
-      seriesMap[b.series].owned++;
-      if (b.read) seriesMap[b.series].read++;
-    });
-    return Object.entries(seriesMap)
-      .filter(([,v]) => v.owned > 1)
-      .map(([name,v]) => ({name, ...v, pct: Math.round((v.read/v.owned)*100)}))
-      .sort((a,b) => b.owned - a.owned)
-      .slice(0,8);
-  },[books]);
-
-  // Author collection completeness
-  const authorOwned = useMemo(()=>{
-    const c: Record<string,{owned:number,read:number}> = {};
-    books.forEach(b => {
-      if (!c[b.author]) c[b.author] = {owned:0,read:0};
-      c[b.author].owned++;
-      if (b.read) c[b.author].read++;
-    });
-    return Object.entries(c)
-      .filter(([,v]) => v.owned >= 3)
-      .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
-      .sort((a,b) => b.owned - a.owned)
-      .slice(0,6);
-  },[books]);
 
   const maxGenre = genreData[0]?.count||1;
   const maxAuthor = authorData[0]?.count||1;
@@ -2317,7 +2287,6 @@ export default function App() {
     const rr:number[]=book.rereads||[];
     if(!rr.includes(THIS_YEAR)) update(id,{rereads:[...rr,THIS_YEAR]});
   };
-  const readAll_app = books.filter(b => b.read);
 
   const seriesData = useMemo(()=>{
     const seriesMap: Record<string,{owned:number,read:number}> = {};
@@ -2343,14 +2312,6 @@ export default function App() {
       .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
       .sort((a,b) => b.owned - a.owned).slice(0,6);
   },[books]);
-
-  const authorData = useMemo(()=>{
-    const c: Record<string,number> = {};
-    readAll_app.forEach(b=>{c[b.author]=(c[b.author]||0)+1;});
-    return Object.entries(c).map(([a,n])=>({author:a,count:n})).sort((a,b)=>b.count-a.count).slice(0,8);
-  },[readAll_app]);
-
-  const maxAuthor = authorData[0]?.count||1;
 
   const [seriesModal, setSeriesModal] = useState<string|null>(null);
   const [authorModal, setAuthorModal] = useState<string|null>(null);
@@ -2541,7 +2502,38 @@ export default function App() {
 
       {tab==='home'&&<HomeTab books={books} goals={goals} onEditGoals={()=>setGoalModal(true)} userName="Elle" onBookDetail={setDetailBook} onUpdate={update}/>}
 
-      {tab==='insights'&&(
+      {tab==='insights'&&(()=>{
+        const readAll_i = books.filter((b:any) => b.read);
+        const seriesData = (() => {
+          const seriesMap: Record<string,{owned:number,read:number}> = {};
+          books.forEach((b:any) => {
+            if (!b.series) return;
+            if (!seriesMap[b.series]) seriesMap[b.series] = {owned:0,read:0};
+            seriesMap[b.series].owned++;
+            if (b.read) seriesMap[b.series].read++;
+          });
+          return Object.entries(seriesMap).filter(([,v]) => v.owned > 1)
+            .map(([name,v]) => ({name, ...v, pct: Math.round((v.read/v.owned)*100)}))
+            .sort((a,b) => b.owned - a.owned).slice(0,8);
+        })();
+        const authorOwned = (() => {
+          const c: Record<string,{owned:number,read:number}> = {};
+          books.forEach((b:any) => {
+            if (!c[b.author]) c[b.author] = {owned:0,read:0};
+            c[b.author].owned++;
+            if (b.read) c[b.author].read++;
+          });
+          return Object.entries(c).filter(([,v]) => v.owned >= 3)
+            .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
+            .sort((a,b) => b.owned - a.owned).slice(0,6);
+        })();
+        const authorData = (() => {
+          const c: Record<string,number> = {};
+          readAll_i.forEach((b:any) => {c[b.author]=(c[b.author]||0)+1;});
+          return Object.entries(c).map(([a,n])=>({author:a,count:n})).sort((a,b)=>b.count-a.count).slice(0,8);
+        })();
+        const maxAuthor = authorData[0]?.count||1;
+        return (
   <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
     {/* Series Completion */}
     {seriesData.length>0&&(
@@ -2603,7 +2595,8 @@ export default function App() {
       </div>
     )}
   </div>
-)}
+        );
+      })()}
 
       {tab!=='home'&&tab!=='insights'&&(
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
