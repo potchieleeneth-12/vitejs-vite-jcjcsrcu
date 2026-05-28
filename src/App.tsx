@@ -1092,8 +1092,8 @@ function buildRows(books: any[], maxW: number) {
   return result;
 }
 
-function ShelfRow({ row, ri, isLast, gradId }: {
-  row: { spine: any; x: number }[]; ri: number; isLast: boolean; gradId: string;
+function ShelfRow({ row, isLast, gradId }: {
+  row: { spine: any; x: number }[]; isLast: boolean; gradId: string;
 }) {
   const SHELF_H = 82;
   const PLANK_H = 15;
