@@ -1060,7 +1060,7 @@ function ShelfModal({ books, onClose }: { books: any[]; onClose: () => void }) {
               padding:'0.3rem 0.65rem',lineHeight:1 }}>✕</button>
           </div>
           <div style={{ overflowY:'auto',background:'#0a0614',padding:'6px 0',flex:1 }}>
-            {rows.map((row, ri) => <ShelfRow key={ri} row={row} ri={ri} isLast={ri===rows.length-1} gradId={`wm${ri}`}/>)}
+            {rows.map((row, ri) => <ShelfRow key={ri} row={row} isLast={ri===rows.length-1} gradId={`wm${ri}`}/>)}
           </div>
           <ShelfLegend/>
         </div>
@@ -1243,7 +1243,7 @@ function BookshelfVisual({ books }: { books: any[] }) {
         <div style={{ background:'#0a0614',borderRadius:'0.5rem',overflow:'hidden',
           border:'1px solid rgba(255,255,255,0.05)' }}>
           {previewRows.map((row, ri) => (
-            <ShelfRow key={ri} row={row} ri={ri}
+            <ShelfRow key={ri} row={row}
               isLast={ri === previewRows.length - 1}
               gradId={`wp${ri}`}/>
           ))}
