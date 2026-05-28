@@ -1072,8 +1072,7 @@ function ShelfModal({ books, onClose }: { books: any[]; onClose: () => void }) {
 // ── shared helpers ─────────────────────────────────────────────────────────────
 function buildRows(books: any[], maxW: number) {
   const SPINE_GAP = 2;
-  const spines = [...books].sort((a, b) => a.id - b.id).map(b => ({
-    read:  b.read,
+  const spines = [...books].sort((a, b) => (a.id * 2654435761 % 99991) - (b.id * 2654435761 % 99991)).map(b => ({    read:  b.read,
     h:     65 + (b.id % 12),   // 65–76 px — tighter range = cleaner rows
     w:     11 + (b.id % 7),    // 11–17 px
     color: GENRE_CFG[b.genre]?.accent || '#a78bfa',
