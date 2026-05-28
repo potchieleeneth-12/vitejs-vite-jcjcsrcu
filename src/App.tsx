@@ -1033,42 +1033,32 @@ function PaceGauge({ read, goal, year }: { read: number; goal: number; year: num
   );
 }
 
-// ── BookshelfVisual ────────────────────────────────────────────────────────────
-// DROP-IN REPLACEMENT — paste this over the existing BookshelfVisual function
-// in your App.tsx (from the comment line above down to, but NOT including,
-// the "// ── YearBooksModal" comment).
-function BookshelfVisual({ books }: { books: any[] }) {
-  const total = books.length;
+// ── ShelfModal ─────────────────────────────────────────────────────────────────
+function ShelfModal({ books, onClose }: { books: any[]; onClose: () => void }) {
+  const total     = books.length;
   const readCount = books.filter(b => b.read).length;
-  const pct = total ? Math.round((readCount / total) * 100) : 0;
+  const pct       = total ? Math.round((readCount / total) * 100) : 0;
 
   const SPINE_GAP = 2;
-  const SHELF_H   = 80;   // height of the book area per row
-  const PLANK_H   = 14;   // wooden shelf plank height
-  const WALL_GAP  = 6;    // gap between plank and next row
+  const SHELF_H   = 80;
+  const PLANK_H   = 14;
+  const WALL_GAP  = 6;
 
-  // Pre-compute all spine sizes and positions into rows
   const rows = useMemo(() => {
     const spines = [...books].sort((a, b) => a.id - b.id).map(b => ({
       read:  b.read,
-      h:     54 + (b.id % 22),   // 54–75 px — tall like real books
-      w:     10 + (b.id % 8),    // 10–17 px wide
+      h:     54 + (b.id % 22),
+      w:     10 + (b.id % 8),
       color: GENRE_CFG[b.genre]?.accent || '#a78bfa',
       tilt:  (b.id % 31 === 0) ? 4 : (b.id % 43 === 0) ? -4 : 0,
     }));
-
     const MAX_ROW_W = 860;
     const result: { spine: typeof spines[0]; x: number }[][] = [];
-    let row:  { spine: typeof spines[0]; x: number }[] = [];
+    let row: { spine: typeof spines[0]; x: number }[] = [];
     let rowW = 0;
-
     for (const spine of spines) {
       const needed = spine.w + SPINE_GAP;
-      if (rowW + needed > MAX_ROW_W && row.length > 0) {
-        result.push(row);
-        row  = [];
-        rowW = 0;
-      }
+      if (rowW + needed > MAX_ROW_W && row.length > 0) { result.push(row); row = []; rowW = 0; }
       row.push({ spine, x: rowW });
       rowW += needed;
     }
@@ -1076,130 +1066,247 @@ function BookshelfVisual({ books }: { books: any[] }) {
     return result;
   }, [books.length, readCount]);
 
-  return (
-    <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-      {/* Header */}
-      <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.7rem' }}>
-        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>📚 Your Library</div>
-        <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>
-          {readCount} of {total} read &nbsp;·&nbsp; {pct}%
-        </div>
-      </div>
-
-      {/* Shelf rows */}
-      <div style={{ background:'#0a0614',borderRadius:'0.5rem',overflow:'hidden',border:'1px solid rgba(255,255,255,0.05)' }}>
-        {rows.map((row, ri) => {
-          const last      = row[row.length - 1];
-          const rowViewW  = (last?.x ?? 0) + (last?.spine.w ?? 0) + 4;
-          const vbW       = Math.max(rowViewW, 400);
-          const rowHeight = SHELF_H + PLANK_H + (ri < rows.length - 1 ? WALL_GAP : 0);
-
+  const renderRow = (row: { spine: any; x: number }[], ri: number, isLast: boolean) => {
+    const last     = row[row.length - 1];
+    const vbW      = Math.max((last?.x ?? 0) + (last?.spine.w ?? 0) + 4, 400);
+    const rowHeight = SHELF_H + PLANK_H + (!isLast ? WALL_GAP : 0);
+    return (
+      <svg key={ri} width="100%" viewBox={`0 0 ${vbW} ${rowHeight}`}
+        preserveAspectRatio="xMinYMin meet" style={{ display:'block' }}>
+        <rect x={0} y={0} width={vbW} height={SHELF_H} fill="#100c1e"/>
+        {[0.3, 0.55, 0.78].map((f, i) => (
+          <line key={i} x1={0} y1={Math.round(f*SHELF_H)} x2={vbW} y2={Math.round(f*SHELF_H)}
+            stroke="rgba(255,255,255,0.015)" strokeWidth={1}/>
+        ))}
+        {row.map(({ spine: s, x }, i) => {
+          const bookY = SHELF_H - s.h;
+          const cx    = x + s.w / 2;
           return (
-            <svg key={ri} width="100%"
-              viewBox={`0 0 ${vbW} ${rowHeight}`}
-              preserveAspectRatio="xMinYMin meet"
-              style={{ display:'block' }}>
-
-              {/* Back wall */}
-              <rect x={0} y={0} width={vbW} height={SHELF_H} fill="#100c1e"/>
-              {/* Subtle wall texture */}
-              {[0.3, 0.55, 0.78].map((f, i) => (
-                <line key={i} x1={0} y1={Math.round(f*SHELF_H)} x2={vbW} y2={Math.round(f*SHELF_H)}
-                  stroke="rgba(255,255,255,0.015)" strokeWidth={1}/>
-              ))}
-
-              {/* Books */}
-              {row.map(({ spine: s, x }, i) => {
-                const bookY = SHELF_H - s.h;
-                const cx    = x + s.w / 2;
-                return (
-                  <g key={i} transform={s.tilt !== 0 ? `rotate(${s.tilt},${cx},${SHELF_H})` : undefined}>
-                    {/* Drop shadow */}
-                    <rect x={x+1} y={bookY+2} width={s.w} height={s.h}
-                      fill="rgba(0,0,0,0.35)" rx={1}/>
-                    {/* Book body — vivid if read, very dim if unread */}
-                    <rect x={x} y={bookY} width={s.w} height={s.h}
-                      fill={s.read ? s.color : s.color + '28'} rx={1}
-                      opacity={s.read ? 0.92 : 1}/>
-                    {/* Top page edge */}
-                    <rect x={x} y={bookY} width={s.w} height={3}
-                      fill={s.read ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.06)'} rx={1}/>
-                    {/* Spine highlight */}
-                    <rect x={x+1} y={bookY+3} width={2} height={s.h-6}
-                      fill={s.read ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)'} rx={1}/>
-                    {/* Right-edge shadow */}
-                    <rect x={x+s.w-1} y={bookY+3} width={1} height={s.h-6}
-                      fill="rgba(0,0,0,0.3)"/>
-                    {/* Mid-spine stripe (wider books only, when read) */}
-                    {s.read && s.w >= 13 && (
-                      <rect x={x+2} y={bookY+Math.round(s.h*0.35)}
-                        width={s.w-4} height={2}
-                        fill="rgba(255,255,255,0.2)" rx={1}/>
-                    )}
-                  </g>
-                );
-              })}
-
-              {/* Wooden shelf plank */}
-              <defs>
-                <linearGradient id={`wood${ri}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor="#8B5E3C"/>
-                  <stop offset="20%"  stopColor="#6B4423"/>
-                  <stop offset="70%"  stopColor="#4A2E14"/>
-                  <stop offset="100%" stopColor="#2d1a08"/>
-                </linearGradient>
-              </defs>
-              {/* Top highlight */}
-              <rect x={0} y={SHELF_H}   width={vbW} height={1}         fill="rgba(255,255,255,0.12)"/>
-              {/* Wood */}
-              <rect x={0} y={SHELF_H+1} width={vbW} height={PLANK_H-2} fill={`url(#wood${ri})`}/>
-              {/* Wood grain */}
-              {[0.3, 0.6, 0.85].map((f, i) => (
-                <line key={i}
-                  x1={0}   y1={SHELF_H+1+Math.round(f*(PLANK_H-2))}
-                  x2={vbW} y2={SHELF_H+1+Math.round(f*(PLANK_H-2))}
-                  stroke="rgba(0,0,0,0.18)" strokeWidth={1}/>
-              ))}
-              {/* Bottom shadow */}
-              <rect x={0} y={SHELF_H+PLANK_H-1} width={vbW} height={2} fill="rgba(0,0,0,0.5)"/>
-
-              {/* Gap between shelves */}
-              {ri < rows.length - 1 && (
-                <rect x={0} y={SHELF_H+PLANK_H} width={vbW} height={WALL_GAP} fill="#0a0614"/>
+            <g key={i} transform={s.tilt !== 0 ? `rotate(${s.tilt},${cx},${SHELF_H})` : undefined}>
+              <rect x={x+1} y={bookY+2} width={s.w} height={s.h} fill="rgba(0,0,0,0.35)" rx={1}/>
+              <rect x={x} y={bookY} width={s.w} height={s.h}
+                fill={s.read ? s.color : s.color + '28'} rx={1} opacity={s.read ? 0.92 : 1}/>
+              <rect x={x} y={bookY} width={s.w} height={3}
+                fill={s.read ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.06)'} rx={1}/>
+              <rect x={x+1} y={bookY+3} width={2} height={s.h-6}
+                fill={s.read ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)'} rx={1}/>
+              <rect x={x+s.w-1} y={bookY+3} width={1} height={s.h-6} fill="rgba(0,0,0,0.3)"/>
+              {s.read && s.w >= 13 && (
+                <rect x={x+2} y={bookY+Math.round(s.h*0.35)} width={s.w-4} height={2}
+                  fill="rgba(255,255,255,0.2)" rx={1}/>
               )}
-            </svg>
+            </g>
           );
         })}
-      </div>
+        <defs>
+          <linearGradient id={`wm${ri}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="#8B5E3C"/>
+            <stop offset="20%"  stopColor="#6B4423"/>
+            <stop offset="70%"  stopColor="#4A2E14"/>
+            <stop offset="100%" stopColor="#2d1a08"/>
+          </linearGradient>
+        </defs>
+        <rect x={0} y={SHELF_H}       width={vbW} height={1}         fill="rgba(255,255,255,0.12)"/>
+        <rect x={0} y={SHELF_H+1}     width={vbW} height={PLANK_H-2} fill={`url(#wm${ri})`}/>
+        {[0.3, 0.6, 0.85].map((f, i) => (
+          <line key={i}
+            x1={0}   y1={SHELF_H+1+Math.round(f*(PLANK_H-2))}
+            x2={vbW} y2={SHELF_H+1+Math.round(f*(PLANK_H-2))}
+            stroke="rgba(0,0,0,0.18)" strokeWidth={1}/>
+        ))}
+        <rect x={0} y={SHELF_H+PLANK_H-1} width={vbW} height={2} fill="rgba(0,0,0,0.5)"/>
+        {!isLast && <rect x={0} y={SHELF_H+PLANK_H} width={vbW} height={WALL_GAP} fill="#0a0614"/>}
+      </svg>
+    );
+  };
 
-      {/* Legend */}
-      <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'0.65rem',flexWrap:'wrap',gap:'0.4rem' }}>
-        <div style={{ display:'flex',gap:'0.75rem' }}>
-          <span style={{ display:'flex',alignItems:'center',gap:'0.3rem',fontSize:'0.62rem',color:'rgba(255,255,255,0.5)' }}>
-            <span style={{ display:'inline-block',width:'10px',height:'12px',borderRadius:'1px',background:'rgba(255,255,255,0.55)',border:'1px solid rgba(255,255,255,0.2)' }}/>
-            Read
-          </span>
-          <span style={{ display:'flex',alignItems:'center',gap:'0.3rem',fontSize:'0.62rem',color:'rgba(255,255,255,0.3)' }}>
-            <span style={{ display:'inline-block',width:'10px',height:'12px',borderRadius:'1px',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.08)' }}/>
-            Unread
-          </span>
-        </div>
-        <div style={{ display:'flex',gap:'0.35rem',flexWrap:'wrap' }}>
-          {Object.entries(GENRE_CFG).map(([g, cfg]) => (
-            <span key={g} style={{ display:'flex',alignItems:'center',gap:'0.2rem',fontSize:'0.58rem',color:'rgba(255,255,255,0.3)' }}>
-              <span style={{ display:'inline-block',width:'7px',height:'9px',borderRadius:'1px',background:cfg.accent }}/>
-              {g}
+  return (
+    <>
+      <div onClick={onClose}
+        style={{ position:'fixed',inset:0,zIndex:65,background:'rgba(0,0,0,0.88)' }}/>
+      <div style={{ position:'fixed',inset:0,zIndex:66,display:'flex',flexDirection:'column',padding:'1rem',pointerEvents:'none' }}>
+        <div style={{ background:'#0d0a1c',borderRadius:'1rem',border:'1px solid rgba(255,255,255,0.1)',
+          display:'flex',flexDirection:'column',maxHeight:'100%',overflow:'hidden',pointerEvents:'all' }}>
+          {/* Header */}
+          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',
+            padding:'0.9rem 1.1rem',borderBottom:'1px solid rgba(255,255,255,0.07)',flexShrink:0 }}>
+            <div>
+              <div style={{ fontSize:'0.9rem',fontWeight:'bold',color:'white' }}>📚 Your Library</div>
+              <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)',marginTop:'0.1rem' }}>
+                {readCount} of {total} read · {pct}% · {rows.length} shelves
+              </div>
+            </div>
+            <button onClick={onClose}
+              style={{ background:'rgba(255,255,255,0.06)',border:'none',color:'rgba(255,255,255,0.5)',
+                cursor:'pointer',fontSize:'1.1rem',borderRadius:'0.5rem',padding:'0.3rem 0.6rem',lineHeight:1 }}>✕</button>
+          </div>
+          {/* Scrollable shelves */}
+          <div style={{ overflowY:'auto',padding:'0.5rem',background:'#0a0614',flex:1 }}>
+            {rows.map((row, ri) => renderRow(row, ri, ri === rows.length - 1))}
+          </div>
+          {/* Legend */}
+          <div style={{ padding:'0.6rem 1rem',borderTop:'1px solid rgba(255,255,255,0.07)',
+            display:'flex',gap:'0.5rem',flexWrap:'wrap',flexShrink:0 }}>
+            <span style={{ display:'flex',alignItems:'center',gap:'0.3rem',fontSize:'0.62rem',color:'rgba(255,255,255,0.5)' }}>
+              <span style={{ display:'inline-block',width:'10px',height:'12px',borderRadius:'1px',
+                background:'rgba(255,255,255,0.55)',border:'1px solid rgba(255,255,255,0.2)' }}/>Read
             </span>
-          ))}
+            <span style={{ display:'flex',alignItems:'center',gap:'0.3rem',fontSize:'0.62rem',color:'rgba(255,255,255,0.3)' }}>
+              <span style={{ display:'inline-block',width:'10px',height:'12px',borderRadius:'1px',
+                background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.08)' }}/>Unread
+            </span>
+            {Object.entries(GENRE_CFG).map(([g, cfg]) => (
+              <span key={g} style={{ display:'flex',alignItems:'center',gap:'0.2rem',fontSize:'0.58rem',color:'rgba(255,255,255,0.3)' }}>
+                <span style={{ display:'inline-block',width:'7px',height:'9px',borderRadius:'1px',background:cfg.accent }}/>
+                {g}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
+    </>
+  );
+}
 
-      <div style={{ display:'flex',gap:'1.5rem',marginTop:'0.35rem' }}>
-        <span style={{ fontSize:'0.72rem',color:'white',fontWeight:700 }}>{total} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>total</span></span>
-        <span style={{ fontSize:'0.72rem',color:'#4ade80',fontWeight:700 }}>{readCount} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>read</span></span>
-        <span style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.3)',fontWeight:400 }}>{total - readCount} unread</span>
+// ── BookshelfVisual ────────────────────────────────────────────────────────────
+function BookshelfVisual({ books }: { books: any[] }) {
+  const [showModal, setShowModal] = useState(false);
+  const total     = books.length;
+  const readCount = books.filter(b => b.read).length;
+  const pct       = total ? Math.round((readCount / total) * 100) : 0;
+
+  const SPINE_GAP = 2;
+  const SHELF_H   = 80;
+  const PLANK_H   = 14;
+  const WALL_GAP  = 6;
+  const PREVIEW_ROWS = 3;
+
+  const rows = useMemo(() => {
+    const spines = [...books].sort((a, b) => a.id - b.id).map(b => ({
+      read:  b.read,
+      h:     54 + (b.id % 22),
+      w:     10 + (b.id % 8),
+      color: GENRE_CFG[b.genre]?.accent || '#a78bfa',
+      tilt:  (b.id % 31 === 0) ? 4 : (b.id % 43 === 0) ? -4 : 0,
+    }));
+    const MAX_ROW_W = 860;
+    const result: { spine: typeof spines[0]; x: number }[][] = [];
+    let row: { spine: typeof spines[0]; x: number }[] = [];
+    let rowW = 0;
+    for (const spine of spines) {
+      const needed = spine.w + SPINE_GAP;
+      if (rowW + needed > MAX_ROW_W && row.length > 0) { result.push(row); row = []; rowW = 0; }
+      row.push({ spine, x: rowW });
+      rowW += needed;
+    }
+    if (row.length > 0) result.push(row);
+    return result;
+  }, [books.length, readCount]);
+
+  const previewRows = rows.slice(0, PREVIEW_ROWS);
+
+  const renderRow = (row: { spine: any; x: number }[], ri: number, isLast: boolean) => {
+    const last      = row[row.length - 1];
+    const vbW       = Math.max((last?.x ?? 0) + (last?.spine.w ?? 0) + 4, 400);
+    const rowHeight = SHELF_H + PLANK_H + (!isLast ? WALL_GAP : 0);
+    return (
+      <svg key={ri} width="100%" viewBox={`0 0 ${vbW} ${rowHeight}`}
+        preserveAspectRatio="xMinYMin meet" style={{ display:'block' }}>
+        <rect x={0} y={0} width={vbW} height={SHELF_H} fill="#100c1e"/>
+        {[0.3, 0.55, 0.78].map((f, i) => (
+          <line key={i} x1={0} y1={Math.round(f*SHELF_H)} x2={vbW} y2={Math.round(f*SHELF_H)}
+            stroke="rgba(255,255,255,0.015)" strokeWidth={1}/>
+        ))}
+        {row.map(({ spine: s, x }, i) => {
+          const bookY = SHELF_H - s.h;
+          const cx    = x + s.w / 2;
+          return (
+            <g key={i} transform={s.tilt !== 0 ? `rotate(${s.tilt},${cx},${SHELF_H})` : undefined}>
+              <rect x={x+1} y={bookY+2} width={s.w} height={s.h} fill="rgba(0,0,0,0.35)" rx={1}/>
+              <rect x={x} y={bookY} width={s.w} height={s.h}
+                fill={s.read ? s.color : s.color + '28'} rx={1} opacity={s.read ? 0.92 : 1}/>
+              <rect x={x} y={bookY} width={s.w} height={3}
+                fill={s.read ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.06)'} rx={1}/>
+              <rect x={x+1} y={bookY+3} width={2} height={s.h-6}
+                fill={s.read ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)'} rx={1}/>
+              <rect x={x+s.w-1} y={bookY+3} width={1} height={s.h-6} fill="rgba(0,0,0,0.3)"/>
+              {s.read && s.w >= 13 && (
+                <rect x={x+2} y={bookY+Math.round(s.h*0.35)} width={s.w-4} height={2}
+                  fill="rgba(255,255,255,0.2)" rx={1}/>
+              )}
+            </g>
+          );
+        })}
+        <defs>
+          <linearGradient id={`wp${ri}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="#8B5E3C"/>
+            <stop offset="20%"  stopColor="#6B4423"/>
+            <stop offset="70%"  stopColor="#4A2E14"/>
+            <stop offset="100%" stopColor="#2d1a08"/>
+          </linearGradient>
+        </defs>
+        <rect x={0} y={SHELF_H}       width={vbW} height={1}         fill="rgba(255,255,255,0.12)"/>
+        <rect x={0} y={SHELF_H+1}     width={vbW} height={PLANK_H-2} fill={`url(#wp${ri})`}/>
+        {[0.3, 0.6, 0.85].map((f, i) => (
+          <line key={i}
+            x1={0}   y1={SHELF_H+1+Math.round(f*(PLANK_H-2))}
+            x2={vbW} y2={SHELF_H+1+Math.round(f*(PLANK_H-2))}
+            stroke="rgba(0,0,0,0.18)" strokeWidth={1}/>
+        ))}
+        <rect x={0} y={SHELF_H+PLANK_H-1} width={vbW} height={2} fill="rgba(0,0,0,0.5)"/>
+        {!isLast && <rect x={0} y={SHELF_H+PLANK_H} width={vbW} height={WALL_GAP} fill="#0a0614"/>}
+      </svg>
+    );
+  };
+
+  return (
+    <>
+      {showModal && <ShelfModal books={books} onClose={() => setShowModal(false)}/>}
+
+      <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',
+        padding:'1rem',marginBottom:'0.75rem' }}>
+        {/* Header */}
+        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.7rem' }}>
+          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>📚 Your Library</div>
+          <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>
+            {readCount} of {total} read &nbsp;·&nbsp; {pct}%
+          </div>
+        </div>
+
+        {/* 3-row preview */}
+        <div style={{ background:'#0a0614',borderRadius:'0.5rem',overflow:'hidden',
+          border:'1px solid rgba(255,255,255,0.05)' }}>
+          {previewRows.map((row, ri) =>
+            renderRow(row, ri, ri === previewRows.length - 1)
+          )}
+        </div>
+
+        {/* Expand button */}
+        <button onClick={() => setShowModal(true)}
+          style={{ width:'100%',marginTop:'0.65rem',padding:'0.5rem',
+            background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.2)',
+            borderRadius:'0.65rem',color:'#a78bfa',fontSize:'0.75rem',fontWeight:600,
+            cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.4rem' }}>
+          <span>🔍 View full shelf</span>
+          <span style={{ opacity:0.5,fontWeight:400 }}>
+            ({rows.length} shelves · {total} books)
+          </span>
+        </button>
+
+        {/* Stats row */}
+        <div style={{ display:'flex',gap:'1.5rem',marginTop:'0.5rem' }}>
+          <span style={{ fontSize:'0.72rem',color:'white',fontWeight:700 }}>
+            {total} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>total</span>
+          </span>
+          <span style={{ fontSize:'0.72rem',color:'#4ade80',fontWeight:700 }}>
+            {readCount} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>read</span>
+          </span>
+          <span style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.3)',fontWeight:400 }}>
+            {total - readCount} unread
+          </span>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
