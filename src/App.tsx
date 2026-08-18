@@ -7,8 +7,9 @@ import {
   signOut,
   onAuthStateChanged,
   type User,
+  type Auth,
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, type Firestore } from 'firebase/firestore';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type Genre =
@@ -49,22 +50,30 @@ export interface Goals {
   monthProgress: number | null;
 }
 
-// ── Firebase Singletons ──────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: 'AIzaSyD2p_VgfHQhGja_Xb-XrSwLUxqUdrpipzA',
-  authDomain: 'personal-library-99222.firebaseapp.com',
-  projectId: 'personal-library-99222',
-  storageBucket: 'personal-library-99222.firebasestorage.app',
-  messagingSenderId: '188028941942',
-  appId: '1:188028941942:web:8e9aee68e9a22091935157',
-};
+// ── Safe Firebase Singletons ──────────────────────────────────────────────────
+let auth: Auth | null = null;
+let db: Firestore | null = null;
+let provider: GoogleAuthProvider | null = null;
 
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+try {
+  const firebaseConfig = {
+    apiKey: 'AIzaSyD2p_VgfHQhGja_Xb-XrSwLUxqUdrpipzA',
+    authDomain: 'personal-library-99222.firebaseapp.com',
+    projectId: 'personal-library-99222',
+    storageBucket: 'personal-library-99222.firebasestorage.app',
+    messagingSenderId: '188028941942',
+    appId: '1:188028941942:web:8e9aee68e9a22091935157',
+  };
+  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  provider = new GoogleAuthProvider();
+} catch (e) {
+  console.warn('Firebase initialization skipped/failed in this environment:', e);
+}
 
 const saveToFirestore = async (uid: string, books: Book[], goals: Goals) => {
+  if (!db) return;
   try {
     await setDoc(doc(db, 'users', uid), { books, goals });
     const publicBooks = books.map((b) => ({
@@ -131,7 +140,7 @@ const STATUS_COLORS: Record<string, string> = {
 const THIS_YEAR = new Date().getFullYear();
 const THIS_MONTH = new Date().getMonth();
 
-// ── Data Construction Helpers ────────────────────────────────────────────────
+// ── Data Helpers ────────────────────────────────────────────────────────────
 const generateUid = () => Math.floor(Date.now() + Math.random() * 1000);
 
 export const baseBook = (extra: Partial<Book>): Book => ({
@@ -168,11 +177,9 @@ const migrateBooks = (books: any[]): Book[] =>
 
 const fa = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Fantasy', subgenre: sg, series: sr, sn });
 const rt = (id: number, t: string, a: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romantasy', subgenre: 'Romantasy', series: sr, sn });
-const r = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romance', subgenre: sg, series: sr, sn });
-const m = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Mystery/Thriller', subgenre: sg, series: sr, sn });
-const h = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Horror', subgenre: sg, series: sr, sn });
-const co = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Contemporary', subgenre: sg, series: sr, sn });
 const cl = (id: number, t: string, a: string, sg: string) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Classics', subgenre: sg, series: null, sn: null });
+const m = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Mystery/Thriller', subgenre: sg, series: sr, sn });
+const co = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Contemporary', subgenre: sg, series: sr, sn });
 const nf = (id: number, t: string, a: string, sg: string) => base({ id, title: t, author: a, category: 'Non-Fiction', genre: 'Non-Fiction', subgenre: sg, series: null, sn: null });
 
 const fileToBase64 = (file: File): Promise<string> =>
@@ -202,23 +209,16 @@ const exportCSV = (books: Book[]) => {
 
 // ── Seed Library ────────────────────────────────────────────────────────────
 const SEED: Book[] = [
-  fa(1,'The Awakening','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',1),
-  fa(12,'Caraval','Stephanie Garber','YA Fantasy','Caraval',1),
-  rt(36,'Fourth Wing','Rebecca Yarros','The Empyrean',1),
-  cl(205,'Dracula','Bram Stoker','Gothic Classic'),
-  m(711,'The Housemaid','Freida McFadden','Thriller','The Housemaid',1),
-  co(112,'Legends & Lattes','Travis Baldree','Cozy Fiction',null,null),
-  nf(716,'Meditations','Marcus Aurelius','Philosophy'),
+  fa(1, 'The Awakening', 'C.Peckham & S.Valenti', 'Paranormal Romance', 'Zodiac Academy', 1),
+  fa(12, 'Caraval', 'Stephanie Garber', 'YA Fantasy', 'Caraval', 1),
+  rt(36, 'Fourth Wing', 'Rebecca Yarros', 'The Empyrean', 1),
+  cl(205, 'Dracula', 'Bram Stoker', 'Gothic Classic'),
+  m(711, 'The Housemaid', 'Freida McFadden', 'Thriller', 'The Housemaid', 1),
+  co(112, 'Legends & Lattes', 'Travis Baldree', 'Cozy Fiction', null, null),
+  nf(716, 'Meditations', 'Marcus Aurelius', 'Philosophy'),
 ];
 
-const seen = new Set<number>();
-const ALL_BOOKS: Book[] = [];
-for (const b of SEED) {
-  if (!seen.has(b.id)) {
-    seen.add(b.id);
-    ALL_BOOKS.push(b);
-  }
-}
+const ALL_BOOKS: Book[] = SEED;
 
 // ── UI Components ─────────────────────────────────────────────────────────────
 function StarRating({ rating, onChange, size = 'sm' }: { rating: number | null; onChange?: (r: number) => void; size?: 'sm' | 'md' }) {
@@ -374,7 +374,6 @@ function PaceGauge({ read, goal, year }: { read: number; goal: number; year: num
   );
 }
 
-// ── Bookshelf Renderer ───────────────────────────────────────────────────────
 function buildRows(books: Book[], maxW: number) {
   const SPINE_GAP = 2;
   const spines = books.map((b) => ({
@@ -504,7 +503,6 @@ function BookshelfVisual({ books }: { books: Book[] }) {
   );
 }
 
-// ── Modals: Book Details & Tropes ──────────────────────────────────────────────
 function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: Book; onClose: () => void; onUpdate: (id: number, patch: Partial<Book>) => void; onReread: (id: number) => void }) {
   const [synopsis, setSynopsis] = useState('');
   const [loadingSyn, setLoadingSyn] = useState(false);
@@ -553,7 +551,7 @@ function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: Book; on
     setLoadingTropes(false);
   };
 
-  const inp: React.CSSProperties = {
+  const inpStyle: React.CSSProperties = {
     width: '100%',
     background: 'rgba(255,255,255,0.05)',
     border: '1px solid rgba(255,255,255,0.1)',
@@ -612,7 +610,7 @@ function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: Book; on
               value={newTrope}
               onChange={(e) => setNewTrope(e.target.value)}
               placeholder="Add a trope…"
-              style={{ ...inp, fontSize: '0.78rem', padding: '0.35rem 0.65rem' }}
+              style={{ ...inpStyle, fontSize: '0.78rem', padding: '0.35rem 0.65rem' }}
             />
             <button
               onClick={() => {
@@ -637,7 +635,7 @@ function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: Book; on
           </div>
           {editingNote ? (
             <div>
-              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} style={{ ...inp, resize: 'vertical', lineHeight: 1.5, marginBottom: '0.4rem' }} />
+              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} style={{ ...inpStyle, resize: 'vertical', lineHeight: 1.5, marginBottom: '0.4rem' }} />
               <button
                 onClick={() => {
                   onUpdate(book.id, { note });
@@ -678,22 +676,17 @@ function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: Book; on
   );
 }
 
-// ── Multi-Mode Form ──────────────────────────────────────────────────────────
 function ModalForm({
   book,
   onSave,
-  onSaveMany,
   onClose,
   tab,
-  allSeries = [],
   allBooks = [],
 }: {
   book: Book | null;
   onSave: (b: Book) => void;
-  onSaveMany?: (bs: Book[]) => void;
   onClose: () => void;
   tab: string;
-  allSeries?: string[];
   allBooks?: Book[];
 }) {
   const [mode, setMode] = useState('single');
@@ -852,18 +845,6 @@ function ModalForm({
               <input value={f.author} onChange={(e) => set('author', e.target.value)} placeholder="Author name" style={inp} />
             </div>
 
-            {allSeries.length > 0 && (
-              <div style={{ marginBottom: '0.65rem' }}>
-                <label style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', display: 'block', marginBottom: '0.2rem' }}>Series</label>
-                <input value={f.series || ''} onChange={(e) => set('series', e.target.value || null)} placeholder="Series name" style={inp} list="series-list" />
-                <datalist id="series-list">
-                  {allSeries.map((s) => (
-                    <option key={s} value={s} />
-                  ))}
-                </datalist>
-              </div>
-            )}
-
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
               <button
                 onClick={() => {
@@ -901,10 +882,7 @@ function ModalForm({
               <input type="checkbox" checked={shelfRead} onChange={(e) => setShelfRead(e.target.checked)} /> Mark batch as read
             </label>
             <button
-              onClick={() => {
-                if (onSaveMany) onSaveMany([]);
-                onClose();
-              }}
+              onClick={onClose}
               style={{ width: '100%', background: '#6d28d9', color: 'white', border: 'none', borderRadius: '0.75rem', padding: '0.6rem', fontWeight: 600, cursor: 'pointer' }}
             >
               Done
@@ -921,43 +899,66 @@ export default function App() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('home');
-  const [goals] = useState<Goals>({ yearly: 50, monthly: 4, readProgress: null, monthProgress: null });
+  const [goals] = useState<Goals>(() => {
+    try {
+      const raw = localStorage.getItem(GOALS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return { yearly: 50, monthly: 4, readProgress: null, monthProgress: null };
+  });
   const [user, setUser] = useState<User | null>(null);
   const [detailBook, setDetailBook] = useState<Book | null>(null);
   const [modal, setModal] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        try {
-          const snap = await getDoc(doc(db, 'users', u.uid));
-          if (snap.exists()) {
-            const data = snap.data();
-            const cloud = migrateBooks(data.books || []);
-            const ids = new Set(cloud.map((b) => b.id));
-            setBooks([...cloud, ...ALL_BOOKS.filter((b) => !ids.has(b.id))]);
-          } else {
+    let unsub = () => {};
+
+    if (auth) {
+      unsub = onAuthStateChanged(auth, async (u) => {
+        setUser(u);
+        if (u) {
+          try {
+            const snap = await getDoc(doc(db!, 'users', u.uid));
+            if (snap.exists()) {
+              const data = snap.data();
+              const cloud = migrateBooks(data.books || []);
+              const ids = new Set(cloud.map((b) => b.id));
+              setBooks([...cloud, ...ALL_BOOKS.filter((b) => !ids.has(b.id))]);
+            } else {
+              setBooks(ALL_BOOKS);
+              await saveToFirestore(u.uid, ALL_BOOKS, goals);
+            }
+          } catch {
             setBooks(ALL_BOOKS);
-            await saveToFirestore(u.uid, ALL_BOOKS, goals);
           }
-        } catch {
-          setBooks(ALL_BOOKS);
+        } else {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+              const local = migrateBooks(JSON.parse(raw));
+              const ids = new Set(local.map((b) => b.id));
+              setBooks([...local, ...ALL_BOOKS.filter((b) => !ids.has(b.id))]);
+            } else setBooks(ALL_BOOKS);
+          } catch {
+            setBooks(ALL_BOOKS);
+          }
         }
-      } else {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) {
-            const local = migrateBooks(JSON.parse(raw));
-            const ids = new Set(local.map((b) => b.id));
-            setBooks([...local, ...ALL_BOOKS.filter((b) => !ids.has(b.id))]);
-          } else setBooks(ALL_BOOKS);
-        } catch {
-          setBooks(ALL_BOOKS);
-        }
+        setLoading(false);
+      });
+    } else {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const local = migrateBooks(JSON.parse(raw));
+          const ids = new Set(local.map((b) => b.id));
+          setBooks([...local, ...ALL_BOOKS.filter((b) => !ids.has(b.id))]);
+        } else setBooks(ALL_BOOKS);
+      } catch {
+        setBooks(ALL_BOOKS);
       }
       setLoading(false);
-    });
+    }
+
     return () => unsub();
   }, [goals]);
 
@@ -965,6 +966,7 @@ export default function App() {
     setBooks(nb);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nb));
+      localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
     } catch {}
     if (user) saveToFirestore(user.uid, nb, goals);
   };
@@ -981,8 +983,6 @@ export default function App() {
     const rr = book.rereads || [];
     if (!rr.includes(THIS_YEAR)) update(id, { rereads: [...rr, THIS_YEAR] });
   };
-
-  const allSeries = useMemo(() => Array.from(new Set(books.map((b) => b.series).filter(Boolean))) as string[], [books]);
 
   if (loading)
     return (
@@ -1008,11 +1008,11 @@ export default function App() {
             📤 CSV
           </button>
           {user ? (
-            <button onClick={() => signOut(auth)} style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 0.8rem', cursor: 'pointer' }}>
+            <button onClick={() => auth && signOut(auth)} style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 0.8rem', cursor: 'pointer' }}>
               Sign Out
             </button>
           ) : (
-            <button onClick={() => signInWithPopup(auth, provider)} style={{ background: '#6d28d9', color: 'white', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 0.8rem', cursor: 'pointer' }}>
+            <button onClick={() => auth && provider && signInWithPopup(auth, provider)} style={{ background: '#6d28d9', color: 'white', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 0.8rem', cursor: 'pointer' }}>
               Sign In
             </button>
           )}
@@ -1053,14 +1053,9 @@ export default function App() {
         <ModalForm
           book={null}
           tab={tab}
-          allSeries={allSeries}
           allBooks={books}
           onSave={(nb) => {
             persist([...books, nb]);
-            setModal(null);
-          }}
-          onSaveMany={(nbs) => {
-            persist([...books, ...nbs]);
             setModal(null);
           }}
           onClose={() => setModal(null)}
