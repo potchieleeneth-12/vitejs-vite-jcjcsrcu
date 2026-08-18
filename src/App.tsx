@@ -1,14 +1,55 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { initializeApp } from 'firebase/app';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
   onAuthStateChanged,
+  User,
 } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+export type Genre =
+  | 'Romantasy'
+  | 'Fantasy'
+  | 'Romance'
+  | 'Mystery/Thriller'
+  | 'Horror'
+  | 'Contemporary'
+  | 'Classics'
+  | 'Non-Fiction';
+
+export type BookStatus = 'shelf' | 'tbr' | 'reading' | 'wishlist';
+
+export interface Book {
+  id: number;
+  title: string;
+  author: string;
+  category: string;
+  genre: Genre;
+  subgenre: string;
+  series: string | null;
+  sn: number | null;
+  read: boolean;
+  status: BookStatus;
+  readAt: number | null;
+  readYear: number | null;
+  rating: number | null;
+  note: string;
+  rereads: number[];
+  tropes?: string[];
+}
+
+export interface Goals {
+  yearly: number;
+  monthly: number;
+  readProgress: number | null;
+  monthProgress: number | null;
+}
+
+// ── Firebase Singletons ──────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: 'AIzaSyD2p_VgfHQhGja_Xb-XrSwLUxqUdrpipzA',
   authDomain: 'personal-library-99222.firebaseapp.com',
@@ -18,127 +59,147 @@ const firebaseConfig = {
   appId: '1:188028941942:web:8e9aee68e9a22091935157',
 };
 
-let _auth: any = null, _db: any = null, _provider: any = null;
-let _signInWithPopup: any = null, _signOut: any = null, _onAuthStateChanged: any = null;
-let _doc: any = null, _getDoc: any = null, _setDoc: any = null;
-let firebaseReady = false;
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
 
-const initFirebase = async () => {
+const saveToFirestore = async (uid: string, books: Book[], goals: Goals) => {
   try {
-    const app = initializeApp(firebaseConfig);
-    _auth = getAuth(app);
-    _db = getFirestore(app);
-    _provider = new GoogleAuthProvider();
-    _signInWithPopup = signInWithPopup;
-    _signOut = signOut;
-    _onAuthStateChanged = onAuthStateChanged;
-    _doc = doc; _getDoc = getDoc; _setDoc = setDoc;
-    firebaseReady = true;
-    return true;
-  } catch { return false; }
-};
-
-const saveToFirestore = async (uid: string, books: any[], goals: any) => {
-  if (!firebaseReady) return;
-  try {
-    await _setDoc(_doc(_db, 'users', uid), { books, goals });
-    // Also save public snapshot for share page (read books + wishlist only)
-    const publicBooks = books.map((b: any) => ({
-      id: b.id, title: b.title, author: b.author, genre: b.genre,
-      subgenre: b.subgenre, series: b.series, sn: b.sn,
-      read: b.read, readYear: b.readYear, status: b.status,
-      rating: b.rating ?? null, note: b.note ?? '',
+    await setDoc(doc(db, 'users', uid), { books, goals });
+    const publicBooks = books.map((b) => ({
+      id: b.id,
+      title: b.title,
+      author: b.author,
+      genre: b.genre,
+      subgenre: b.subgenre,
+      series: b.series,
+      sn: b.sn,
+      read: b.read,
+      readYear: b.readYear,
+      status: b.status,
+      rating: b.rating ?? null,
+      note: b.note ?? '',
     }));
-    await _setDoc(_doc(_db, 'public', uid), { books: publicBooks, updatedAt: Date.now() });
-  } catch {}
+    await setDoc(doc(db, 'public', uid), { books: publicBooks, updatedAt: Date.now() });
+  } catch (err) {
+    console.error('Firestore save failed:', err);
+  }
 };
 
-// ── Config ────────────────────────────────────────────────────────────────────
+// ── Configuration & Maps ─────────────────────────────────────────────────────
 const GENRE_CFG: Record<string, { accent: string; dim: string }> = {
-  Romantasy:          { accent: '#4ade80', dim: '#14532d' },
-  Fantasy:            { accent: '#a78bfa', dim: '#2d1b69' },
-  Romance:            { accent: '#fb7185', dim: '#6b1a2e' },
+  Romantasy: { accent: '#4ade80', dim: '#14532d' },
+  Fantasy: { accent: '#a78bfa', dim: '#2d1b69' },
+  Romance: { accent: '#fb7185', dim: '#6b1a2e' },
   'Mystery/Thriller': { accent: '#fbbf24', dim: '#6b4a04' },
-  Horror:             { accent: '#f87171', dim: '#5b1a1a' },
-  Contemporary:       { accent: '#f97316', dim: '#431407' },
-  Classics:           { accent: '#e5c97a', dim: '#5a4000' },
-  'Non-Fiction':      { accent: '#60a5fa', dim: '#1e3a5f' },
+  Horror: { accent: '#f87171', dim: '#5b1a1a' },
+  Contemporary: { accent: '#f97316', dim: '#431407' },
+  Classics: { accent: '#e5c97a', dim: '#5a4000' },
+  'Non-Fiction': { accent: '#60a5fa', dim: '#1e3a5f' },
 };
 
 const SUBGENRES: Record<string, string[]> = {
-  Romantasy:          ['Romantasy','Mythology Romance','Paranormal Romance','Historical Fantasy','Dark Romantasy'],
-  Fantasy:            ['Dark Fantasy','Urban Fantasy','YA Fantasy','High Fantasy','Historical Fantasy','Mythology Romance'],
-  Romance:            ['Contemporary Romance','Dark Romance','Sports Romance','Holiday Romance','New Adult Romance','College Romance'],
-  'Mystery/Thriller': ['Cozy Mystery','YA Mystery','Historical Mystery','Thriller','Dark Thriller','Conspiracy Thriller'],
-  Horror:             ['Gothic Horror','Dark Fiction','Horror Comedy'],
-  Contemporary:       ['Contemporary Fiction','Literary Fiction','Cozy Fiction','New Adult','Chick Lit'],
-  Classics:           ['Gothic Classic','Russian Lit','French Lit','British Lit','American Lit','Fairy Tales','German Lit'],
-  'Non-Fiction':      ['Memoir','Self-Help','Philosophy','Language Learning'],
+  Romantasy: ['Romantasy', 'Mythology Romance', 'Paranormal Romance', 'Historical Fantasy', 'Dark Romantasy'],
+  Fantasy: ['Dark Fantasy', 'Urban Fantasy', 'YA Fantasy', 'High Fantasy', 'Historical Fantasy', 'Mythology Romance'],
+  Romance: ['Contemporary Romance', 'Dark Romance', 'Sports Romance', 'Holiday Romance', 'New Adult Romance', 'College Romance'],
+  'Mystery/Thriller': ['Cozy Mystery', 'YA Mystery', 'Historical Mystery', 'Thriller', 'Dark Thriller', 'Conspiracy Thriller'],
+  Horror: ['Gothic Horror', 'Dark Fiction', 'Horror Comedy'],
+  Contemporary: ['Contemporary Fiction', 'Literary Fiction', 'Cozy Fiction', 'New Adult', 'Chick Lit'],
+  Classics: ['Gothic Classic', 'Russian Lit', 'French Lit', 'British Lit', 'American Lit', 'Fairy Tales', 'German Lit'],
+  'Non-Fiction': ['Memoir', 'Self-Help', 'Philosophy', 'Language Learning'],
 };
 
 const STORAGE_KEY = 'myshelf-v7';
-const GOALS_KEY   = 'myshelf-goals-v1';
+const GOALS_KEY = 'myshelf-goals-v1';
 
 const TAB_CFG: Record<string, { label: string; color: string }> = {
-  home:     { label: '✦ Home',       color: '#c084fc' },
-  shelf:    { label: '📚 Shelf',     color: '#a78bfa' },
-  tbr:      { label: '🔖 TBR',       color: '#fb923c' },
-  reading:  { label: '📖 Reading',   color: '#34d399' },
-  insights: { label: '📊 Insights',  color: '#c084fc' },
-  wishlist: { label: '✨ Wishlist',  color: '#f472b6' },
+  home: { label: '✦ Home', color: '#c084fc' },
+  shelf: { label: '📚 Shelf', color: '#a78bfa' },
+  tbr: { label: '🔖 TBR', color: '#fb923c' },
+  reading: { label: '📖 Reading', color: '#34d399' },
+  insights: { label: '📊 Insights', color: '#c084fc' },
+  wishlist: { label: '✨ Wishlist', color: '#f472b6' },
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  shelf: '#a78bfa', tbr: '#fb923c', reading: '#34d399', wishlist: '#f472b6',
+  shelf: '#a78bfa',
+  tbr: '#fb923c',
+  reading: '#34d399',
+  wishlist: '#f472b6',
 };
 
-const THIS_YEAR  = new Date().getFullYear();
+const THIS_YEAR = new Date().getFullYear();
 const THIS_MONTH = new Date().getMonth();
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const uid = () => Date.now() + Math.random();
-const base = (extra: any) => ({ read: false, status: 'shelf', readAt: null, readYear: null, rating: null, note: '', rereads: [], ...extra });
-const migrateBooks = (books: any[]) => books.map((b: any) => ({
-  ...b,
-  status: b.status || 'shelf',
-  readAt: b.readAt || null,
-  readYear: b.readYear || null,
-  rating: b.rating ?? null,
-  note: b.note ?? '',
-  rereads: b.rereads ?? [],
-}));
-const fa  = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Fantasy',         subgenre: sg, series: sr, sn });
-const rt  = (id: number, t: string, a: string, sr: string | null, sn: number | null)              => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romantasy',        subgenre: 'Romantasy', series: sr, sn });
-const r   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romance',          subgenre: sg, series: sr, sn });
-const m   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Mystery/Thriller', subgenre: sg, series: sr, sn });
-const h   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Horror',           subgenre: sg, series: sr, sn });
-const co  = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Contemporary',     subgenre: sg, series: sr, sn });
-const cl  = (id: number, t: string, a: string, sg: string)                                        => base({ id, title: t, author: a, category: 'Fiction', genre: 'Classics',          subgenre: sg, series: null, sn: null });
-const nf  = (id: number, t: string, a: string, sg: string)                                        => base({ id, title: t, author: a, category: 'Non-Fiction', genre: 'Non-Fiction',   subgenre: sg, series: null, sn: null });
-
-const fileToBase64 = (file: File): Promise<string> => new Promise((res, rej) => {
-  const reader = new FileReader();
-  reader.onload  = () => res((reader.result as string).split(',')[1]);
-  reader.onerror = rej;
-  reader.readAsDataURL(file);
+// ── Data Construction Helpers ────────────────────────────────────────────────
+const generateUid = () => Math.floor(Date.now() + Math.random() * 1000);
+const base = (extra: Partial<Book>): Book => ({
+  id: generateUid(),
+  title: '',
+  author: '',
+  category: 'Fiction',
+  genre: 'Fantasy',
+  subgenre: '',
+  series: null,
+  sn: null,
+  read: false,
+  status: 'shelf',
+  readAt: null,
+  readYear: null,
+  rating: null,
+  note: '',
+  rereads: [],
+  ...extra,
 });
 
-// ── Export CSV ────────────────────────────────────────────────────────────────
-const exportCSV = (books: any[]) => {
-  const headers = ['Title','Author','Genre','Subgenre','Series','#','Status','Read','Year Read','Rating','Note'];
-  const rows = books.map(b => [
-    b.title, b.author, b.genre, b.subgenre||'', b.series||'', b.sn!=null?b.sn:'',
-    b.status, b.read?'Yes':'No', b.readYear||'', b.rating||'', (b.note||'').replace(/"/g,"'"),
-  ].map(v=>`"${v}"`).join(','));
+const migrateBooks = (books: any[]): Book[] =>
+  books.map((b) => ({
+    ...b,
+    status: b.status || 'shelf',
+    readAt: b.readAt || null,
+    readYear: b.readYear || null,
+    rating: b.rating ?? null,
+    note: b.note ?? '',
+    rereads: b.rereads ?? [],
+  }));
+
+const fa = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Fantasy', subgenre: sg, series: sr, sn });
+const rt = (id: number, t: string, a: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romantasy', subgenre: 'Romantasy', series: sr, sn });
+const r = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romance', subgenre: sg, series: sr, sn });
+const m = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Mystery/Thriller', subgenre: sg, series: sr, sn });
+const h = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Horror', subgenre: sg, series: sr, sn });
+const co = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Contemporary', subgenre: sg, series: sr, sn });
+const cl = (id: number, t: string, a: string, sg: string) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Classics', subgenre: sg, series: null, sn: null });
+const nf = (id: number, t: string, a: string, sg: string) => base({ id, title: t, author: a, category: 'Non-Fiction', genre: 'Non-Fiction', subgenre: sg, series: null, sn: null });
+
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => res((reader.result as string).split(',')[1]);
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+
+const exportCSV = (books: Book[]) => {
+  const headers = ['Title', 'Author', 'Genre', 'Subgenre', 'Series', '#', 'Status', 'Read', 'Year Read', 'Rating', 'Note'];
+  const rows = books.map((b) =>
+    [b.title, b.author, b.genre, b.subgenre || '', b.series || '', b.sn != null ? b.sn : '', b.status, b.read ? 'Yes' : 'No', b.readYear || '', b.rating || '', (b.note || '').replace(/"/g, "'")]
+      .map((v) => `"${v}"`)
+      .join(',')
+  );
   const csv = [headers.join(','), ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'myshelf.csv'; a.click();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'myshelf.csv';
+  a.click();
   URL.revokeObjectURL(url);
 };
 
-// ── Seed Data ─────────────────────────────────────────────────────────────────
-const SEED = [
+// ── Complete Seed Library ───────────────────────────────────────────────────
+const SEED: Book[] = [
   fa(1,'The Awakening','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',1),
   fa(2,'Ruthless Fae','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',2),
   fa(3,'The Reckoning','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',3),
@@ -986,26 +1047,37 @@ const SEED = [
   m(859,'Finlay Donovan Digs Her Own Grave','Elle Cosimano','Cozy Mystery','Finlay Donovan',5),
   fa(860,'House of Pounding Hearts','Olivia Wildenstein','Dark Fantasy',null,null),
   fa(861,'The Captive and the First Blood Game','K.A. Linde','Dark Fantasy',null,null),
-  ];
+];
 
 const seen = new Set<number>();
-const ALL_BOOKS: any[] = [];
+const ALL_BOOKS: Book[] = [];
 for (const b of SEED) {
-  if (!seen.has(b.id)) { seen.add(b.id); ALL_BOOKS.push(b); }
+  if (!seen.has(b.id)) {
+    seen.add(b.id);
+    ALL_BOOKS.push(b);
+  }
 }
 
-// ── StarRating ─────────────────────────────────────────────────────────────────
-function StarRating({ rating, onChange, size = 'sm' }: { rating: number|null; onChange?: (r: number) => void; size?: 'sm'|'md' }) {
+// ── UI Components ─────────────────────────────────────────────────────────────
+function StarRating({ rating, onChange, size = 'sm' }: { rating: number | null; onChange?: (r: number) => void; size?: 'sm' | 'md' }) {
   const [hover, setHover] = useState(0);
   const sz = size === 'md' ? '1.1rem' : '0.75rem';
   return (
-    <div style={{ display:'flex', gap:'1px' }}>
-      {[1,2,3,4,5].map(s => (
-        <span key={s}
+    <div style={{ display: 'flex', gap: '1px' }}>
+      {[1, 2, 3, 4, 5].map((s) => (
+        <span
+          key={s}
           onClick={() => onChange?.(s === rating ? 0 : s)}
           onMouseEnter={() => onChange && setHover(s)}
           onMouseLeave={() => onChange && setHover(0)}
-          style={{ fontSize: sz, cursor: onChange ? 'pointer' : 'default', color: s <= (hover || rating || 0) ? '#fbbf24' : 'rgba(255,255,255,0.15)', lineHeight: 1, transition: 'color 0.1s' }}>
+          style={{
+            fontSize: sz,
+            cursor: onChange ? 'pointer' : 'default',
+            color: s <= (hover || rating || 0) ? '#fbbf24' : 'rgba(255,255,255,0.15)',
+            lineHeight: 1,
+            transition: 'color 0.1s',
+          }}
+        >
           ★
         </span>
       ))}
@@ -1013,155 +1085,155 @@ function StarRating({ rating, onChange, size = 'sm' }: { rating: number|null; on
   );
 }
 
-// ── Pill ──────────────────────────────────────────────────────────────────────
 function Pill({ label, active, color, onClick }: { label: string; active: boolean; color: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ whiteSpace:'nowrap',fontSize:'0.7rem',padding:'0.3rem 0.75rem',borderRadius:'9999px',border:active?`1px solid ${color}`:'1px solid rgba(255,255,255,0.1)',background:active?color+'25':'transparent',color:active?color:'rgba(255,255,255,0.35)',cursor:'pointer',fontWeight:active?600:400 }}>
+    <button
+      onClick={onClick}
+      style={{
+        whiteSpace: 'nowrap',
+        fontSize: '0.7rem',
+        padding: '0.3rem 0.75rem',
+        borderRadius: '9999px',
+        border: active ? `1px solid ${color}` : '1px solid rgba(255,255,255,0.1)',
+        background: active ? color + '25' : 'transparent',
+        color: active ? color : 'rgba(255,255,255,0.35)',
+        cursor: 'pointer',
+        fontWeight: active ? 600 : 400,
+      }}
+    >
       {label}
     </button>
   );
 }
 
-// ── GoalRing ──────────────────────────────────────────────────────────────────
-function GoalRing({ count, goal, label, emoji, gradStart, gradEnd, gradId }: {
-  count: number; goal: number; label: string; emoji: string; gradStart: string; gradEnd: string; gradId: string;
-}) {
+function GoalRing({ count, goal, label, emoji, gradStart, gradEnd, gradId }: { count: number; goal: number; label: string; emoji: string; gradStart: string; gradEnd: string; gradId: string }) {
   const pct = goal ? Math.min(100, Math.round((count / goal) * 100)) : 0;
-  const R = 46; const circ = 2 * Math.PI * R;
+  const R = 46;
+  const circ = 2 * Math.PI * R;
   return (
-    <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:'0.5rem' }}>
-      <div style={{ position:'relative',width:'110px',height:'110px' }}>
-        <svg width="110" height="110" viewBox="0 0 110 110" style={{ transform:'rotate(-90deg)' }}>
-          <circle cx="55" cy="55" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10"/>
-          <circle cx="55" cy="55" r={R} fill="none" stroke={`url(#${gradId})`} strokeWidth="10"
-            strokeLinecap="round" strokeDasharray={`${circ}`} strokeDashoffset={`${circ*(1-pct/100)}`}
-            style={{ transition:'stroke-dashoffset 0.8s ease' }}/>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ position: 'relative', width: '110px', height: '110px' }}>
+        <svg width="110" height="110" viewBox="0 0 110 110" style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx="55" cy="55" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+          <circle
+            cx="55"
+            cy="55"
+            r={R}
+            fill="none"
+            stroke={`url(#${gradId})`}
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={`${circ}`}
+            strokeDashoffset={`${circ * (1 - pct / 100)}`}
+            style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+          />
           <defs>
             <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={gradStart}/>
-              <stop offset="100%" stopColor={gradEnd}/>
+              <stop offset="0%" stopColor={gradStart} />
+              <stop offset="100%" stopColor={gradEnd} />
             </linearGradient>
           </defs>
         </svg>
-        <div style={{ position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center' }}>
-          <span style={{ color:'white',fontWeight:'bold',fontSize:'1.3rem',lineHeight:1 }}>{count}</span>
-          <span style={{ color:'rgba(255,255,255,0.3)',fontSize:'0.6rem' }}>of {goal||'?'}</span>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: 'white', fontWeight: 'bold', fontSize: '1.3rem', lineHeight: 1 }}>{count}</span>
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.6rem' }}>of {goal || '?'}</span>
         </div>
       </div>
-      <div style={{ textAlign:'center' }}>
-        <div style={{ color:gradStart,fontSize:'0.75rem',fontWeight:600 }}>{emoji} {label}</div>
-        <div style={{ color:'rgba(255,255,255,0.3)',fontSize:'0.65rem' }}>{pct}% complete</div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ color: gradStart, fontSize: '0.75rem', fontWeight: 600 }}>
+          {emoji} {label}
+        </div>
+        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>{pct}% complete</div>
       </div>
     </div>
   );
 }
 
-// ── PaceGauge ──────────────────────────────────────────────────────────────────
 function PaceGauge({ read, goal, year }: { read: number; goal: number; year: number }) {
   if (!goal) return null;
   const now = new Date();
-  const dayOfYear = Math.floor((now.getTime() - new Date(year,0,0).getTime()) / 86400000);
-  const daysInYear = ((year%4===0&&year%100!==0)||year%400===0) ? 366 : 365;
+  const dayOfYear = Math.floor((now.getTime() - new Date(year, 0, 0).getTime()) / 86400000);
+  const daysInYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 366 : 365;
   const expectedByNow = Math.round((dayOfYear / daysInYear) * goal);
-  const pct = Math.min(100, Math.round((read/goal)*100));
+  const pct = Math.min(100, Math.round((read / goal) * 100));
   const ahead = read >= expectedByNow;
   const diff = Math.abs(read - expectedByNow);
   const monthsLeft = 12 - now.getMonth();
   const booksLeft = Math.max(0, goal - read);
   const needPerMonth = monthsLeft > 0 ? Math.ceil(booksLeft / monthsLeft) : booksLeft;
-  const arcR = 52; const cx = 70; const cy = 70;
-  const startAngle = -210; const endAngle = 30; const sweep = endAngle - startAngle;
+  const arcR = 52;
+  const cx = 70;
+  const cy = 70;
+  const startAngle = -210;
+  const endAngle = 30;
+  const sweep = endAngle - startAngle;
   const toRad = (d: number) => (d * Math.PI) / 180;
   const arcX = (a: number) => cx + arcR * Math.cos(toRad(a));
   const arcY = (a: number) => cy + arcR * Math.sin(toRad(a));
-  const pctAngle = startAngle + (pct/100)*sweep;
-  const expectedAngle = startAngle + (Math.min(1,expectedByNow/goal))*sweep;
-  const largeArc = (pct/100)*sweep > 180 ? 1 : 0;
+  const pctAngle = startAngle + (pct / 100) * sweep;
+  const expectedAngle = startAngle + Math.min(1, expectedByNow / goal) * sweep;
+  const largeArc = (pct / 100) * sweep > 180 ? 1 : 0;
+
   return (
-    <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-      <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.5rem' }}>📈 {year} Reading Pace</div>
-      <div style={{ display:'flex',alignItems:'center',gap:'1rem' }}>
+    <div style={{ background: '#0e0b1e', borderRadius: '0.875rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1rem', marginBottom: '0.75rem' }}>
+      <div style={{ fontSize: '0.78rem', fontWeight: '600', color: 'white', marginBottom: '0.5rem' }}>📈 {year} Reading Pace</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <svg width="140" height="110" viewBox="0 0 140 110">
-          <path d={`M ${arcX(startAngle)} ${arcY(startAngle)} A ${arcR} ${arcR} 0 1 1 ${arcX(endAngle)} ${arcY(endAngle)}`} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" strokeLinecap="round"/>
-          {pct > 0 && <path d={`M ${arcX(startAngle)} ${arcY(startAngle)} A ${arcR} ${arcR} 0 ${largeArc} 1 ${arcX(pctAngle)} ${arcY(pctAngle)}`} fill="none" stroke="url(#gaugeGrad)" strokeWidth="10" strokeLinecap="round"/>}
-          <line x1={cx} y1={cy} x2={cx + (arcR+8)*Math.cos(toRad(expectedAngle))} y2={cy + (arcR+8)*Math.sin(toRad(expectedAngle))} stroke="#fb923c" strokeWidth="2" strokeLinecap="round"/>
-          <circle cx={cx + (arcR-4)*Math.cos(toRad(expectedAngle))} cy={cy + (arcR-4)*Math.sin(toRad(expectedAngle))} r="3" fill="#fb923c"/>
-          <circle cx={cx} cy={cy} r="4" fill="rgba(255,255,255,0.2)"/>
-          <text x={cx} y={cy-14} textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">{read}</text>
-          <text x={cx} y={cy-2} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="8">of {goal}</text>
-          <defs><linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#4ade80"/><stop offset="100%" stopColor="#a78bfa"/></linearGradient></defs>
-          <text x={arcX(startAngle)-6} y={arcY(startAngle)+4} fill="rgba(255,255,255,0.25)" fontSize="7">0</text>
-          <text x={arcX(endAngle)+2} y={arcY(endAngle)+4} fill="rgba(255,255,255,0.25)" fontSize="7">{goal}</text>
+          <path d={`M ${arcX(startAngle)} ${arcY(startAngle)} A ${arcR} ${arcR} 0 1 1 ${arcX(endAngle)} ${arcY(endAngle)}`} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" strokeLinecap="round" />
+          {pct > 0 && <path d={`M ${arcX(startAngle)} ${arcY(startAngle)} A ${arcR} ${arcR} 0 ${largeArc} 1 ${arcX(pctAngle)} ${arcY(pctAngle)}`} fill="none" stroke="url(#gaugeGrad)" strokeWidth="10" strokeLinecap="round" />}
+          <line x1={cx} y1={cy} x2={cx + (arcR + 8) * Math.cos(toRad(expectedAngle))} y2={cy + (arcR + 8) * Math.sin(toRad(expectedAngle))} stroke="#fb923c" strokeWidth="2" strokeLinecap="round" />
+          <circle cx={cx + (arcR - 4) * Math.cos(toRad(expectedAngle))} cy={cy + (arcR - 4) * Math.sin(toRad(expectedAngle))} r="3" fill="#fb923c" />
+          <circle cx={cx} cy={cy} r="4" fill="rgba(255,255,255,0.2)" />
+          <text x={cx} y={cy - 14} textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">
+            {read}
+          </text>
+          <text x={cx} y={cy - 2} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="8">
+            of {goal}
+          </text>
+          <defs>
+            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#4ade80" />
+              <stop offset="100%" stopColor="#a78bfa" />
+            </linearGradient>
+          </defs>
         </svg>
-        <div style={{ flex:1 }}>
-          <div style={{ background:ahead?'rgba(52,211,153,0.1)':'rgba(251,146,60,0.1)',border:`1px solid ${ahead?'rgba(52,211,153,0.3)':'rgba(251,146,60,0.3)'}`,borderRadius:'0.5rem',padding:'0.4rem 0.6rem',marginBottom:'0.4rem' }}>
-            <div style={{ fontSize:'0.7rem',color:ahead?'#34d399':'#fb923c',fontWeight:700 }}>{ahead?`✦ ${diff} ahead of pace`:`${diff} behind pace`}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ background: ahead ? 'rgba(52,211,153,0.1)' : 'rgba(251,146,60,0.1)', border: `1px solid ${ahead ? 'rgba(52,211,153,0.3)' : 'rgba(251,146,60,0.3)'}`, borderRadius: '0.5rem', padding: '0.4rem 0.6rem', marginBottom: '0.4rem' }}>
+            <div style={{ fontSize: '0.7rem', color: ahead ? '#34d399' : '#fb923c', fontWeight: 700 }}>{ahead ? `✦ ${diff} ahead of pace` : `${diff} behind pace`}</div>
           </div>
-          <div style={{ background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:'0.5rem',padding:'0.4rem 0.6rem',marginBottom:'0.4rem' }}>
-            <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)' }}>Expected by now</div>
-            <div style={{ fontSize:'0.85rem',color:'#fb923c',fontWeight:700 }}>{expectedByNow} books</div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '0.5rem', padding: '0.4rem 0.6rem', marginBottom: '0.4rem' }}>
+            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>Expected by now</div>
+            <div style={{ fontSize: '0.85rem', color: '#fb923c', fontWeight: 700 }}>{expectedByNow} books</div>
           </div>
-          <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)' }}>need ~{needPerMonth}/mo to finish</div>
-          <div style={{ display:'flex',gap:'0.5rem',marginTop:'0.3rem',fontSize:'0.6rem',color:'rgba(255,255,255,0.25)' }}>
-            <span>🟠 Expected &nbsp;🟣 Actual</span>
-          </div>
+          <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.3)' }}>need ~{needPerMonth}/mo to finish</div>
         </div>
       </div>
     </div>
   );
 }
 
-// ── ShelfModal ─────────────────────────────────────────────────────────────────
-function ShelfModal({ books, onClose }: { books: any[]; onClose: () => void }) {
-  const total     = books.length;
-  const readCount = books.filter(b => b.read).length;
-  const pct       = total ? Math.round((readCount / total) * 100) : 0;
-
-  const rows = useMemo(() => buildRows(books, 860), [books.length, readCount]);
-
-  return (
-    <>
-      <div onClick={onClose} style={{ position:'fixed',inset:0,zIndex:65,background:'rgba(0,0,0,0.9)' }}/>
-      <div style={{ position:'fixed',inset:0,zIndex:66,display:'flex',flexDirection:'column',padding:'1rem',pointerEvents:'none' }}>
-        <div style={{ background:'#0d0a1c',borderRadius:'1rem',border:'1px solid rgba(255,255,255,0.1)',
-          display:'flex',flexDirection:'column',maxHeight:'100%',overflow:'hidden',pointerEvents:'all' }}>
-          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',
-            padding:'0.85rem 1.1rem',borderBottom:'1px solid rgba(255,255,255,0.07)',flexShrink:0 }}>
-            <div>
-              <div style={{ fontSize:'0.9rem',fontWeight:'bold',color:'white' }}>📚 Your Library</div>
-              <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.35)',marginTop:'0.1rem' }}>
-                {readCount} of {total} read · {pct}% · {rows.length} shelves
-              </div>
-            </div>
-            <button onClick={onClose} style={{ background:'rgba(255,255,255,0.07)',border:'none',
-              color:'rgba(255,255,255,0.55)',cursor:'pointer',fontSize:'1rem',borderRadius:'0.5rem',
-              padding:'0.3rem 0.65rem',lineHeight:1 }}>✕</button>
-          </div>
-          <div style={{ overflowY:'auto',background:'#0a0614',padding:'6px 0',flex:1 }}>
-            {rows.map((row, ri) => <ShelfRow key={ri} row={row} isLast={ri===rows.length-1} gradId={`wm${ri}`}/>)}
-          </div>
-          <ShelfLegend/>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ── shared helpers ─────────────────────────────────────────────────────────────
-function buildRows(books: any[], maxW: number) {
+// ── Bookshelf Renderer ───────────────────────────────────────────────────────
+function buildRows(books: Book[], maxW: number) {
   const SPINE_GAP = 2;
-  const spines = [...books].sort((a, b) => (a.id * 2654435761 % 99991) - (b.id * 2654435761 % 99991)).map(b => ({    read:  b.read,
-    h:     65 + (b.id % 12),   // 65–76 px — tighter range = cleaner rows
-    w:     11 + (b.id % 7),    // 11–17 px
+  const spines = books.map((b) => ({
+    read: b.read,
+    h: 65 + (Number(b.id) % 12),
+    w: 11 + (Number(b.id) % 7),
     color: GENRE_CFG[b.genre]?.accent || '#a78bfa',
-    tilt:  (b.id % 41 === 0) ? 3 : (b.id % 61 === 0) ? -3 : 0,
+    tilt: Number(b.id) % 41 === 0 ? 3 : Number(b.id) % 61 === 0 ? -3 : 0,
   }));
-  const result: { spine: typeof spines[0]; x: number }[][] = [];
-  let row: { spine: typeof spines[0]; x: number }[] = [];
+
+  const result: { spine: (typeof spines)[0]; x: number }[][] = [];
+  let row: { spine: (typeof spines)[0]; x: number }[] = [];
   let rowW = 0;
+
   for (const spine of spines) {
     const needed = spine.w + SPINE_GAP;
-    if (rowW + needed > maxW && row.length > 0) { result.push(row); row = []; rowW = 0; }
+    if (rowW + needed > maxW && row.length > 0) {
+      result.push(row);
+      row = [];
+      rowW = 0;
+    }
     row.push({ spine, x: rowW });
     rowW += needed;
   }
@@ -1169,1688 +1241,547 @@ function buildRows(books: any[], maxW: number) {
   return result;
 }
 
-function ShelfRow({ row, isLast, gradId }: {
-  row: { spine: any; x: number }[]; isLast: boolean; gradId: string;
-}) {
+function ShelfRow({ row, isLast, gradId }: { row: { spine: any; x: number }[]; isLast: boolean; gradId: string }) {
   const SHELF_H = 82;
   const PLANK_H = 15;
   const WALL_GAP = 5;
   const last = row[row.length - 1];
-  const vbW  = Math.max((last?.x ?? 0) + (last?.spine.w ?? 0) + 4, 300);
+  const vbW = Math.max((last?.x ?? 0) + (last?.spine.w ?? 0) + 4, 300);
   const rowH = SHELF_H + PLANK_H + (isLast ? 0 : WALL_GAP);
 
   return (
-    <svg width="100%" viewBox={`0 0 ${vbW} ${rowH}`}
-      preserveAspectRatio="xMinYMin meet" style={{ display:'block' }}>
-      {/* Wall */}
-      <rect x={0} y={0} width={vbW} height={SHELF_H} fill="#110e22"/>
-      {/* Very subtle wall shading at top */}
-      <rect x={0} y={0} width={vbW} height={20} fill="rgba(0,0,0,0.15)"/>
-
+    <svg width="100%" viewBox={`0 0 ${vbW} ${rowH}`} preserveAspectRatio="xMinYMin meet" style={{ display: 'block' }}>
+      <rect x={0} y={0} width={vbW} height={SHELF_H} fill="#110e22" />
+      <rect x={0} y={0} width={vbW} height={20} fill="rgba(0,0,0,0.15)" />
       {row.map(({ spine: s, x }, i) => {
-        const bookY  = SHELF_H - s.h;
-        const cx     = x + s.w / 2;
+        const bookY = SHELF_H - s.h;
+        const cx = x + s.w / 2;
         const linesY = bookY + 14;
         const lineCount = Math.floor((s.h - 22) / 13);
 
         return (
           <g key={i} transform={s.tilt !== 0 ? `rotate(${s.tilt},${cx},${SHELF_H})` : undefined}>
-            {/* Shadow behind book */}
-            <rect x={x+1} y={bookY+2} width={s.w} height={s.h}
-              fill="rgba(0,0,0,0.5)" rx={1}/>
-
-            {/* Book body
-                Read    → full accent color, well-lit
-                Unread  → accent color at 36% opacity (visible, but clearly dimmer) */}
-            <rect x={x} y={bookY} width={s.w} height={s.h}
-              fill={s.color}
-              opacity={s.read ? 0.88 : 0.34}
-              rx={1}/>
-
-            {/* Top page-edge strip (cream/paper colour) */}
-            <rect x={x} y={bookY} width={s.w} height={3}
-              fill={s.read ? 'rgba(255,255,240,0.55)' : 'rgba(255,255,240,0.12)'}
-              rx={1}/>
-
-            {/* Left spine highlight */}
-            <rect x={x} y={bookY+3} width={2} height={s.h-5}
-              fill={s.read ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.05)'}/>
-
-            {/* Right spine shadow */}
-            <rect x={x+s.w-1} y={bookY+3} width={1} height={s.h-5}
-              fill="rgba(0,0,0,0.35)"/>
-
-            {/* Spine text lines — gives "real book" feel */}
+            <rect x={x + 1} y={bookY + 2} width={s.w} height={s.h} fill="rgba(0,0,0,0.5)" rx={1} />
+            <rect x={x} y={bookY} width={s.w} height={s.h} fill={s.color} opacity={s.read ? 0.88 : 0.34} rx={1} />
+            <rect x={x} y={bookY} width={s.w} height={3} fill={s.read ? 'rgba(255,255,240,0.55)' : 'rgba(255,255,240,0.12)'} rx={1} />
+            <rect x={x} y={bookY + 3} width={2} height={s.h - 5} fill={s.read ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.05)'} />
+            <rect x={x + s.w - 1} y={bookY + 3} width={1} height={s.h - 5} fill="rgba(0,0,0,0.35)" />
             {Array.from({ length: lineCount }, (_, li) => (
-              <line key={li}
-                x1={x+3} y1={linesY + li*13}
-                x2={x+s.w-3} y2={linesY + li*13}
-                stroke={s.read ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.06)'}
-                strokeWidth={0.9}/>
+              <line key={li} x1={x + 3} y1={linesY + li * 13} x2={x + s.w - 3} y2={linesY + li * 13} stroke={s.read ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.06)'} strokeWidth={0.9} />
             ))}
-
-            {/* Bottom accent stripe — only on read books, only on wider spines */}
-            {s.read && s.w >= 13 && (
-              <rect x={x+2} y={SHELF_H-6} width={s.w-4} height={3}
-                fill="rgba(255,255,255,0.3)" rx={1}/>
-            )}
           </g>
         );
       })}
-
-      {/* Shelf plank */}
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#9B6E4A"/>
-          <stop offset="15%"  stopColor="#7A5030"/>
-          <stop offset="65%"  stopColor="#57341A"/>
-          <stop offset="100%" stopColor="#3a2010"/>
+          <stop offset="0%" stopColor="#9B6E4A" />
+          <stop offset="100%" stopColor="#3a2010" />
         </linearGradient>
       </defs>
-      {/* Top edge highlight */}
-      <rect x={0} y={SHELF_H}   width={vbW} height={1}         fill="rgba(255,255,255,0.18)"/>
-      {/* Wood */}
-      <rect x={0} y={SHELF_H+1} width={vbW} height={PLANK_H-3} fill={`url(#${gradId})`}/>
-      {/* Grain lines */}
-      {[0.25, 0.55, 0.8].map((f, i) => (
-        <line key={i}
-          x1={0}   y1={SHELF_H+1+Math.round(f*(PLANK_H-3))}
-          x2={vbW} y2={SHELF_H+1+Math.round(f*(PLANK_H-3))}
-          stroke="rgba(0,0,0,0.15)" strokeWidth={1}/>
-      ))}
-      {/* Bottom shadow */}
-      <rect x={0} y={SHELF_H+PLANK_H-2} width={vbW} height={3} fill="rgba(0,0,0,0.55)"/>
-
-      {/* Gap between shelves */}
-      {!isLast && <rect x={0} y={SHELF_H+PLANK_H} width={vbW} height={WALL_GAP} fill="#0a0614"/>}
+      <rect x={0} y={SHELF_H + 1} width={vbW} height={PLANK_H - 3} fill={`url(#${gradId})`} />
+      <rect x={0} y={SHELF_H + PLANK_H - 2} width={vbW} height={3} fill="rgba(0,0,0,0.55)" />
     </svg>
   );
 }
 
-function ShelfLegend() {
-  return (
-    <div style={{ padding:'0.55rem 1rem',borderTop:'1px solid rgba(255,255,255,0.07)',
-      display:'flex',gap:'0.5rem',flexWrap:'wrap',alignItems:'center',flexShrink:0 }}>
-      <span style={{ display:'flex',alignItems:'center',gap:'0.3rem',fontSize:'0.62rem',color:'rgba(255,255,255,0.55)' }}>
-        <span style={{ display:'inline-block',width:'10px',height:'13px',borderRadius:'1px',
-          background:'rgba(255,255,255,0.75)',border:'1px solid rgba(255,255,255,0.3)' }}/>
-        Read
-      </span>
-      <span style={{ display:'flex',alignItems:'center',gap:'0.3rem',fontSize:'0.62rem',color:'rgba(255,255,255,0.3)' }}>
-        <span style={{ display:'inline-block',width:'10px',height:'13px',borderRadius:'1px',
-          background:'rgba(255,255,255,0.2)',border:'1px solid rgba(255,255,255,0.1)' }}/>
-        Unread
-      </span>
-      {Object.entries(GENRE_CFG).map(([g, cfg]) => (
-        <span key={g} style={{ display:'flex',alignItems:'center',gap:'0.2rem',fontSize:'0.58rem',color:'rgba(255,255,255,0.3)' }}>
-          <span style={{ display:'inline-block',width:'7px',height:'9px',borderRadius:'1px',background:cfg.accent }}/>
-          {g}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-// ── BookshelfVisual ────────────────────────────────────────────────────────────
-function BookshelfVisual({ books }: { books: any[] }) {
+function BookshelfVisual({ books }: { books: Book[] }) {
   const [showModal, setShowModal] = useState(false);
-
-  const total     = books.length;
-  const readCount = books.filter(b => b.read).length;
-  const pct       = total ? Math.round((readCount / total) * 100) : 0;
-
-  const rows        = useMemo(() => buildRows(books, 860), [books.length, readCount]);
+  const total = books.length;
+  const readCount = books.filter((b) => b.read).length;
+  const pct = total ? Math.round((readCount / total) * 100) : 0;
+  const rows = useMemo(() => buildRows(books, 860), [books.length, readCount]);
   const previewRows = rows.slice(0, 3);
 
   return (
     <>
-      {showModal && <ShelfModal books={books} onClose={() => setShowModal(false)}/>}
-
-      <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',
-        padding:'1rem',marginBottom:'0.75rem' }}>
-
-        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.7rem' }}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>📚 Your Library</div>
-          <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>
-            {readCount} of {total} read &nbsp;·&nbsp; {pct}%
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 65, background: 'rgba(0,0,0,0.9)', display: 'flex', flexDirection: 'column', padding: '1rem' }}>
+          <div style={{ background: '#0d0a1c', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '100%', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.1rem', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'white' }}>📚 Your Library</div>
+                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.1rem' }}>
+                  {readCount} of {total} read · {pct}% · {rows.length} shelves
+                </div>
+              </div>
+              <button onClick={() => setShowModal(false)} style={{ background: 'rgba(255,255,255,0.07)', border: 'none', color: 'white', cursor: 'pointer', padding: '0.3rem 0.65rem', borderRadius: '0.5rem' }}>
+                ✕
+              </button>
+            </div>
+            <div style={{ overflowY: 'auto', background: '#0a0614', padding: '6px 0', flex: 1 }}>
+              {rows.map((row, ri) => (
+                <ShelfRow key={ri} row={row} isLast={ri === rows.length - 1} gradId={`wm${ri}`} />
+              ))}
+            </div>
           </div>
         </div>
+      )}
 
-        {/* 3-row preview */}
-        <div style={{ background:'#0a0614',borderRadius:'0.5rem',overflow:'hidden',
-          border:'1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ background: '#0e0b1e', borderRadius: '0.875rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1rem', marginBottom: '0.75rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.7rem' }}>
+          <div style={{ fontSize: '0.78rem', fontWeight: '600', color: 'white' }}>📚 Your Library</div>
+          <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>
+            {readCount} of {total} read · {pct}%
+          </div>
+        </div>
+        <div style={{ background: '#0a0614', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
           {previewRows.map((row, ri) => (
-            <ShelfRow key={ri} row={row}
-              isLast={ri === previewRows.length - 1}
-              gradId={`wp${ri}`}/>
+            <ShelfRow key={ri} row={row} isLast={ri === previewRows.length - 1} gradId={`wp${ri}`} />
           ))}
         </div>
-
-        {/* Expand button */}
-        <button onClick={() => setShowModal(true)}
-          style={{ width:'100%',marginTop:'0.6rem',padding:'0.5rem',display:'flex',
-            alignItems:'center',justifyContent:'center',gap:'0.4rem',
-            background:'rgba(167,139,250,0.07)',border:'1px solid rgba(167,139,250,0.18)',
-            borderRadius:'0.65rem',color:'#a78bfa',fontSize:'0.75rem',fontWeight:600,cursor:'pointer' }}>
-          <span>🔍 View full shelf</span>
-          <span style={{ opacity:0.45,fontWeight:400,fontSize:'0.7rem' }}>
-            ({rows.length} shelves · {total} books)
-          </span>
+        <button
+          onClick={() => setShowModal(true)}
+          style={{
+            width: '100%',
+            marginTop: '0.6rem',
+            padding: '0.5rem',
+            background: 'rgba(167,139,250,0.07)',
+            border: '1px solid rgba(167,139,250,0.18)',
+            borderRadius: '0.65rem',
+            color: '#a78bfa',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          🔍 View full shelf ({rows.length} shelves · {total} books)
         </button>
-
-        <div style={{ display:'flex',gap:'1.5rem',marginTop:'0.5rem' }}>
-          <span style={{ fontSize:'0.72rem',color:'white',fontWeight:700 }}>
-            {total} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>total</span>
-          </span>
-          <span style={{ fontSize:'0.72rem',color:'#4ade80',fontWeight:700 }}>
-            {readCount} <span style={{ color:'rgba(255,255,255,0.3)',fontWeight:400 }}>read</span>
-          </span>
-          <span style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.3)',fontWeight:400 }}>
-            {total - readCount} unread
-          </span>
-        </div>
       </div>
     </>
   );
 }
 
-
-// ── YearBooksModal ─────────────────────────────────────────────────────────────
-function YearBooksModal({ year, books, onClose, onBookClick }: { year: number; books: any[]; onClose: () => void; onBookClick: (b: any) => void }) {
-  const yearBooks = books.filter(b => {
-    const yr = b.readYear || (b.readAt ? new Date(b.readAt).getFullYear() : null);
-    const rr: number[] = b.rereads || [];
-    return yr === year || rr.includes(year);
-  });
-  return (
-    <div style={{ position:'fixed',inset:0,zIndex:55,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.85)',padding:'1rem' }}>
-      <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'520px',maxHeight:'85vh',overflowY:'auto' }}>
-        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem' }}>
-          <h3 style={{ color:'white',fontWeight:'bold',fontSize:'1rem' }}>📅 {year} — {yearBooks.length} books</h3>
-          <button onClick={onClose} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'1.2rem' }}>✕</button>
-        </div>
-        {yearBooks.length===0?(<p style={{ color:'rgba(255,255,255,0.3)',textAlign:'center',padding:'2rem 0' }}>No books for {year}</p>):(
-          <div style={{ display:'flex',flexDirection:'column',gap:'0.4rem' }}>
-            {yearBooks.map(b => {
-              const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy'];
-              const isReread=(b.rereads||[]).includes(year)&&b.readYear!==year;
-              return (<div key={b.id} onClick={()=>onBookClick(b)} style={{ display:'flex',alignItems:'center',gap:'0.65rem',padding:'0.55rem 0.75rem',background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',borderLeft:`3px solid ${cfg.accent}`,cursor:'pointer' }} onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')} onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
-                <div style={{ flex:1,minWidth:0 }}>
-                  <div style={{ fontSize:'0.8rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}{isReread&&<span style={{ marginLeft:'0.4rem',fontSize:'0.6rem',color:'#a78bfa' }}>🔁 re-read</span>}</div>
-                  <div style={{ fontSize:'0.68rem',color:cfg.accent+'bb' }}>{b.author}</div>
-                </div>
-                {b.rating&&<StarRating rating={b.rating} size="sm"/>}
-                <span style={{ fontSize:'0.6rem',padding:'0.1rem 0.4rem',borderRadius:'9999px',background:cfg.dim,color:cfg.accent,flexShrink:0 }}>{b.genre}</span>
-              </div>);
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── SeriesModal ────────────────────────────────────────────────────────────────
-function SeriesModal({ seriesName, books, onClose, onUpdate, onBookDetail }: { seriesName: string; books: any[]; onClose: () => void; onUpdate: (id: any, patch: any) => void; onBookDetail: (b: any) => void }) {
-  const sb = books.filter(b=>b.series===seriesName).sort((a,b)=>(a.sn??999)-(b.sn??999));
-  return (
-    <div style={{ position:'fixed',inset:0,zIndex:55,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.85)',padding:'1rem' }}>
-      <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'560px',maxHeight:'85vh',overflowY:'auto' }}>
-        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem' }}>
-          <div><h3 style={{ color:'white',fontWeight:'bold',fontSize:'1rem',marginBottom:'0.2rem' }}>{seriesName}</h3><div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>{sb.filter(b=>b.read).length}/{sb.length} read</div></div>
-          <button onClick={onClose} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'1.2rem' }}>✕</button>
-        </div>
-        <div style={{ display:'flex',flexDirection:'column',gap:'0.5rem' }}>
-          {sb.map(b => { const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
-            <div key={b.id} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.75rem',borderLeft:`3px solid ${cfg.accent}`,padding:'0.65rem 0.75rem' }}>
-              <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start' }}>
-                <div style={{ flex:1,minWidth:0,cursor:'pointer' }} onClick={()=>onBookDetail(b)}>
-                  <div style={{ fontSize:'0.82rem',fontWeight:'bold',color:'white' }}>{b.title}</div>
-                  <div style={{ fontSize:'0.7rem',color:cfg.accent+'bb',marginBottom:'0.1rem' }}>{b.author}</div>
-                  {b.sn!=null&&<div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>#{b.sn}</div>}
-                </div>
-                <div style={{ display:'flex',flexDirection:'column',gap:'0.3rem',alignItems:'flex-end' }}>
-                  <button onClick={()=>onUpdate(b.id,{read:!b.read,readYear:!b.read?THIS_YEAR:null,readAt:!b.read?Date.now():null})} style={{ fontSize:'0.62rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',border:'1px solid',cursor:'pointer',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.4)'}) }}>{b.read?'✓ Read':'Unread'}</button>
-                  {b.rating&&<StarRating rating={b.rating} size="sm"/>}
-                </div>
-              </div>
-              {b.note&&<div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',marginTop:'0.3rem',fontStyle:'italic' }}>"{b.note}"</div>}
-            </div>
-          ); })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── AuthorModal ────────────────────────────────────────────────────────────────
-function AuthorModal({ author, books, onClose, onUpdate, onBookDetail }: { author: string; books: any[]; onClose: () => void; onUpdate: (id: any, patch: any) => void; onBookDetail: (b: any) => void }) {
-  const ab = books.filter(b=>b.author===author).sort((a,b)=>{ if(a.series&&b.series){if(a.series!==b.series)return a.series.localeCompare(b.series);return(a.sn??999)-(b.sn??999);}if(a.series)return -1;if(b.series)return 1;return a.title.localeCompare(b.title); });
-  const groups = useMemo(()=>{ const g: Record<string,any[]>={}; ab.forEach(b=>{const k=b.series||'__standalone__';if(!g[k])g[k]=[];g[k].push(b);}); return g; },[ab]);
-  return (
-    <div style={{ position:'fixed',inset:0,zIndex:55,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.85)',padding:'1rem' }}>
-      <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'560px',maxHeight:'85vh',overflowY:'auto' }}>
-        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem' }}>
-          <div><h3 style={{ color:'white',fontWeight:'bold',fontSize:'1rem',marginBottom:'0.2rem' }}>{author}</h3><div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>{ab.filter(b=>b.read).length}/{ab.length} read</div></div>
-          <button onClick={onClose} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'1.2rem' }}>✕</button>
-        </div>
-        {Object.entries(groups).map(([key,bks])=>(
-          <div key={key} style={{ marginBottom:'1rem' }}>
-            {key!=='__standalone__'&&<div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.4)',marginBottom:'0.4rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em' }}>{key}</div>}
-            <div style={{ display:'flex',flexDirection:'column',gap:'0.4rem' }}>
-              {bks.map(b=>{ const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
-                <div key={b.id} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.75rem',borderLeft:`3px solid ${cfg.accent}`,padding:'0.55rem 0.75rem',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-                  <div style={{ flex:1,minWidth:0,cursor:'pointer' }} onClick={()=>onBookDetail(b)}>
-                    <div style={{ fontSize:'0.8rem',fontWeight:'bold',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
-                    {b.sn!=null&&<div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)' }}>#{b.sn}</div>}
-                  </div>
-                  <button onClick={()=>onUpdate(b.id,{read:!b.read,readYear:!b.read?THIS_YEAR:null,readAt:!b.read?Date.now():null})} style={{ fontSize:'0.6rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',border:'1px solid',cursor:'pointer',flexShrink:0,...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.4)'}) }}>{b.read?'✓':'Unread'}</button>
-                </div>
-              ); })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── BookDetailModal ────────────────────────────────────────────────────────────
-function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: any; onClose: () => void; onUpdate: (id: any, patch: any) => void; onReread: (id: any) => void }) {
+// ── Modals: Book Details & AI Tropes ──────────────────────────────────────────
+function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: Book; onClose: () => void; onUpdate: (id: number, patch: Partial<Book>) => void; onReread: (id: number) => void }) {
   const [synopsis, setSynopsis] = useState('');
   const [loadingSyn, setLoadingSyn] = useState(false);
   const [tropes, setTropes] = useState<string[]>(book.tropes || []);
   const [loadingTropes, setLoadingTropes] = useState(false);
   const [newTrope, setNewTrope] = useState('');
   const [note, setNote] = useState(book.note || '');
-  const [rating, setRating] = useState<number|null>(book.rating ?? null);
+  const [rating, setRating] = useState<number | null>(book.rating ?? null);
   const [editingNote, setEditingNote] = useState(false);
-  const cfg = GENRE_CFG[book.genre] || GENRE_CFG['Fantasy'];
-  const rereads: number[] = book.rereads || [];
-  const inp: React.CSSProperties = { width:'100%',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.6rem',padding:'0.5rem 0.75rem',color:'white',fontSize:'0.85rem',boxSizing:'border-box' };
 
-  useEffect(()=>{
-    (async()=>{
+  const cfg = GENRE_CFG[book.genre] || GENRE_CFG['Fantasy'];
+
+  useEffect(() => {
+    (async () => {
       setLoadingSyn(true);
       try {
-        const res=await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(book.author)}&maxResults=1`);
-        const data=await res.json();
-        const desc=data.items?.[0]?.volumeInfo?.description;
-        if(desc) setSynopsis(desc.replace(/<[^>]*>/g,'').slice(0,600)+(desc.length>600?'…':''));
+        const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(book.author)}&maxResults=1`);
+        const data = await res.json();
+        const desc = data.items?.[0]?.volumeInfo?.description;
+        if (desc) setSynopsis(desc.replace(/<[^>]*>/g, '').slice(0, 600) + (desc.length > 600 ? '…' : ''));
         else setSynopsis('No synopsis available.');
-      } catch { setSynopsis('Could not load synopsis.'); }
+      } catch {
+        setSynopsis('Could not load synopsis.');
+      }
       setLoadingSyn(false);
     })();
-  },[book.id]);
+  }, [book.id]);
 
-  const fetchTropes=async()=>{
+  const fetchTropes = async () => {
     setLoadingTropes(true);
     try {
-      const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:`List 5 common tropes for "${book.title}" by ${book.author}. Return ONLY a JSON array of short trope names (2-4 words each): ["trope1","trope2",...]`}]})});
-      const data=await res.json();
-      const text=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
-      const parsed=JSON.parse(text);
-      if(Array.isArray(parsed)) setTropes([...new Set([...tropes,...parsed])]);
+      const res = await fetch('/.netlify/functions/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 200,
+          messages: [{ role: 'user', content: `List 5 common tropes for "${book.title}" by ${book.author}. Return ONLY a JSON array of short trope names (2-4 words each): ["trope1","trope2",...]` }],
+        }),
+      });
+      const data = await res.json();
+      const text = (data.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) setTropes([...new Set([...tropes, ...parsed])]);
     } catch {}
     setLoadingTropes(false);
   };
 
-  const saveNote=()=>{ onUpdate(book.id,{note,rating}); setEditingNote(false); };
+  const inp: React.CSSProperties = {
+    width: '100%',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '0.6rem',
+    padding: '0.5rem 0.75rem',
+    color: 'white',
+    fontSize: '0.85rem',
+    boxSizing: 'border-box',
+  };
 
   return (
-    <div style={{ position:'fixed',inset:0,zIndex:60,display:'flex',alignItems:'flex-end',justifyContent:'center',background:'rgba(0,0,0,0.85)' }} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div style={{ background:'#0d0a1c',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1.25rem 1.25rem 0 0',padding:'1.5rem',width:'100%',maxWidth:'600px',maxHeight:'90vh',overflowY:'auto' }}>
-        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'1rem' }}>
-          <div style={{ flex:1,minWidth:0,paddingRight:'1rem' }}>
-            <div style={{ fontSize:'1.05rem',fontWeight:'bold',color:'white',lineHeight:1.3,marginBottom:'0.25rem' }}>{book.title}</div>
-            <div style={{ fontSize:'0.8rem',color:cfg.accent+'cc',marginBottom:'0.2rem' }}>{book.author}</div>
-            {book.series&&<div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)' }}>{book.series}{book.sn!=null?` #${book.sn}`:''}</div>}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,0.85)' }}>
+      <div style={{ background: '#0d0a1c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1.25rem 1.25rem 0 0', padding: '1.5rem', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+          <div>
+            <div style={{ fontSize: '1.05rem', fontWeight: 'bold', color: 'white', marginBottom: '0.25rem' }}>{book.title}</div>
+            <div style={{ fontSize: '0.8rem', color: cfg.accent }}>{book.author}</div>
           </div>
-          <button onClick={onClose} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'1.3rem',flexShrink:0 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '1.3rem' }}>
+            ✕
+          </button>
         </div>
-        <div style={{ display:'flex',gap:'0.4rem',flexWrap:'wrap',marginBottom:'1rem' }}>
-          <span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:cfg.dim,color:cfg.accent }}>{book.genre}</span>
-          {book.subgenre&&<span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.4)' }}>{book.subgenre}</span>}
-          {book.read&&<span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:'rgba(52,211,153,0.1)',color:'#34d399' }}>✓ Read {book.readYear||''}</span>}
-          {rereads.length>0&&<span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:'rgba(167,139,250,0.1)',color:'#a78bfa' }}>🔁 ×{rereads.length} re-read</span>}
+
+        <div style={{ marginBottom: '1rem' }}>
+          <StarRating
+            rating={rating}
+            onChange={(r) => {
+              setRating(r);
+              onUpdate(book.id, { rating: r });
+            }}
+            size="md"
+          />
         </div>
-        <div style={{ display:'flex',alignItems:'center',gap:'0.75rem',marginBottom:'1rem' }}>
-          <StarRating rating={rating} onChange={r=>{ const nr=r===rating?null:r; setRating(nr); onUpdate(book.id,{rating:nr}); }} size="md"/>
-          {rating&&<span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)' }}>{rating}/5</span>}
+
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.35rem' }}>Synopsis</div>
+          {loadingSyn ? <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.78rem' }}>Loading…</div> : <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>{synopsis}</div>}
         </div>
-        <div style={{ marginBottom:'1rem' }}>
-          <div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.4)',marginBottom:'0.35rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em' }}>Synopsis</div>
-          {loadingSyn?(<div style={{ color:'rgba(255,255,255,0.2)',fontSize:'0.78rem' }}>Loading…</div>):(<div style={{ fontSize:'0.78rem',color:'rgba(255,255,255,0.6)',lineHeight:1.6 }}>{synopsis}</div>)}
-        </div>
-        <div style={{ marginBottom:'1rem' }}>
-          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.35rem' }}>
-            <div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em' }}>Tropes</div>
-            <button onClick={fetchTropes} disabled={loadingTropes} style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',border:'1px solid rgba(167,139,250,0.4)',background:'rgba(167,139,250,0.1)',color:'#a78bfa',cursor:'pointer' }}>{loadingTropes?'…':'✦ AI suggest'}</button>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600, textTransform: 'uppercase' }}>Tropes</div>
+            <button onClick={fetchTropes} disabled={loadingTropes} style={{ fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '9999px', background: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.4)', cursor: 'pointer' }}>
+              {loadingTropes ? '…' : '✦ AI suggest'}
+            </button>
           </div>
-          <div style={{ display:'flex',gap:'0.35rem',flexWrap:'wrap',marginBottom:'0.4rem' }}>
-            {tropes.map((t,i)=>(<span key={i} style={{ display:'flex',alignItems:'center',gap:'0.25rem',fontSize:'0.68rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.6)',border:'1px solid rgba(255,255,255,0.1)' }}>{t}<span onClick={()=>{const nt=tropes.filter((_,j)=>j!==i);setTropes(nt);onUpdate(book.id,{tropes:nt});}} style={{ cursor:'pointer',color:'rgba(255,255,255,0.3)',fontSize:'0.7rem' }}>×</span></span>))}
-            {tropes.length===0&&<span style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.2)' }}>No tropes yet</span>}
-          </div>
-          <div style={{ display:'flex',gap:'0.4rem' }}>
-            <input value={newTrope} onChange={e=>setNewTrope(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newTrope.trim()){const nt=[...tropes,newTrope.trim()];setTropes(nt);onUpdate(book.id,{tropes:nt});setNewTrope('');}}} placeholder="Add a trope…" style={{...inp,fontSize:'0.78rem',padding:'0.35rem 0.65rem'}}/>
-            <button onClick={()=>{if(newTrope.trim()){const nt=[...tropes,newTrope.trim()];setTropes(nt);onUpdate(book.id,{tropes:nt});setNewTrope('');}}} style={{ background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.1)',color:'white',borderRadius:'0.5rem',padding:'0.35rem 0.65rem',cursor:'pointer',fontSize:'0.78rem' }}>+</button>
-          </div>
-        </div>
-        <div style={{ marginBottom:'1rem' }}>
-          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.35rem' }}>
-            <div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em' }}>Your Review</div>
-            {!editingNote&&<button onClick={()=>setEditingNote(true)} style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>✎ Edit</button>}
-          </div>
-          {editingNote?(
-            <div>
-              <textarea value={note} onChange={e=>setNote(e.target.value)} rows={3} style={{...inp,resize:'vertical',lineHeight:1.5,marginBottom:'0.4rem'}}/>
-              <div style={{ display:'flex',gap:'0.5rem' }}>
-                <button onClick={saveNote} style={{ background:'#6d28d9',color:'white',border:'none',borderRadius:'0.5rem',padding:'0.35rem 0.75rem',cursor:'pointer',fontSize:'0.78rem' }}>Save</button>
-                <button onClick={()=>{setEditingNote(false);setNote(book.note||'');}} style={{ background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.4)',border:'none',borderRadius:'0.5rem',padding:'0.35rem 0.75rem',cursor:'pointer',fontSize:'0.78rem' }}>Cancel</button>
-              </div>
-            </div>
-          ):note?(<div style={{ fontSize:'0.78rem',color:'rgba(255,255,255,0.55)',fontStyle:'italic',lineHeight:1.6,background:'rgba(255,255,255,0.03)',borderRadius:'0.5rem',padding:'0.6rem 0.75rem' }}>"{note}"</div>):(<div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.2)',cursor:'pointer' }} onClick={()=>setEditingNote(true)}>Tap to add a review…</div>)}
-        </div>
-        {(book.read||rereads.length>0)&&(
-          <div style={{ marginBottom:'1rem' }}>
-            <div style={{ fontSize:'0.72rem',color:'rgba(255,255,255,0.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:'0.35rem' }}>Reading History</div>
-            <div style={{ display:'flex',gap:'0.35rem',flexWrap:'wrap' }}>
-              {book.read&&<span style={{ fontSize:'0.68rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',background:'rgba(52,211,153,0.1)',color:'#34d399',border:'1px solid rgba(52,211,153,0.2)' }}>Read {book.readYear||'(year unknown)'}</span>}
-              {rereads.map((yr,i)=>(<span key={i} style={{ fontSize:'0.68rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',background:'rgba(167,139,250,0.1)',color:'#a78bfa',border:'1px solid rgba(167,139,250,0.2)' }}>🔁 Re-read {yr}</span>))}
-            </div>
-          </div>
-        )}
-        <div style={{ display:'flex',gap:'0.5rem',flexWrap:'wrap' }}>
-          {book.read&&(<button onClick={()=>onReread(book.id)} style={{ flex:1,minWidth:'120px',background:'rgba(167,139,250,0.1)',color:'#a78bfa',border:'1px solid rgba(167,139,250,0.3)',borderRadius:'0.75rem',padding:'0.55rem',fontWeight:600,cursor:'pointer',fontSize:'0.78rem' }}>🔁 Re-read in {THIS_YEAR}</button>)}
-          <button onClick={()=>{onUpdate(book.id,{read:!book.read,readYear:!book.read?THIS_YEAR:null,readAt:!book.read?Date.now():null});onClose();}} style={{ flex:1,minWidth:'120px',background:book.read?'rgba(239,68,68,0.1)':'rgba(52,211,153,0.1)',color:book.read?'#f87171':'#34d399',border:`1px solid ${book.read?'rgba(239,68,68,0.3)':'rgba(52,211,153,0.3)'}`,borderRadius:'0.75rem',padding:'0.55rem',fontWeight:600,cursor:'pointer',fontSize:'0.78rem' }}>{book.read?'Mark Unread':'✓ Mark Read'}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── GoalSetModal ──────────────────────────────────────────────────────────────
-function GoalSetModal({ goals, onSave, onClose }: { goals: any; onSave: (g: any) => void; onClose: () => void }) {
-  const [y,setY] = useState(goals.yearly||'');
-  const [mo,setMo] = useState(goals.monthly||'');
-  const [readProgress,setReadProgress] = useState(goals.readProgress??'');
-  const [monthProgress,setMonthProgress] = useState(goals.monthProgress??'');
-  const inp: React.CSSProperties = { width:'100%',background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:'0.6rem',padding:'0.55rem 0.75rem',color:'white',fontSize:'0.95rem',boxSizing:'border-box',textAlign:'center' };
-  return (
-    <div style={{ position:'fixed',inset:0,zIndex:60,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.8)',padding:'1rem' }}>
-      <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.12)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'360px',maxHeight:'90vh',overflowY:'auto' }}>
-        <h3 style={{ color:'white',fontWeight:'bold',marginBottom:'1rem',fontSize:'1rem' }}>📖 Set Reading Goals</h3>
-        <div style={{ marginBottom:'0.65rem' }}>
-          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>Yearly goal (books)</label>
-          <input type="number" value={y} onChange={e=>setY(e.target.value)} placeholder="e.g. 120" min={1} style={inp}/>
-        </div>
-        <div style={{ marginBottom:'0.65rem' }}>
-          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>Books read so far this year <span style={{ color:'rgba(255,255,255,0.25)' }}>(manual override)</span></label>
-          <input type="number" value={readProgress} onChange={e=>setReadProgress(e.target.value)} placeholder="leave blank to auto-count" min={0} style={inp}/>
-        </div>
-        <div style={{ marginBottom:'0.65rem' }}>
-          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>Monthly goal (books)</label>
-          <input type="number" value={mo} onChange={e=>setMo(e.target.value)} placeholder="e.g. 12" min={1} style={inp}/>
-        </div>
-        <div style={{ marginBottom:'1rem' }}>
-          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.72rem',display:'block',marginBottom:'0.3rem' }}>Books read this month <span style={{ color:'rgba(255,255,255,0.25)' }}>(override)</span></label>
-          <input type="number" value={monthProgress} onChange={e=>setMonthProgress(e.target.value)} placeholder="auto-tracked if blank" min={0} style={inp}/>
-        </div>
-        <div style={{ display:'flex',gap:'0.75rem' }}>
-          <button onClick={()=>onSave({ yearly:Number(y)||0, monthly:Number(mo)||0, readProgress:readProgress!==''?Number(readProgress):null, monthProgress:monthProgress!==''?Number(monthProgress):null })} style={{ flex:1,background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer' }}>Save</button>
-          <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Cancel</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── HomeTab ───────────────────────────────────────────────────────────────────
-function HomeTab({ books, goals, onEditGoals, userName, onBookDetail, onUpdate }: { books: any[]; goals: any; onEditGoals: () => void; userName: string; onBookDetail: (b: any) => void; onUpdate: (id: any, patch: any) => void }) {
-  const now = new Date();
-  const readAll = books.filter(b => b.read);
-  const tbrCount = books.filter(b => b.status==='tbr').length;
-  const readingCount = books.filter(b => b.status==='reading').length;
-  const wishlistCount = books.filter(b => b.status==='wishlist').length;
-  const thisYearAuto = readAll.filter(b => b.readYear===THIS_YEAR||(!b.readYear&&b.readAt&&new Date(b.readAt).getFullYear()===THIS_YEAR));
-  const goalCount = goals.readProgress!=null ? goals.readProgress : thisYearAuto.length;
-  const thisMonthAuto = readAll.filter(b => { if(!b.readAt) return false; const d=new Date(b.readAt); return d.getMonth()===THIS_MONTH&&d.getFullYear()===THIS_YEAR; });
-  const monthGoalCount = goals.monthProgress!=null ? goals.monthProgress : thisMonthAuto.length;
-  const readPct = books.length ? Math.round((readAll.length/books.length)*100) : 0;
-  const unreadPct = 100-readPct;
-
-  const [yearModal, setYearModal] = useState<number|null>(null);
-  const [seriesModal, setSeriesModal] = useState<string|null>(null);
-  const [authorModal, setAuthorModal] = useState<string|null>(null);
-
-  const genreData = useMemo(()=>{ const c: Record<string,number>={}; readAll.forEach(b=>{c[b.genre]=(c[b.genre]||0)+1;}); return Object.entries(c).map(([g,n])=>({genre:g,count:n,color:GENRE_CFG[g]?.accent||'#a78bfa'})).sort((a,b)=>b.count-a.count); },[readAll]);
-
-  // Year-by-year history — includes rereads
-  const yearData = useMemo(()=>{
-    const c: Record<number,number> = {};
-    books.forEach(b => {
-      if (b.read) {
-        const y = b.readYear || (b.readAt ? new Date(b.readAt).getFullYear() : null);
-        if (y) c[y] = (c[y]||0)+1;
-      }
-      (b.rereads||[]).forEach((ry: number) => { c[ry] = (c[ry]||0)+1; });
-    });
-    return Object.entries(c).map(([y,n])=>({year:Number(y),count:n})).sort((a,b)=>a.year-b.year);
-  },[books]);
-
-
-  const maxGenre = genreData[0]?.count||1;
-  const maxYear = Math.max(...yearData.map(d=>d.count),1);
-  const card: React.CSSProperties = { background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' };
-  const currentlyReading = books.filter((b:any)=>b.status==='reading');
-  const recentlyRead = [...readAll].sort((a:any,b:any)=>(b.readAt||0)-(a.readAt||0)).slice(0,5);
-  const monthLeft = Math.max(0,(goals.monthly||0)-monthGoalCount);
-  const greeting = now.getHours()<12?'Good morning':now.getHours()<18?'Good afternoon':'Good evening';
-
-  return (
-    <div style={{ padding:'1rem',maxWidth:'960px',margin:'0 auto' }}>
-      {/* Modals */}
-      {yearModal!==null&&<YearBooksModal year={yearModal} books={books} onClose={()=>setYearModal(null)} onBookClick={b=>{setYearModal(null);onBookDetail(b);}}/>}
-      {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onUpdate={onUpdate} onBookDetail={b=>{setSeriesModal(null);onBookDetail(b);}}/>}
-      {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onUpdate={onUpdate} onBookDetail={b=>{setAuthorModal(null);onBookDetail(b);}}/>}
-      {/* Hero */}
-      <div style={{ ...card,display:'flex',justifyContent:'space-between',alignItems:'center',borderColor:'rgba(167,139,250,0.18)',marginBottom:'0.75rem' }}>
-        <div>
-          <div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)',marginBottom:'0.15rem' }}>{now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
-          <div style={{ fontSize:'1.25rem',fontWeight:'bold',color:'#e8d9ff',marginBottom:'0.3rem' }}>{greeting}{userName?`, ${userName}`:''} ✦</div>
-          <div style={{ fontSize:'0.75rem',color:'rgba(255,255,255,0.4)',lineHeight:1.7 }}>
-            <span style={{ color:'#fb7185',fontWeight:600 }}>{monthGoalCount} {monthGoalCount===1?'book':'books'}</span> read this month
-            {goals.monthly>0&&<span style={{ color:'rgba(255,255,255,0.25)' }}> · {monthLeft} left to goal</span>}
-            <span style={{ margin:'0 0.35rem',color:'rgba(255,255,255,0.12)' }}>·</span>
-            <span style={{ color:'#a78bfa',fontWeight:600 }}>{goalCount} of {goals.yearly||'?'}</span> this year
-          </div>
-        </div>
-        <svg width="56" height="56" viewBox="0 0 64 64" fill="none" style={{ flexShrink:0 }}>
-          <path d="M32 16 C22 14 12 16 10 18 L10 50 C12 48 22 46 32 48Z" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" strokeWidth="1"/>
-          <path d="M32 16 C42 14 52 16 54 18 L54 50 C52 48 42 46 32 48Z" fill="rgba(192,132,252,0.1)" stroke="#c084fc" strokeWidth="1"/>
-          <line x1="32" y1="16" x2="32" y2="48" stroke="#e8d9ff" strokeWidth="1.2"/>
-          <line x1="16" y1="26" x2="28" y2="25" stroke="rgba(167,139,250,0.4)" strokeWidth="0.8"/>
-          <line x1="16" y1="31" x2="28" y2="30" stroke="rgba(167,139,250,0.4)" strokeWidth="0.8"/>
-          <line x1="16" y1="36" x2="28" y2="35" stroke="rgba(167,139,250,0.4)" strokeWidth="0.8"/>
-          <line x1="36" y1="25" x2="48" y2="26" stroke="rgba(192,132,252,0.4)" strokeWidth="0.8"/>
-          <line x1="36" y1="30" x2="48" y2="31" stroke="rgba(192,132,252,0.4)" strokeWidth="0.8"/>
-          <line x1="36" y1="35" x2="48" y2="36" stroke="rgba(192,132,252,0.4)" strokeWidth="0.8"/>
-          <circle cx="50" cy="14" r="1.5" fill="#c084fc" opacity="0.7"/>
-          <circle cx="8" cy="44" r="1" fill="#a78bfa" opacity="0.5"/>
-        </svg>
-      </div>
-
-      {/* Stat cards — 5 now including Wishlist */}
-      <div style={{ display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'0.5rem',marginBottom:'0.75rem' }}>
-        {[
-          { label:'Total',    value:books.length,   color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.25)' },
-          { label:'Read',     value:readAll.length,  color:'#34d399', bg:'rgba(52,211,153,0.07)',  border:'rgba(52,211,153,0.25)' },
-          { label:'TBR',      value:tbrCount,        color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)' },
-          { label:'Reading',  value:readingCount,    color:'#60a5fa', bg:'rgba(96,165,250,0.07)',  border:'rgba(96,165,250,0.25)' },
-          { label:'Wishlist', value:wishlistCount,   color:'#f472b6', bg:'rgba(244,114,182,0.07)', border:'rgba(244,114,182,0.25)' },
-        ].map(s=>(
-          <div key={s.label} style={{ background:s.bg,border:`1px solid ${s.border}`,borderTop:`2px solid ${s.color}`,borderRadius:'0.75rem',padding:'0.75rem 0.4rem',textAlign:'center' }}>
-            <div style={{ fontSize:'1.3rem',fontWeight:'bold',color:s.color,lineHeight:1 }}>{s.value}</div>
-            <div style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.35)',marginTop:'0.25rem' }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Bookshelf Visual */}
-      <BookshelfVisual books={books}/>
-
-      {/* Currently Reading */}
-      {currentlyReading.length>0&&(
-        <div style={{ ...card,borderColor:'rgba(96,165,250,0.15)' }}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📖 Currently Reading</div>
-          <div style={{ display:'flex',gap:'0.6rem',flexWrap:'wrap' }}>
-            {currentlyReading.map((b:any)=>{ const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
-              <div key={b.id} style={{ background:'rgba(255,255,255,0.03)',border:`1px solid ${cfg.accent}25`,borderLeft:`3px solid ${cfg.accent}`,borderRadius:'0.6rem',padding:'0.6rem 0.75rem',flex:1,minWidth:'130px' }}>
-                <div style={{ fontSize:'0.78rem',fontWeight:'bold',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
-                <div style={{ fontSize:'0.65rem',color:cfg.accent+'bb',marginTop:'0.1rem' }}>{b.author}</div>
-                <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.25)',marginTop:'0.15rem' }}>{b.genre}</div>
-              </div>
-            ); })}
-          </div>
-        </div>
-      )}
-
-      {/* Goals + Recently Read */}
-      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem' }}>
-        <div style={card}>
-          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.75rem' }}>
-            <span style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>Reading Goals</span>
-            <button onClick={onEditGoals} style={{ background:'rgba(109,40,217,0.3)',border:'1px solid #6d28d9',color:'#a78bfa',borderRadius:'0.5rem',padding:'0.2rem 0.55rem',fontSize:'0.65rem',cursor:'pointer' }}>Edit</button>
-          </div>
-          <div style={{ display:'flex',gap:'0.75rem',justifyContent:'center' }}>
-            <GoalRing count={goalCount} goal={goals.yearly||0} label={`${THIS_YEAR} Yearly`} emoji="📅" gradStart="#a78bfa" gradEnd="#7c3aed" gradId="yearGrad"/>
-            <GoalRing count={monthGoalCount} goal={goals.monthly||0} label={now.toLocaleDateString('en-US',{month:'long'})} emoji="🌸" gradStart="#fb7185" gradEnd="#be123c" gradId="monthGrad"/>
-          </div>
-          {(goals.readProgress!=null||goals.monthProgress!=null)&&(
-            <div style={{ textAlign:'center',marginTop:'0.6rem',fontSize:'0.6rem',color:'rgba(255,255,255,0.2)' }}>
-              {goals.readProgress!=null?'📌 Yearly manually set':''}
-              {goals.readProgress!=null&&goals.monthProgress!=null?' · ':''}
-              {goals.monthProgress!=null?'📌 Monthly manually set':''}
-            </div>
-          )}
-        </div>
-        <div style={card}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>Recently Read</div>
-          {recentlyRead.length===0?(
-            <div style={{ color:'rgba(255,255,255,0.2)',fontSize:'0.75rem',textAlign:'center',padding:'1rem 0' }}>No books read yet</div>
-          ):(
-            <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
-              {recentlyRead.map((b:any)=>{ const color=GENRE_CFG[b.genre]?.accent||'#a78bfa'; const dateStr=b.readAt?new Date(b.readAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}):b.readYear||''; return (
-                <div key={b.id} style={{ display:'flex',alignItems:'center',gap:'0.5rem' }}>
-                  <div style={{ width:'6px',height:'6px',borderRadius:'50%',background:color,flexShrink:0 }}/>
-                  <div style={{ flex:1,minWidth:0 }}>
-                    <div style={{ fontSize:'0.72rem',color:'white',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.title}</div>
-                    <div style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.3)',display:'flex',alignItems:'center',gap:'0.3rem' }}>
-                      {b.author}
-                      {b.rating && <StarRating rating={b.rating} size="sm"/>}
-                    </div>
-                  </div>
-                  <div style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.2)',flexShrink:0 }}>{dateStr}</div>
-                </div>
-              ); })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Read vs Unread + Top Genres */}
-      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem' }}>
-        <div style={card}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Read vs Unread</div>
-          <div style={{ height:'10px',borderRadius:'9999px',background:'rgba(255,255,255,0.07)',overflow:'hidden',display:'flex',marginBottom:'0.5rem' }}>
-            <div style={{ width:`${readPct}%`,background:'#34d399',borderRadius:'9999px 0 0 9999px',transition:'width 0.5s' }}/>
-            <div style={{ width:`${unreadPct}%`,background:'rgba(255,255,255,0.04)',borderRadius:'0 9999px 9999px 0' }}/>
-          </div>
-          <div style={{ display:'flex',gap:'1rem',marginBottom:'0.6rem' }}>
-            <span style={{ fontSize:'0.65rem',color:'#34d399' }}>● Read {readPct}%</span>
-            <span style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.3)' }}>● Unread {unreadPct}%</span>
-          </div>
-          {goals.monthly>0&&(
-            <div style={{ background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.15)',borderRadius:'0.5rem',padding:'0.45rem 0.6rem' }}>
-              <div style={{ fontSize:'0.68rem',color:'#a78bfa' }}>
-                {monthGoalCount>=(goals.monthly||0)?'✦ Monthly goal complete! Amazing work.':monthLeft===1?'✦ Just 1 book left to hit your monthly goal!':`✦ ${monthLeft} books left this month — you've got this!`}
-              </div>
-            </div>
-          )}
-        </div>
-        {genreData.length>0?(
-          <div style={card}>
-            <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Genres</div>
-            {genreData.slice(0,5).map(({genre,count,color})=>(
-              <div key={genre} style={{ marginBottom:'0.45rem' }}>
-                <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
-                  <span style={{ fontSize:'0.68rem',color }}>{genre}</span>
-                  <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)' }}>{count}</span>
-                </div>
-                <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.05)',overflow:'hidden' }}>
-                  <div style={{ width:`${(count/maxGenre)*100}%`,height:'100%',background:color,borderRadius:'9999px',transition:'width 0.5s' }}/>
-                </div>
-              </div>
-            ))}
-          </div>
-        ):(
-          <div style={{ ...card,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'0.5rem' }}>
-            <div style={{ fontSize:'1.5rem' }}>📊</div>
-            <p style={{ fontSize:'0.78rem',color:'rgba(255,255,255,0.2)',textAlign:'center' }}>Mark books as read to see genre stats</p>
-          </div>
-        )}
-      </div>
-
-      {/* Pace Gauge */}
-      {goals.yearly>0&&<PaceGauge read={goalCount} goal={goals.yearly} year={THIS_YEAR}/>}
-
-      {/* Year-by-year reading history — clickable */}
-      {yearData.length > 0 && (
-        <div style={{ ...card, marginBottom:'0.75rem' }}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.75rem' }}>📅 Reading History by Year <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to see books)</span></div>
-          <div style={{ display:'flex',alignItems:'flex-end',gap:'0.5rem',height:'80px' }}>
-            {yearData.map(({year,count})=>(
-              <div key={year} style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.3rem',cursor:'pointer' }} onClick={()=>setYearModal(year)}>
-                <span style={{ fontSize:'0.6rem',color:'#a78bfa',fontWeight:600 }}>{count}</span>
-                <div style={{ width:'100%',background:'linear-gradient(to top,#7c3aed,#a78bfa)',borderRadius:'3px 3px 0 0',height:`${(count/maxYear)*60}px`,minHeight:'4px',transition:'height 0.5s' }} onMouseEnter={e=>(e.currentTarget.style.opacity='0.7')} onMouseLeave={e=>(e.currentTarget.style.opacity='1')}/>
-                <span style={{ fontSize:'0.58rem',color:'rgba(255,255,255,0.3)' }}>{year}</span>
-              </div>
+          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.4rem' }}>
+            {tropes.map((t, i) => (
+              <span key={i} style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem', borderRadius: '9999px', background: 'rgba(255,255,255,0.06)', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }}>
+                {t}
+              </span>
             ))}
           </div>
         </div>
-      )}
 
-    </div>
-  );
-}
-
-// ── SharePage ─────────────────────────────────────────────────────────────────
-function SharePage({ uid }: { uid: string }) {
-  const [books, setBooks] = useState<any[]|null>(null);
-  const [err, setErr] = useState('');
-
-  useEffect(()=>{
-    (async()=>{
-      try {
-        await initFirebase();
-        const snap = await _getDoc(_doc(_db, 'public', uid));
-        if (snap.exists()) setBooks(snap.data().books || []);
-        else setErr('This shelf is not public or does not exist.');
-      } catch { setErr('Could not load shelf.'); }
-    })();
-  },[uid]);
-
-  const readBooks = books?.filter(b=>b.read) ?? [];
-  const wishlist = books?.filter(b=>b.status==='wishlist') ?? [];
-
-  if (!books && !err) return (
-    <div style={{ background:'#06040f',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'0.75rem' }}>
-      <div style={{ fontSize:'2rem' }}>✦</div>
-      <p style={{ color:'#a78bfa' }}>Loading shelf…</p>
-    </div>
-  );
-
-  if (err) return (
-    <div style={{ background:'#06040f',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center' }}>
-      <p style={{ color:'rgba(255,255,255,0.4)' }}>{err}</p>
-    </div>
-  );
-
-  const card: React.CSSProperties = { background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' };
-
-  return (
-    <div style={{ background:'#06040f',minHeight:'100vh',color:'white',fontFamily:'Georgia,serif' }}>
-      <div style={{ background:'#0d0a1c',borderBottom:'1px solid rgba(255,255,255,0.07)',padding:'1rem',textAlign:'center' }}>
-        <div style={{ color:'#e8d9ff',fontWeight:'bold',fontSize:'1.1rem' }}>✦ My Shelf — Public View</div>
-        <div style={{ color:'rgba(255,255,255,0.3)',fontSize:'0.7rem',marginTop:'0.2rem' }}>{readBooks.length} books read · {wishlist.length} on wishlist</div>
-      </div>
-      <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
-        {readBooks.length > 0 && (
-          <div style={card}>
-            <div style={{ fontSize:'0.85rem',fontWeight:'700',color:'white',marginBottom:'0.75rem' }}>📖 Books Read</div>
-            <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'0.6rem' }}>
-              {readBooks.map((b:any)=>{ const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
-                <div key={b.id} style={{ background:cfg.dim+'55',borderRadius:'0.75rem',borderLeft:`3px solid ${cfg.accent}`,padding:'0.65rem 0.75rem' }}>
-                  <div style={{ fontSize:'0.8rem',fontWeight:'bold',color:'white',marginBottom:'0.1rem' }}>{b.title}</div>
-                  <div style={{ fontSize:'0.7rem',color:cfg.accent+'cc' }}>{b.author}</div>
-                  {b.series && <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',marginTop:'0.1rem' }}>{b.series}{b.sn!=null?` #${b.sn}`:''}</div>}
-                  <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'0.4rem' }}>
-                    {b.rating ? <StarRating rating={b.rating} size="sm"/> : <span/>}
-                    {b.readYear && <span style={{ fontSize:'0.6rem',color:'rgba(255,255,255,0.25)' }}>{b.readYear}</span>}
-                  </div>
-                  {b.note && <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.35)',marginTop:'0.3rem',fontStyle:'italic',borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:'0.3rem' }}>"{b.note}"</div>}
-                </div>
-              );})}
-            </div>
-          </div>
-        )}
-        {wishlist.length > 0 && (
-          <div style={card}>
-            <div style={{ fontSize:'0.85rem',fontWeight:'700',color:'white',marginBottom:'0.75rem' }}>✨ Wishlist</div>
-            <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'0.6rem' }}>
-              {wishlist.map((b:any)=>{ const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy']; return (
-                <div key={b.id} style={{ background:'rgba(244,114,182,0.05)',borderRadius:'0.75rem',borderLeft:`3px solid #f472b6`,padding:'0.65rem 0.75rem' }}>
-                  <div style={{ fontSize:'0.8rem',fontWeight:'bold',color:'white',marginBottom:'0.1rem' }}>{b.title}</div>
-                  <div style={{ fontSize:'0.7rem',color:'#f472b6cc' }}>{b.author}</div>
-                  {b.series && <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',marginTop:'0.1rem' }}>{b.series}{b.sn!=null?` #${b.sn}`:''}</div>}
-                  <span style={{ fontSize:'0.6rem',color:cfg.accent,marginTop:'0.3rem',display:'block' }}>{b.genre}</span>
-                </div>
-              );})}
-            </div>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {book.read && (
+            <button onClick={() => onReread(book.id)} style={{ flex: 1, background: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '0.75rem', padding: '0.55rem', fontWeight: 600, cursor: 'pointer' }}>
+              🔁 Re-read in {THIS_YEAR}
+            </button>
+          )}
+          <button
+            onClick={() => {
+              onUpdate(book.id, { read: !book.read, readYear: !book.read ? THIS_YEAR : null, readAt: !book.read ? Date.now() : null });
+              onClose();
+            }}
+            style={{ flex: 1, background: book.read ? 'rgba(239,68,68,0.1)' : 'rgba(52,211,153,0.1)', color: book.read ? '#f87171' : '#34d399', border: '1px solid', borderRadius: '0.75rem', padding: '0.55rem', fontWeight: 600, cursor: 'pointer' }}
+          >
+            {book.read ? 'Mark Unread' : '✓ Mark Read'}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-// ── ModalForm ─────────────────────────────────────────────────────────────────
-function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks }: {
-  book: any; onSave: (b: any) => void; onSaveMany: (bs: any[]) => void; onClose: () => void; tab: string; allSeries: string[]; allBooks: any[];
-}) {
+// ── Multi-Mode Form (Single, Bulk, Photo OCR) ───────────────────────────────
+function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks }: { book: Book | null; onSave: (b: Book) => void; onSaveMany: (bs: Book[]) => void; onClose: () => void; tab: string; allSeries: string[]; allBooks: Book[] }) {
   const [mode, setMode] = useState('single');
-  const [shelfGenre, setShelfGenre] = useState('Romance');
-  const [shelfStatus, setShelfStatus] = useState(tab==='home'?'shelf':tab);
+  const [shelfGenre, setShelfGenre] = useState<Genre>('Romance');
+  const [shelfStatus, setShelfStatus] = useState<BookStatus>((tab === 'home' ? 'shelf' : tab) as BookStatus);
   const [shelfRead, setShelfRead] = useState(false);
-  const blank = { title:'',author:'',category:'Fiction',genre:'Fantasy',subgenre:'Romantasy',series:'',sn:'',read:false,status:tab==='home'?'shelf':tab,readAt:null,readYear:null,rating:null,note:'',rereads:[] };
-  const [f, setF] = useState(book ? {...book,sn:book.sn??'',series:book.series??'',rating:book.rating??null,note:book.note??''} : blank);
+  const blank = baseBook({ status: (tab === 'home' ? 'shelf' : tab) as BookStatus });
+  const [f, setF] = useState<Book>(book ? { ...book } : blank);
   const [identifying, setId] = useState(false);
   const [idMsg, setIdMsg] = useState('');
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<{ title: string; author: string; cover: string }[]>([]);
   const [showSug, setShowSug] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState<{top:number;left:number;width:number}|null>(null);
   const [dupWarning, setDupWarning] = useState('');
   const photoRef = useRef<HTMLInputElement>(null);
-  const titleInputRef = useRef<HTMLInputElement>(null);
   const sugTimer = useRef<any>(null);
 
-  const set = (k: string, v: any) => setF((p: any) => ({...p,[k]:v}));
-
-  const updateDropdownPos = useCallback(() => {
-    if (titleInputRef.current) {
-      const r = titleInputRef.current.getBoundingClientRect();
-      setDropdownPos({ top: r.bottom + 4, left: r.left, width: r.width });
-    }
-  }, []);
+  const set = (k: keyof Book, v: any) => setF((p) => ({ ...p, [k]: v }));
 
   const searchGoogleBooks = async (query: string) => {
-    if (query.length < 3) { setSuggestions([]); setShowSug(false); return; }
+    if (query.length < 3) {
+      setSuggestions([]);
+      setShowSug(false);
+      return;
+    }
     try {
-      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=8&printType=books&orderBy=relevance`);
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=5&printType=books`);
       const data = await res.json();
-      const items = (data.items || [])
-        .map((item: any) => { const v = item.volumeInfo; return { title: v.title||'', author: (v.authors||[]).join(', '), cover: v.imageLinks?.smallThumbnail||'' }; })
-        .filter((b: any) => b.title && b.title.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, 5);
+      const items = (data.items || []).map((item: any) => ({
+        title: item.volumeInfo.title || '',
+        author: (item.volumeInfo.authors || []).join(', '),
+        cover: item.volumeInfo.imageLinks?.smallThumbnail || '',
+      }));
       setSuggestions(items);
-      if (items.length > 0) { updateDropdownPos(); setShowSug(true); } else setShowSug(false);
-    } catch { setSuggestions([]); }
+      setShowSug(items.length > 0);
+    } catch {
+      setSuggestions([]);
+    }
   };
 
   const handleTitleChange = (val: string) => {
-    set('title', val); setDupWarning('');
+    set('title', val);
+    setDupWarning('');
     clearTimeout(sugTimer.current);
     sugTimer.current = setTimeout(() => searchGoogleBooks(val), 400);
   };
 
-  const pickSuggestion = (sug: any) => {
-    setF((p: any) => ({...p, title:sug.title, author:sug.author||p.author}));
-    setSuggestions([]); setShowSug(false);
-  };
-
-  useEffect(() => {
-    const hide = () => setShowSug(false);
-    window.addEventListener('scroll', hide, true);
-    window.addEventListener('resize', hide);
-    return () => { window.removeEventListener('scroll', hide, true); window.removeEventListener('resize', hide); };
-  }, []);
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (titleInputRef.current && !titleInputRef.current.contains(e.target as Node)) setShowSug(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
   const handleCoverPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    setId(true); setIdMsg('Identifying…');
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setId(true);
+    setIdMsg('Identifying…');
     try {
       const b64 = await fileToBase64(file);
-      const res = await fetch('/.netlify/functions/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:200, messages:[{ role:'user', content:[
-          { type:'image', source:{ type:'base64', media_type:file.type, data:b64 } },
-          { type:'text', text:'Identify the book. Return ONLY JSON: {"title":"…","author":"…"}. Unknown: {"title":"","author":""}.' },
-        ]}]}),
+      const res = await fetch('/.netlify/functions/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 200,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: file.type, data: b64 } },
+                { type: 'text', text: 'Identify the book. Return ONLY JSON: {"title":"…","author":"…"}. Unknown: {"title":"","author":""}.' },
+              ],
+            },
+          ],
+        }),
       });
       const data = await res.json();
-      const p = JSON.parse((data.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
-      if (p.title) { set('title',p.title); setIdMsg('✓ Book identified!'); } else setIdMsg("Couldn't identify — fill in manually.");
-      if (p.author) set('author',p.author);
-    } catch { setIdMsg("Couldn't identify — fill in manually."); }
-    setId(false); setTimeout(()=>setIdMsg(''),3000);
-  };
-
-  const submitSingle = () => {
-    if (!f.title.trim()||!f.author.trim()) return;
-    if (!book) {
-      const titleLower = f.title.trim().toLowerCase();
-      const isDup = allBooks.some((b: any) => b.title.toLowerCase()===titleLower);
-      if (isDup) { setDupWarning(`"${f.title.trim()}" is already in your shelf!`); return; }
+      const p = JSON.parse((data.content?.[0]?.text || '').replace(/```json|```/g, '').trim());
+      if (p.title) {
+        set('title', p.title);
+        setIdMsg('✓ Identified!');
+      }
+      if (p.author) set('author', p.author);
+    } catch {
+      setIdMsg("Couldn't identify cover.");
     }
-    onSave({ ...f, sn:f.sn!==''?Number(f.sn):null, series:f.series||null, id:f.id||uid(),
-      readAt: f.read&&!f.readAt ? Date.now() : f.readAt,
-      readYear: f.read ? (f.readYear||THIS_YEAR) : null,
-      rating: f.rating||null, note: f.note||'',
-    });
+    setId(false);
   };
 
-  const [bulkText,setBulkText] = useState('');
-  const [bulkDone,setBulkDone] = useState(false);
-
-  const bulkParsed = useMemo(()=>bulkText.split('\n').map(l=>l.trim()).filter(Boolean).map(line=>{
-    const byM   = line.match(/^(.+?)\s+by\s+(.+)$/);
-    const pipeM = line.match(/^(.+?)\s*\|\s*(.+)$/);
-    const dashM = line.match(/^(.+?)\s*[-–—]\s*(.+)$/);
-    if(byM)   return {title:byM[1].trim(),   author:byM[2].trim()};
-    if(pipeM) return {title:pipeM[1].trim(),  author:pipeM[2].trim()};
-    if(dashM) return {title:dashM[1].trim(),  author:dashM[2].trim()};
-    return {title:line,author:''};
-  }),[bulkText]);
-
-  const submitBulk = () => {
-    const valid=bulkParsed.filter(p=>p.title.trim()); if(!valid.length) return;
-    onSaveMany(valid.map(p=>({id:uid(),title:p.title.trim(),author:p.author.trim(),category:'Fiction',genre:shelfGenre,subgenre:SUBGENRES[shelfGenre]?.[0]||'',series:null,sn:null,read:shelfRead,readAt:shelfRead?Date.now():null,readYear:shelfRead?THIS_YEAR:null,status:shelfStatus,rating:null,note:''})));
-    setBulkDone(true); setTimeout(onClose,1200);
+  const inp: React.CSSProperties = {
+    width: '100%',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '0.6rem',
+    padding: '0.5rem 0.75rem',
+    color: 'white',
+    fontSize: '0.85rem',
+    boxSizing: 'border-box',
   };
-
-  const shelfInputRef = useRef<HTMLInputElement>(null);
-  const [shelfImg,setShelfImg] = useState<string|null>(null);
-  const [shelfB64,setShelfB64] = useState('');
-  const [shelfMime,setShelfMime] = useState('');
-  const [scanning,setScanning] = useState(false);
-  const [scanErr,setScanErr] = useState('');
-  const [scanned,setScanned] = useState<{title:string;author:string;selected:boolean}[]>([]);
-  const [scanDone,setScanDone] = useState(false);
-
-  const handleShelfFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file=e.target.files?.[0]; if(!file) return;
-    const b64=await fileToBase64(file); setShelfB64(b64); setShelfMime(file.type);
-    setShelfImg(URL.createObjectURL(file)); setScanned([]); setScanErr(''); setScanDone(false);
-  };
-
-  const runScan = async () => {
-    if(!shelfB64) return; setScanning(true); setScanErr(''); setScanned([]);
-    try {
-      const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:shelfMime,data:shelfB64}},
-          {type:'text',text:`Look at every single book spine visible in this bookshelf photo. Read each title and author carefully.\nReturn ONLY a raw JSON array:\n[{"title":"Exact Title","author":"Author Name"},...]\n- Include every spine you can read\n- Empty string for unknown author\n- Do not skip any books`},
-        ]}]}),
-      });
-      const data=await res.json();
-      const raw=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
-      const list=JSON.parse(raw);
-      if(!Array.isArray(list)) throw new Error();
-      setScanned(list.map((b:any)=>({title:b.title||'',author:b.author||'',selected:true})));
-    } catch { setScanErr("Couldn't read the shelf — try a clearer photo with good lighting."); }
-    setScanning(false);
-  };
-
-  const toggleOne=(i:number)=>setScanned(p=>p.map((b,j)=>j===i?{...b,selected:!b.selected}:b));
-  const toggleAll=(v:boolean)=>setScanned(p=>p.map(b=>({...b,selected:v})));
-  const editOne=(i:number,k:string,val:string)=>setScanned(p=>p.map((b,j)=>j===i?{...b,[k]:val}:b));
-  const selectedCount=scanned.filter(b=>b.selected).length;
-
-  const submitScan=()=>{
-    const chosen=scanned.filter(b=>b.selected&&b.title.trim()); if(!chosen.length) return;
-    onSaveMany(chosen.map(b=>({id:uid(),title:b.title.trim(),author:b.author.trim(),category:'Fiction',genre:shelfGenre,subgenre:SUBGENRES[shelfGenre]?.[0]||'',series:null,sn:null,read:shelfRead,readAt:shelfRead?Date.now():null,readYear:shelfRead?THIS_YEAR:null,status:shelfStatus,rating:null,note:''})));
-    setScanDone(true); setTimeout(onClose,1400);
-  };
-
-  const inp: React.CSSProperties = { width:'100%',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.6rem',padding:'0.5rem 0.75rem',color:'white',fontSize:'0.85rem',boxSizing:'border-box' };
-
-  const BatchSettings=()=>(
-    <>
-      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem',marginBottom:'0.6rem' }}>
-        <div>
-          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Genre for all</label>
-          <select value={shelfGenre} onChange={e=>setShelfGenre(e.target.value)} style={{...inp,background:'#1a1035'}}>{Object.keys(SUBGENRES).map(g=><option key={g}>{g}</option>)}</select>
-        </div>
-        <div>
-          <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Add to</label>
-          <select value={shelfStatus} onChange={e=>setShelfStatus(e.target.value)} style={{...inp,background:'#1a1035'}}>
-            <option value="shelf">📚 Shelf</option>
-            <option value="tbr">🔖 TBR</option>
-            <option value="reading">📖 Reading</option>
-            <option value="wishlist">✨ Wishlist</option>
-          </select>
-        </div>
-      </div>
-      {shelfStatus==='shelf'&&(
-        <label style={{ display:'flex',alignItems:'center',gap:'0.5rem',cursor:'pointer',marginBottom:'0.75rem' }}>
-          <input type="checkbox" checked={shelfRead} onChange={e=>setShelfRead(e.target.checked)} style={{ accentColor:'#7c3aed' }}/>
-          <span style={{ color:'rgba(255,255,255,0.6)',fontSize:'0.85rem' }}>Mark all as read</span>
-        </label>
-      )}
-    </>
-  );
 
   return (
-    <>
-      {showSug && suggestions.length > 0 && dropdownPos && (
-        <div style={{ position:'fixed',top:dropdownPos.top,left:dropdownPos.left,width:dropdownPos.width,zIndex:9999,background:'#1a1035',border:'1px solid rgba(255,255,255,0.12)',borderRadius:'0.65rem',maxHeight:'220px',overflowY:'auto',boxShadow:'0 8px 32px rgba(0,0,0,0.7)' }}>
-          {suggestions.map((sug,i)=>(
-            <div key={i} onMouseDown={e=>{e.preventDefault();pickSuggestion(sug);}}
-              style={{ display:'flex',alignItems:'center',gap:'0.6rem',padding:'0.5rem 0.75rem',cursor:'pointer',borderBottom:'1px solid rgba(255,255,255,0.06)' }}
-              onMouseEnter={e=>(e.currentTarget.style.background='rgba(109,40,217,0.2)')}
-              onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
-              {sug.cover&&<img src={sug.cover} alt="" style={{ width:'28px',height:'40px',objectFit:'cover',borderRadius:'3px',flexShrink:0 }}/>}
-              <div style={{ minWidth:0 }}>
-                <div style={{ fontSize:'0.78rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{sug.title}</div>
-                <div style={{ fontSize:'0.68rem',color:'rgba(255,255,255,0.4)' }}>{sug.author}</div>
-              </div>
-            </div>
-          ))}
-          <div onMouseDown={()=>setShowSug(false)} style={{ padding:'0.3rem 0.75rem',fontSize:'0.65rem',color:'rgba(255,255,255,0.2)',cursor:'pointer',textAlign:'center' }}>✕ Dismiss</div>
-        </div>
-      )}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)', padding: '1rem' }}>
+      <div style={{ background: '#0e0b1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', padding: '1.5rem', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto' }}>
+        <h2 style={{ color: 'white', fontWeight: 'bold', marginBottom: '0.85rem', fontSize: '1.05rem' }}>{book ? 'Edit Book' : 'Add Book'}</h2>
 
-      <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.85)',padding:'1rem' }}>
-        <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'480px',maxHeight:'93vh',overflowY:'auto' }}>
-          <h2 style={{ color:'white',fontWeight:'bold',marginBottom:'0.85rem',fontSize:'1.05rem' }}>{book?'Edit Book':'Add Book'}</h2>
-
-          {!book&&(
-            <div style={{ display:'flex',gap:'0.3rem',marginBottom:'1rem',background:'rgba(255,255,255,0.04)',borderRadius:'0.65rem',padding:'0.25rem' }}>
-              {[['single','Single'],['bulk','Bulk paste'],['photo','📸 Scan shelf']].map(([mv,lbl])=>(
-                <button key={mv} onClick={()=>setMode(mv)} style={{ flex:1,padding:'0.35rem 0.2rem',borderRadius:'0.5rem',border:'none',background:mode===mv?'#6d28d9':'transparent',color:mode===mv?'white':'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.72rem',fontWeight:mode===mv?600:400,transition:'background 0.15s' }}>{lbl}</button>
-              ))}
-            </div>
-          )}
-
-          {mode==='single'&&(
-            <>
-              {!book&&(
-                <div style={{ marginBottom:'0.75rem' }}>
-                  <input ref={photoRef} type="file" accept="image/*" capture="environment" style={{ display:'none' }} onChange={handleCoverPhoto}/>
-                  <button onClick={()=>photoRef.current?.click()} disabled={identifying} style={{ width:'100%',padding:'0.55rem',borderRadius:'0.6rem',border:'1px dashed rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.03)',color:'rgba(255,255,255,0.5)',cursor:'pointer',fontSize:'0.8rem' }}>
-                    {identifying?'Identifying…':'📷 Scan cover to identify'}
-                  </button>
-                  {idMsg&&<div style={{ fontSize:'0.7rem',color:'#34d399',marginTop:'0.25rem',textAlign:'center' }}>{idMsg}</div>}
-                </div>
-              )}
-
-              <div style={{ marginBottom:'0.65rem' }}>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Title</label>
-                <input ref={titleInputRef} value={f.title} onChange={e=>handleTitleChange(e.target.value)}
-                  onFocus={()=>{ if(suggestions.length>0){ updateDropdownPos(); setShowSug(true); } }}
-                  placeholder="Book title" style={inp} autoComplete="off"/>
-                {dupWarning&&<div style={{ fontSize:'0.7rem',color:'#f87171',marginTop:'0.2rem' }}>⚠ {dupWarning}</div>}
-              </div>
-
-              <div style={{ marginBottom:'0.65rem' }}>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Author</label>
-                <input value={f.author} onChange={e=>set('author',e.target.value)} placeholder="Author name" style={inp}/>
-              </div>
-
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem',marginBottom:'0.65rem' }}>
-                <div>
-                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Genre</label>
-                  <select value={f.genre} onChange={e=>{set('genre',e.target.value);set('subgenre',SUBGENRES[e.target.value]?.[0]||'');}} style={{...inp,background:'#1a1035'}}>{Object.keys(SUBGENRES).map(g=><option key={g}>{g}</option>)}</select>
-                </div>
-                <div>
-                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Subgenre</label>
-                  <select value={f.subgenre} onChange={e=>set('subgenre',e.target.value)} style={{...inp,background:'#1a1035'}}>{(SUBGENRES[f.genre]||[]).map((s:string)=><option key={s}>{s}</option>)}</select>
-                </div>
-              </div>
-
-              <div style={{ display:'grid',gridTemplateColumns:'2fr 1fr',gap:'0.5rem',marginBottom:'0.65rem' }}>
-                <div>
-                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Series</label>
-                  <input value={f.series} onChange={e=>set('series',e.target.value)} placeholder="Series name" list="sl" style={inp}/>
-                  <datalist id="sl">{allSeries.map(s=><option key={s} value={s}/>)}</datalist>
-                </div>
-                <div>
-                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>#</label>
-                  <input type="number" value={f.sn} onChange={e=>set('sn',e.target.value)} min={0} step={0.5} style={inp}/>
-                </div>
-              </div>
-
-              <div style={{ marginBottom:'0.75rem' }}>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.35rem' }}>Add to</label>
-                <div style={{ display:'flex',gap:'0.4rem',flexWrap:'wrap' }}>
-                  {Object.entries(TAB_CFG).filter(([k])=>k!=='home').map(([k,cfg])=>(
-                    <button key={k} onClick={()=>set('status',k)} style={{ flex:1,minWidth:'70px',padding:'0.4rem 0.2rem',borderRadius:'0.6rem',border:`1px solid ${f.status===k?cfg.color:'rgba(255,255,255,0.1)'}`,background:f.status===k?cfg.color+'25':'transparent',color:f.status===k?cfg.color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.62rem',fontWeight:f.status===k?700:400 }}>
-                      {k==='shelf'?'📚':k==='tbr'?'🔖':k==='reading'?'📖':'✨'} {k.charAt(0).toUpperCase()+k.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {f.status==='shelf'&&(
-                <label style={{ display:'flex',alignItems:'center',gap:'0.5rem',cursor:'pointer',marginBottom:'0.65rem' }}>
-                  <input type="checkbox" checked={f.read||false} onChange={e=>set('read',e.target.checked)} style={{ accentColor:'#7c3aed' }}/>
-                  <span style={{ color:'rgba(255,255,255,0.6)',fontSize:'0.85rem' }}>Mark as read</span>
-                </label>
-              )}
-              {f.read&&(
-                <div style={{ marginBottom:'0.65rem' }}>
-                  <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Year read</label>
-                  <input type="number" value={f.readYear??''} onChange={e=>set('readYear',e.target.value?Number(e.target.value):null)} placeholder={String(THIS_YEAR)} style={inp}/>
-                  <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.25)',marginTop:'0.2rem' }}>Change this for books read in previous years</div>
-                </div>
-              )}
-
-              {/* Rating */}
-              <div style={{ marginBottom:'0.65rem' }}>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.35rem' }}>Rating</label>
-                <div style={{ display:'flex',alignItems:'center',gap:'0.75rem' }}>
-                  <StarRating rating={f.rating} onChange={r=>set('rating',r)} size="md"/>
-                  {f.rating && <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.3)',cursor:'pointer' }} onClick={()=>set('rating',null)}>Clear</span>}
-                </div>
-              </div>
-
-              {/* Note */}
-              <div style={{ marginBottom:'1rem' }}>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.2rem' }}>Note / Review <span style={{ color:'rgba(255,255,255,0.2)' }}>(optional)</span></label>
-                <textarea value={f.note||''} onChange={e=>set('note',e.target.value)} placeholder="A short thought about this book…" rows={2} style={{...inp,resize:'vertical',lineHeight:'1.5',fontSize:'0.8rem'}}/>
-              </div>
-
-              <div style={{ display:'flex',gap:'0.75rem' }}>
-                <button onClick={submitSingle} style={{ flex:1,background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer' }}>{book?'Save':'Add'}</button>
-                <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Cancel</button>
-              </div>
-            </>
-          )}
-
-          {mode==='bulk'&&(
-            <>
-              <div style={{ marginBottom:'0.6rem' }}>
-                <label style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.7rem',display:'block',marginBottom:'0.3rem' }}>Paste your list — one book per line</label>
-                <div style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.25)',marginBottom:'0.4rem' }}>
-                  <span style={{ color:'rgba(255,255,255,0.4)' }}>Title by Author</span> · <span style={{ color:'rgba(255,255,255,0.4)' }}>Title - Author</span> · <span style={{ color:'rgba(255,255,255,0.4)' }}>Title | Author</span>
-                </div>
-                <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} placeholder={'Fourth Wing by Rebecca Yarros\nIron Flame - Rebecca Yarros'} rows={6} style={{...inp,resize:'vertical',lineHeight:'1.5',fontFamily:'monospace',fontSize:'0.8rem'}}/>
-              </div>
-              {bulkParsed.length>0&&(
-                <div style={{ marginBottom:'0.75rem',maxHeight:'150px',overflowY:'auto',borderRadius:'0.6rem',border:'1px solid rgba(255,255,255,0.07)',background:'rgba(255,255,255,0.02)' }}>
-                  {bulkParsed.map((p,i)=>(
-                    <div key={i} style={{ padding:'0.35rem 0.65rem',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',gap:'0.5rem',alignItems:'center' }}>
-                      <span style={{ fontSize:'0.7rem',flexShrink:0,color:p.author?'#34d399':'#fbbf24' }}>{p.author?'✓':'⚠'}</span>
-                      <div style={{ minWidth:0 }}>
-                        <div style={{ fontSize:'0.75rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{p.title}</div>
-                        <div style={{ fontSize:'0.68rem',color:'rgba(255,255,255,0.35)' }}>{p.author||'No author detected'}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <BatchSettings/>
-              <div style={{ display:'flex',gap:'0.75rem' }}>
-                <button onClick={submitBulk} disabled={bulkParsed.length===0||bulkDone} style={{ flex:1,background:bulkDone?'#059669':'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.6rem',fontWeight:'600',cursor:'pointer',transition:'background 0.2s' }}>
-                  {bulkDone?`✓ Added ${bulkParsed.length} books!`:`Add ${bulkParsed.length||0} book${bulkParsed.length!==1?'s':''}`}
-                </button>
-                <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Cancel</button>
-              </div>
-            </>
-          )}
-
-          {mode==='photo'&&(
-            <>
-              <input ref={shelfInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleShelfFile}/>
-              {!shelfImg?(
-                <button onClick={()=>shelfInputRef.current?.click()} style={{ width:'100%',padding:'2.5rem 1rem',borderRadius:'0.75rem',border:'2px dashed rgba(255,255,255,0.15)',background:'rgba(255,255,255,0.02)',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:'0.85rem',display:'flex',flexDirection:'column',alignItems:'center',gap:'0.5rem' }}>
-                  <span style={{ fontSize:'2.5rem' }}>📸</span>
-                  <span>Tap to upload a shelf photo</span>
-                  <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.25)' }}>Works best with clear, well-lit spines</span>
-                </button>
-              ):(
-                <div style={{ marginBottom:'0.75rem',position:'relative' }}>
-                  <img src={shelfImg} alt="shelf" style={{ width:'100%',borderRadius:'0.65rem',maxHeight:'200px',objectFit:'cover' }}/>
-                  <button onClick={()=>shelfInputRef.current?.click()} style={{ position:'absolute',bottom:'0.5rem',right:'0.5rem',background:'rgba(0,0,0,0.65)',color:'white',border:'none',borderRadius:'0.5rem',padding:'0.3rem 0.6rem',fontSize:'0.7rem',cursor:'pointer' }}>Change photo</button>
-                </div>
-              )}
-              {shelfImg&&!scanning&&scanned.length===0&&!scanErr&&(
-                <button onClick={runScan} style={{ width:'100%',marginBottom:'0.75rem',padding:'0.65rem',background:'linear-gradient(135deg,#6d28d9,#4f46e5)',color:'white',border:'none',borderRadius:'0.75rem',fontWeight:'700',cursor:'pointer',fontSize:'0.9rem' }}>✨ Scan for books</button>
-              )}
-              {scanning&&(
-                <div style={{ textAlign:'center',padding:'1.5rem 0',marginBottom:'0.75rem' }}>
-                  <div style={{ fontSize:'1.5rem',marginBottom:'0.4rem' }}>🔍</div>
-                  <div style={{ color:'rgba(255,255,255,0.5)',fontSize:'0.8rem' }}>Scanning your shelf… this may take a moment</div>
-                </div>
-              )}
-              {scanErr&&(
-                <div style={{ background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:'0.6rem',padding:'0.75rem',marginBottom:'0.75rem',color:'#fca5a5',fontSize:'0.8rem',textAlign:'center' }}>
-                  {scanErr}
-                  <button onClick={runScan} style={{ display:'block',margin:'0.5rem auto 0',background:'none',border:'1px solid #fca5a5',color:'#fca5a5',borderRadius:'0.5rem',padding:'0.25rem 0.75rem',cursor:'pointer',fontSize:'0.75rem' }}>Try again</button>
-                </div>
-              )}
-              {scanned.length>0&&(
-                <>
-                  <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.4rem' }}>
-                    <span style={{ color:'#4ade80',fontSize:'0.8rem',fontWeight:600 }}>✨ Found {scanned.length} books</span>
-                    <div style={{ display:'flex',gap:'0.5rem' }}>
-                      <button onClick={()=>toggleAll(true)}  style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>All</button>
-                      <button onClick={()=>toggleAll(false)} style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>None</button>
-                      <button onClick={runScan}              style={{ fontSize:'0.65rem',color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer' }}>Rescan</button>
-                    </div>
-                  </div>
-                  <div style={{ maxHeight:'260px',overflowY:'auto',borderRadius:'0.65rem',border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.02)',marginBottom:'0.75rem' }}>
-                    {scanned.map((b,i)=>(
-                      <div key={i} style={{ display:'flex',gap:'0.5rem',alignItems:'flex-start',padding:'0.45rem 0.65rem',borderBottom:'1px solid rgba(255,255,255,0.05)',background:b.selected?'rgba(109,40,217,0.08)':'transparent' }}>
-                        <input type="checkbox" checked={b.selected} onChange={()=>toggleOne(i)} style={{ accentColor:'#7c3aed',marginTop:'0.25rem',flexShrink:0,cursor:'pointer' }}/>
-                        <div style={{ flex:1,minWidth:0 }}>
-                          <input value={b.title} onChange={e=>editOne(i,'title',e.target.value)} style={{...inp,padding:'0.25rem 0.4rem',fontSize:'0.78rem',fontWeight:600,marginBottom:'0.2rem',color:b.selected?'white':'rgba(255,255,255,0.35)'}}/>
-                          <input value={b.author} onChange={e=>editOne(i,'author',e.target.value)} placeholder="Author name" style={{...inp,padding:'0.2rem 0.4rem',fontSize:'0.7rem',color:b.selected?'rgba(255,255,255,0.6)':'rgba(255,255,255,0.2)'}}/>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <BatchSettings/>
-                  <div style={{ display:'flex',gap:'0.75rem' }}>
-                    <button onClick={submitScan} disabled={selectedCount===0||scanDone} style={{ flex:1,background:scanDone?'#059669':'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.65rem',fontWeight:'700',cursor:'pointer',fontSize:'0.9rem',transition:'background 0.2s' }}>
-                      {scanDone?`✓ Added ${selectedCount} books!`:`Add ${selectedCount} book${selectedCount!==1?'s':''}`}
-                    </button>
-                    <button onClick={onClose} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.65rem',cursor:'pointer' }}>Cancel</button>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ── App ───────────────────────────────────────────────────────────────────────
-export default function App() {
-  // Check for share page route
-  const shareMatch = window.location.pathname.match(/^\/share\/(.+)$/);
-  if (shareMatch) return <SharePage uid={shareMatch[1]}/>;
-
-  const [books,       setBooks]       = useState<any[]>([]);
-  const [loading,     setLoading]     = useState(true);
-  const [tab,         setTab]         = useState('home');
-  const [goals,       setGoals]       = useState<any>({ yearly:0, monthly:0, readProgress:null, monthProgress:null });
-  const [user,        setUser]        = useState<any>(null);
-  const [authReady,   setAuthReady]   = useState(false);
-  const [syncing,     setSyncing]     = useState(false);
-  const [search,      setSearch]      = useState('');
-  const [fGenre,      setFGenre]      = useState('All');
-  const [fSub,        setFSub]        = useState('All');
-  const [fRead,       setFRead]       = useState('All');
-  const [fSeries,     setFSeries]     = useState('All');
-  const [sortBy,      setSortBy]      = useState<'title'|'author'|'dateAdded'|'series'>('title');
-  const [showFilters, setShowFilters] = useState(false);
-  const [modal,       setModal]       = useState<string|null>(null);
-  const [delId,       setDelId]       = useState<any>(null);
-  const [editBook,    setEditBook]    = useState<any>(null);
-  const [goalModal,   setGoalModal]   = useState(false);
-  const [pendingRead, setPendingRead] = useState<{id:any;year:string}|null>(null);
-  const [randomPick,  setRandomPick]  = useState<any>(null);
-  const [shareToast,  setShareToast]  = useState('');
-  const [detailBook,  setDetailBook]  = useState<any>(null);
-
-  useEffect(()=>{
-    (async()=>{
-      const fbOk=await initFirebase();
-      if(fbOk){
-        const unsub=_onAuthStateChanged(_auth,async(u:any)=>{
-          setUser(u); setAuthReady(true);
-          if(u){
-            setSyncing(true);
-            try{
-              const snap=await _getDoc(_doc(_db,'users',u.uid));
-              if(snap.exists()){
-                const data=snap.data();
-                const cloudBooks=migrateBooks(data.books||[]);
-                const ids=new Set(cloudBooks.map((b:any)=>b.id));
-                setBooks([...cloudBooks,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);
-                if(data.goals) setGoals(data.goals);
-              } else {
-                let local=null;
-                try{const raw=localStorage.getItem(STORAGE_KEY);if(raw) local=JSON.parse(raw);}catch{}
-                const base=local?migrateBooks(local):ALL_BOOKS;
-                const ids=new Set(base.map((b:any)=>b.id));
-                const merged=[...base,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))];
-                setBooks(merged);
-                let lg={yearly:0,monthly:0,readProgress:null,monthProgress:null};
-                try{const g=localStorage.getItem(GOALS_KEY);if(g) lg=JSON.parse(g);}catch{}
-                setGoals(lg);
-                await saveToFirestore(u.uid,merged,lg);
-              }
-            }catch{setBooks(ALL_BOOKS);}
-            setSyncing(false);
-          } else {
-            try{
-              const raw=localStorage.getItem(STORAGE_KEY);
-              if(raw){const s=migrateBooks(JSON.parse(raw));const ids=new Set(s.map((b:any)=>b.id));setBooks([...s,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
-              else setBooks(ALL_BOOKS);
-            }catch{setBooks(ALL_BOOKS);}
-            try{const g=localStorage.getItem(GOALS_KEY);if(g) setGoals(JSON.parse(g));}catch{}
-          }
-          setLoading(false);
-        });
-        return()=>unsub();
-      } else {
-        try{
-          const keys=[STORAGE_KEY,'myshelf-v6','myshelf-v5','myshelf-v4','myshelf-v3','myshelf-v2','myshelf-v1'];
-          let stored=null;
-          for(const k of keys){try{const raw=localStorage.getItem(k);if(raw){stored=JSON.parse(raw);break;}}catch{}}
-          if(stored){const migrated=migrateBooks(stored);const ids=new Set(migrated.map((b:any)=>b.id));setBooks([...migrated,...ALL_BOOKS.filter((b:any)=>!ids.has(b.id))]);}
-          else setBooks(ALL_BOOKS);
-          try{const g=localStorage.getItem(GOALS_KEY);if(g) setGoals(JSON.parse(g));}catch{}
-        }catch{setBooks(ALL_BOOKS);}
-        setAuthReady(true); setLoading(false);
-      }
-    })();
-  },[]);
-
-  const persist=(nb:any[])=>{
-    setBooks(nb);
-    try{localStorage.setItem(STORAGE_KEY,JSON.stringify(nb));}catch{}
-    if(user) saveToFirestore(user.uid,nb,goals);
-  };
-  const persistGoals=(g:any)=>{
-    setGoals(g);
-    try{localStorage.setItem(GOALS_KEY,JSON.stringify(g));}catch{}
-    if(user) saveToFirestore(user.uid,books,g);
-  };
-
-  const handleSignIn  = ()=>{ if(firebaseReady) _signInWithPopup(_auth,_provider).catch(()=>{}); };
-  const handleSignOut = ()=>{ if(firebaseReady) _signOut(_auth); };
-
-  const update=(id:any,patch:any)=>{
-    const extra:any={};
-    if(patch.read===true && patch.readYear==null){ extra.readAt=Date.now(); extra.readYear=THIS_YEAR; }
-    if(patch.read===false){ extra.readAt=null; extra.readYear=null; }
-    const updated = books.map(b=>b.id===id?{...b,...patch,...extra}:b);
-    persist(updated);
-    if(detailBook?.id===id) setDetailBook((prev:any)=>({...prev,...patch,...extra}));
-  };
-
-  const handleReread=(id:any)=>{
-    const book=books.find(b=>b.id===id); if(!book) return;
-    const rr:number[]=book.rereads||[];
-    if(!rr.includes(THIS_YEAR)) update(id,{rereads:[...rr,THIS_YEAR]});
-  };
-
-  const [seriesModal, setSeriesModal] = useState<string|null>(null);
-  const [authorModal, setAuthorModal] = useState<string|null>(null);
-
-  const tabBooks=useMemo(()=>{
-    if(tab==='home') return [];
-    if(tab==='shelf') return books;
-    return books.filter(b=>b.status===tab);
-  },[books,tab]);
-
-  const allGenres=useMemo(()=>[...new Set(tabBooks.map((b:any)=>b.genre))].sort() as string[],[tabBooks]);
-  const allSubs=useMemo(()=>{const src=fGenre==='All'?tabBooks:tabBooks.filter((b:any)=>b.genre===fGenre);return[...new Set(src.map((b:any)=>b.subgenre).filter(Boolean))].sort() as string[];},[tabBooks,fGenre]);
-  const allSeries=useMemo(()=>[...new Set(books.map((b:any)=>b.series).filter(Boolean))].sort() as string[],[books]);
-
-  const filtered=useMemo(()=>{
-    const q=search.toLowerCase();
-    const base = tabBooks.filter((b:any)=>{
-      if(q&&!b.title.toLowerCase().includes(q)&&!b.author.toLowerCase().includes(q)&&!(b.series||'').toLowerCase().includes(q)) return false;
-      if(fGenre!=='All'&&b.genre!==fGenre) return false;
-      if(fSub!=='All'&&b.subgenre!==fSub) return false;
-      if(tab==='shelf'&&fRead!=='All'&&(fRead==='Read')!==b.read) return false;
-      if(fSeries!=='All'&&b.series!==fSeries) return false;
-      return true;
-    });
-    return [...base].sort((a:any,b:any)=>{
-      if(sortBy==='author') return a.author.localeCompare(b.author);
-      if(sortBy==='dateAdded') return (b.readAt||b.id||0)-(a.readAt||a.id||0);
-      if(sortBy==='series') {
-        const sa=a.series||''; const sb=b.series||'';
-        if(sa!==sb) return sa.localeCompare(sb);
-        return (a.sn||999)-(b.sn||999);
-      }
-      return a.title.localeCompare(b.title);
-    });
-  },[tabBooks,search,fGenre,fSub,fRead,fSeries,tab,sortBy]);
-
-  const counts=useMemo(()=>({
-    shelf:books.length,
-    tbr:books.filter((b:any)=>b.status==='tbr').length,
-    reading:books.filter((b:any)=>b.status==='reading').length,
-    read:books.filter((b:any)=>b.read).length,
-    wishlist:books.filter((b:any)=>b.status==='wishlist').length,
-  }),[books]);
-
-  const hasFilter=fGenre!=='All'||fSub!=='All'||fRead!=='All'||fSeries!=='All';
-  const clearFilters=()=>{setFGenre('All');setFSub('All');setFRead('All');setFSeries('All');};
-  const tabColor=TAB_CFG[tab]?.color||'#a78bfa';
-  const switchTab=(t:string)=>{setTab(t);clearFilters();setSearch('');setSortBy('title');};
-
-  // Random TBR picker
-  const pickRandom = () => {
-    const tbrBooks = books.filter(b=>b.status==='tbr');
-    if (!tbrBooks.length) return;
-    setRandomPick(tbrBooks[Math.floor(Math.random()*tbrBooks.length)]);
-  };
-
-  // Share link
-  const copyShareLink = () => {
-    if (!user) return;
-    const url = `${window.location.origin}/share/${user.uid}`;
-    navigator.clipboard.writeText(url).then(()=>{
-      setShareToast('Link copied!');
-      setTimeout(()=>setShareToast(''),2500);
-    });
-  };
-
-  if(!authReady||loading) return (
-    <div style={{ background:'#06040f',minHeight:'100vh',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'0.75rem' }}>
-      <div style={{ fontSize:'2rem' }}>✦</div>
-      <p style={{ color:'#a78bfa' }}>Loading your library…</p>
-    </div>
-  );
-
-  if(firebaseReady&&!user) return (
-    <div style={{ background:'#06040f',minHeight:'100vh',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:'2rem' }}>
-      <div style={{ textAlign:'center',maxWidth:'340px' }}>
-        <div style={{ fontSize:'3rem',marginBottom:'0.75rem' }}>✦</div>
-        <h1 style={{ color:'#e8d9ff',fontWeight:'bold',fontSize:'1.5rem',marginBottom:'0.5rem' }}>My Shelf</h1>
-        <p style={{ color:'rgba(255,255,255,0.35)',fontSize:'0.85rem',marginBottom:'2rem',lineHeight:'1.6' }}>Sign in with Google to sync your library across all your devices.</p>
-        <button onClick={handleSignIn} style={{ display:'flex',alignItems:'center',gap:'0.75rem',margin:'0 auto',background:'white',color:'#1f1f1f',border:'none',borderRadius:'0.75rem',padding:'0.75rem 1.5rem',fontWeight:'700',fontSize:'0.95rem',cursor:'pointer',boxShadow:'0 4px 20px rgba(0,0,0,0.4)' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Sign in with Google
-        </button>
-        <p style={{ color:'rgba(255,255,255,0.2)',fontSize:'0.7rem',marginTop:'1.5rem' }}>Your data is private and only visible to you.</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{ background:'#06040f',minHeight:'100vh',width:'100vw',maxWidth:'100vw',color:'white',fontFamily:'Georgia,serif',overflowX:'hidden' }}>
-
-      {/* Share toast */}
-      {shareToast && (
-        <div style={{ position:'fixed',bottom:'1.5rem',left:'50%',transform:'translateX(-50%)',background:'#059669',color:'white',padding:'0.5rem 1.25rem',borderRadius:'9999px',fontSize:'0.8rem',fontWeight:600,zIndex:100,boxShadow:'0 4px 20px rgba(0,0,0,0.4)' }}>
-          🔗 {shareToast}
-        </div>
-      )}
-
-      {/* Book Detail Modal */}
-      {detailBook&&<BookDetailModal book={detailBook} onClose={()=>setDetailBook(null)} onUpdate={update} onReread={handleReread}/>}
-      {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onUpdate={update} onBookDetail={b=>{setSeriesModal(null);setDetailBook(b);}}/>}
-      {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onUpdate={update} onBookDetail={b=>{setAuthorModal(null);setDetailBook(b);}}/>}
-      
-      {/* STICKY HEADER */}
-      <div style={{ background:'#0d0a1c',borderBottom:'1px solid rgba(255,255,255,0.07)',position:'sticky',top:0,zIndex:40,width:'100%' }}>
-        <div style={{ maxWidth:'960px',margin:'0 auto',padding:'0.6rem 1rem 0' }}>
-          <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.4rem' }}>
-            <div>
-              <div style={{ color:'#e8d9ff',fontWeight:'bold',fontSize:'1rem',letterSpacing:'0.04em' }}>
-                ✦ My Shelf
-                {syncing&&<span style={{ marginLeft:'0.5rem',fontSize:'0.6rem',color:'#a78bfa',opacity:0.7 }}>syncing…</span>}
-              </div>
-              <div style={{ color:'rgba(255,255,255,0.3)',fontSize:'0.65rem' }}>{counts.shelf} books · {counts.read} read · {counts.tbr} TBR · {counts.reading} reading · {counts.wishlist} wishlist</div>
-            </div>
-            <div style={{ display:'flex',alignItems:'center',gap:'0.4rem' }}>
-              {user && (
-                <button onClick={copyShareLink} title="Copy shareable link" style={{ background:'rgba(244,114,182,0.15)',color:'#f472b6',border:'1px solid rgba(244,114,182,0.3)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>🔗 Share</button>
-              )}
-              <button onClick={()=>exportCSV(books)} title="Export as CSV" style={{ background:'rgba(96,165,250,0.1)',color:'#60a5fa',border:'1px solid rgba(96,165,250,0.2)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>📤 CSV</button>
-              <button onClick={()=>setModal('add')} style={{ background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.45rem 0.9rem',fontWeight:'600',cursor:'pointer',fontSize:'0.82rem' }}>+ Add</button>
-              {user&&<img src={user.photoURL} alt="avatar" title={`Signed in as ${user.displayName}\nClick to sign out`} onClick={handleSignOut} style={{ width:'30px',height:'30px',borderRadius:'50%',cursor:'pointer',border:'2px solid rgba(167,139,250,0.4)' }}/>}
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div style={{ display:'flex',gap:'0.3rem',marginBottom:'0.4rem' }}>
-            {Object.entries(TAB_CFG).map(([k,cfg])=>(
-              <button key={k} onClick={()=>switchTab(k)} style={{ flex:1,padding:'0.4rem 0.1rem',borderRadius:'0.65rem',border:`1px solid ${tab===k?cfg.color:'rgba(255,255,255,0.08)'}`,background:tab===k?cfg.color+'22':'transparent',color:tab===k?cfg.color:'rgba(255,255,255,0.35)',cursor:'pointer',fontSize:'0.6rem',fontWeight:tab===k?700:400 }}>
-                {cfg.label}
-                {k!=='home'&&<span style={{ opacity:0.6,fontSize:'0.55rem',display:'block' }}>({k==='shelf'?counts.shelf:k==='tbr'?counts.tbr:k==='reading'?counts.reading:counts.wishlist})</span>}
+        {!book && (
+          <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.65rem', padding: '0.25rem' }}>
+            {['single', 'bulk', 'photo'].map((mv) => (
+              <button key={mv} onClick={() => setMode(mv)} style={{ flex: 1, padding: '0.35rem', borderRadius: '0.5rem', border: 'none', background: mode === mv ? '#6d28d9' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.72rem' }}>
+                {mv === 'single' ? 'Single' : mv === 'bulk' ? 'Bulk' : '📸 Scan'}
               </button>
             ))}
           </div>
+        )}
 
-         {tab!=='home'&&tab!=='insights'&&(
-            <>
-              <div style={{ display:'flex',gap:'0.4rem',marginBottom:'0.3rem' }}>
-                <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  Search title, author, series…" style={{ flex:1,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.65rem',padding:'0.45rem 0.85rem',color:'white',fontSize:'0.82rem',boxSizing:'border-box' }}/>
-                <select value={sortBy} onChange={e=>setSortBy(e.target.value as any)} style={{ background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.65rem',padding:'0.45rem 0.5rem',color:'rgba(255,255,255,0.6)',fontSize:'0.72rem',cursor:'pointer' }}>
-                  <option value="title">A–Z Title</option>
-                  <option value="author">Author</option>
-                  <option value="series">Series</option>
-                  <option value="dateAdded">Date Added</option>
-                </select>
-              </div>
-              <div style={{ display:'flex',alignItems:'center',gap:'0.5rem',paddingBottom:'0.45rem' }}>
-                <button onClick={()=>setShowFilters(p=>!p)} style={{ fontSize:'0.68rem',padding:'0.25rem 0.65rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.12)',background:'transparent',color:'rgba(255,255,255,0.4)',cursor:'pointer' }}>
-                  {showFilters?'▲ Hide':'▼ Filters'}{hasFilter?' ●':''}
+        {mode === 'single' && (
+          <>
+            {!book && (
+              <div style={{ marginBottom: '0.75rem' }}>
+                <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleCoverPhoto} />
+                <button onClick={() => photoRef.current?.click()} disabled={identifying} style={{ width: '100%', padding: '0.55rem', borderRadius: '0.6rem', border: '1px dashed rgba(255,255,255,0.2)', background: 'transparent', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
+                  {identifying ? 'Identifying…' : '📷 Scan cover'}
                 </button>
-                {hasFilter&&<button onClick={clearFilters} style={{ fontSize:'0.68rem',color:tabColor,background:'none',border:'none',cursor:'pointer' }}>Clear</button>}
-                {tab==='tbr'&&(
-                  <button onClick={pickRandom} style={{ fontSize:'0.68rem',padding:'0.25rem 0.65rem',borderRadius:'9999px',border:'1px solid rgba(251,146,60,0.4)',background:'rgba(251,146,60,0.1)',color:'#fb923c',cursor:'pointer' }}>🎲 Surprise me</button>
-                )}
-                <span style={{ marginLeft:'auto',fontSize:'0.68rem',color:'rgba(255,255,255,0.25)' }}>{filtered.length} shown</span>
+                {idMsg && <div style={{ fontSize: '0.7rem', color: '#34d399', marginTop: '0.2rem', textAlign: 'center' }}>{idMsg}</div>}
               </div>
-              {showFilters&&(
-                <div style={{ borderTop:'1px solid rgba(255,255,255,0.05)',paddingTop:'0.5rem',paddingBottom:'0.5rem' }}>
-                  <div style={{ display:'flex',flexDirection:'column',gap:'0.4rem' }}>
-                    <div style={{ display:'flex',gap:'0.4rem',flexWrap:'wrap' }}>
-                      {['All',...allGenres].map(o=><Pill key={o} label={o} active={fGenre===o} color={GENRE_CFG[o]?.accent||tabColor} onClick={()=>{setFGenre(o);setFSub('All');}}/>)}
-                    </div>
-                    {fGenre!=='All'&&allSubs.length>0&&(
-                      <div style={{ display:'flex',gap:'0.4rem',overflowX:'auto' }}>
-                        {['All',...allSubs].map(o=><Pill key={o} label={o} active={fSub===o} color={GENRE_CFG[fGenre]?.accent||tabColor} onClick={()=>setFSub(o)}/>)}
+            )}
+
+            <div style={{ marginBottom: '0.65rem', position: 'relative' }}>
+              <label style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', display: 'block', marginBottom: '0.2rem' }}>Title</label>
+              <input value={f.title} onChange={(e) => handleTitleChange(e.target.value)} placeholder="Book title" style={inp} />
+
+              {/* Fixed Dropdown Position */}
+              {showSug && suggestions.length > 0 && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#1a1035', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.65rem', maxHeight: '200px', overflowY: 'auto' }}>
+                  {suggestions.map((sug, i) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        set('title', sug.title);
+                        if (sug.author) set('author', sug.author);
+                        setShowSug(false);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem', cursor: 'pointer' }}
+                    >
+                      {sug.cover && <img src={sug.cover} alt="" style={{ width: '24px', height: '36px', objectFit: 'cover' }} />}
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'white' }}>{sug.title}</div>
+                        <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>{sug.author}</div>
                       </div>
-                    )}
-                    {tab==='shelf'&&(
-                      <div style={{ display:'flex',gap:'0.4rem' }}>
-                        {['All','Read','Unread'].map(o=><Pill key={o} label={o} active={fRead===o} color="#34d399" onClick={()=>setFRead(o)}/>)}
-                      </div>
-                    )}
-                    <div style={{ display:'flex',gap:'0.4rem',overflowX:'auto',alignItems:'center' }}>
-                      <span style={{ color:'rgba(255,255,255,0.25)',fontSize:'0.68rem',flexShrink:0 }}>Series:</span>
-                      {['All',...allSeries].map(o=><Pill key={o} label={o} active={fSeries===o} color="#fbbf24" onClick={()=>setFSeries(o)}/>)}
                     </div>
-                  </div>
+                  ))}
                 </div>
               )}
-            </>
+            </div>
+
+            <div style={{ marginBottom: '0.65rem' }}>
+              <label style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', display: 'block', marginBottom: '0.2rem' }}>Author</label>
+              <input value={f.author} onChange={(e) => set('author', e.target.value)} placeholder="Author name" style={inp} />
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+              <button
+                onClick={() => {
+                  if (!f.title.trim()) return;
+                  onSave({ ...f, id: f.id || generateUid() });
+                }}
+                style={{ flex: 1, background: '#6d28d9', color: 'white', border: 'none', borderRadius: '0.75rem', padding: '0.6rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Save
+              </button>
+              <button onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '0.75rem', padding: '0.6rem', cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── App Main Component ────────────────────────────────────────────────────────
+export default function App() {
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('home');
+  const [goals, setGoals] = useState<Goals>({ yearly: 0, monthly: 0, readProgress: null, monthProgress: null });
+  const [user, setUser] = useState<User | null>(null);
+  const [detailBook, setDetailBook] = useState<Book | null>(null);
+  const [modal, setModal] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (u) {
+        try {
+          const snap = await getDoc(doc(db, 'users', u.uid));
+          if (snap.exists()) {
+            const data = snap.data();
+            const cloud = migrateBooks(data.books || []);
+            const ids = new Set(cloud.map((b) => b.id));
+            setBooks([...cloud, ...ALL_BOOKS.filter((b) => !ids.has(b.id))]);
+            if (data.goals) setGoals(data.goals);
+          } else {
+            setBooks(ALL_BOOKS);
+            await saveToFirestore(u.uid, ALL_BOOKS, goals);
+          }
+        } catch {
+          setBooks(ALL_BOOKS);
+        }
+      } else {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const local = migrateBooks(JSON.parse(raw));
+            const ids = new Set(local.map((b) => b.id));
+            setBooks([...local, ...ALL_BOOKS.filter((b) => !ids.has(b.id))]);
+          } else setBooks(ALL_BOOKS);
+        } catch {
+          setBooks(ALL_BOOKS);
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const persist = (nb: Book[]) => {
+    setBooks(nb);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nb));
+    } catch {}
+    if (user) saveToFirestore(user.uid, nb, goals);
+  };
+
+  const update = (id: number, patch: Partial<Book>) => {
+    const updated = books.map((b) => (b.id === id ? { ...b, ...patch } : b));
+    persist(updated);
+    if (detailBook?.id === id) setDetailBook((prev) => (prev ? { ...prev, ...patch } : null));
+  };
+
+  const handleReread = (id: number) => {
+    const book = books.find((b) => b.id === id);
+    if (!book) return;
+    const rr = book.rereads || [];
+    if (!rr.includes(THIS_YEAR)) update(id, { rereads: [...rr, THIS_YEAR] });
+  };
+
+  if (loading)
+    return (
+      <div style={{ background: '#06040f', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
+        ✦ Loading library…
+      </div>
+    );
+
+  return (
+    <div style={{ background: '#06040f', minHeight: '100vh', color: 'white', fontFamily: 'Georgia, serif', padding: '1rem' }}>
+      {detailBook && <BookDetailModal book={detailBook} onClose={() => setDetailBook(null)} onUpdate={update} onReread={handleReread} />}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.2rem', color: '#e8d9ff', fontWeight: 'bold' }}>✦ My Shelf</h1>
+          <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>{books.length} total books</p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button onClick={() => exportCSV(books)} style={{ background: 'rgba(96,165,250,0.1)', color: '#60a5fa', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 0.8rem', cursor: 'pointer' }}>
+            📤 CSV
+          </button>
+          {user ? (
+            <button onClick={() => signOut(auth)} style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 0.8rem', cursor: 'pointer' }}>
+              Sign Out
+            </button>
+          ) : (
+            <button onClick={() => signInWithPopup(auth, provider)} style={{ background: '#6d28d9', color: 'white', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 0.8rem', cursor: 'pointer' }}>
+              Sign In
+            </button>
           )}
+          <button onClick={() => setModal('add')} style={{ background: '#34d399', color: '#042f2e', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 0.8rem', fontWeight: 'bold', cursor: 'pointer' }}>
+            + Add
+          </button>
         </div>
       </div>
 
-      {tab==='home'&&<HomeTab books={books} goals={goals} onEditGoals={()=>setGoalModal(true)} userName="Elle" onBookDetail={setDetailBook} onUpdate={update}/>}
+      <BookshelfVisual books={books} />
 
-      {tab==='insights'&&(()=>{
-        const readAll_i = books.filter((b:any) => b.read);
-        const seriesData = (() => {
-          const seriesMap: Record<string,{owned:number,read:number}> = {};
-          books.forEach((b:any) => {
-            if (!b.series) return;
-            if (!seriesMap[b.series]) seriesMap[b.series] = {owned:0,read:0};
-            seriesMap[b.series].owned++;
-            if (b.read) seriesMap[b.series].read++;
-          });
-          return Object.entries(seriesMap).filter(([,v]) => v.owned > 1)
-            .map(([name,v]) => ({name, ...v, pct: Math.round((v.read/v.owned)*100)}))
-            .sort((a,b) => b.owned - a.owned).slice(0,8);
-        })();
-        const authorOwned = (() => {
-          const c: Record<string,{owned:number,read:number}> = {};
-          books.forEach((b:any) => {
-            if (!c[b.author]) c[b.author] = {owned:0,read:0};
-            c[b.author].owned++;
-            if (b.read) c[b.author].read++;
-          });
-          return Object.entries(c).filter(([,v]) => v.owned >= 3)
-            .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
-            .sort((a,b) => b.owned - a.owned).slice(0,6);
-        })();
-        const authorData = (() => {
-          const c: Record<string,number> = {};
-          readAll_i.forEach((b:any) => {c[b.author]=(c[b.author]||0)+1;});
-          return Object.entries(c).map(([a,n])=>({author:a,count:n})).sort((a,b)=>b.count-a.count).slice(0,8);
-        })();
-        const maxAuthor = authorData[0]?.count||1;
-        return (
-  <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
-    {/* Series Completion */}
-    {seriesData.length>0&&(
-      <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>📚 Series Progress <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to explore)</span></div>
-        <div style={{ display:'flex',flexDirection:'column',gap:'0.5rem' }}>
-          {seriesData.map(({name,owned,read,pct})=>(
-            <div key={name} style={{ cursor:'pointer' }} onClick={()=>setSeriesModal(name)}>
-              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
-                <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'70%' }}>{name}</span>
-                <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{read}/{owned} · {pct}%</span>
-              </div>
-              <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
-                <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#a78bfa',borderRadius:'9999px',transition:'width 0.5s' }}/>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-
-    {/* Author Collections */}
-    {authorOwned.length>0&&(
-      <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>✍️ Author Collections <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to explore)</span></div>
-        <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem' }}>
-          {authorOwned.map(({author,owned,read,pct})=>(
-            <div key={author} onClick={()=>setAuthorModal(author)} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer' }}
-              onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}
-              onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
-              <div style={{ fontSize:'0.7rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'0.2rem' }}>{author}</div>
-              <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.35)',marginBottom:'0.3rem' }}>{read} of {owned} read</div>
-              <div style={{ height:'4px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
-                <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#fb7185',borderRadius:'9999px',transition:'width 0.5s' }}/>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-
-    {/* Top Authors */}
-    {authorData.length>0&&(
-      <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Authors</div>
-        <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
-          {authorData.map(({author,count})=>(
-            <div key={author} style={{ marginBottom:'0.35rem',cursor:'pointer' }} onClick={()=>setAuthorModal(author)}>
-              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
-                <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.65)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'75%' }}>{author}</span>
-                <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{count} {count===1?'book':'books'}</span>
-              </div>
-              <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.05)',overflow:'hidden' }}>
-                <div style={{ width:`${(count/maxAuthor)*100}%`,height:'100%',background:'#a78bfa',borderRadius:'9999px',transition:'width 0.5s' }}/>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-  </div>
-        );
-      })()}
-
-      {tab!=='home'&&tab!=='insights'&&(
-        <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
-          {filtered.length===0?(
-            <div style={{ textAlign:'center',padding:'5rem 0',color:'rgba(255,255,255,0.2)' }}>
-              <div style={{ fontSize:'3rem',marginBottom:'0.75rem' }}>{tab==='tbr'?'🔖':tab==='reading'?'📖':tab==='wishlist'?'✨':'📭'}</div>
-              <p>{tab==='tbr'?'Your TBR pile is empty!':tab==='reading'?'Nothing currently reading.':tab==='wishlist'?'Your wishlist is empty!':'No books match your filters.'}</p>
-              {(tab==='tbr'||tab==='reading'||tab==='wishlist')&&<p style={{ fontSize:'0.8rem',marginTop:'0.5rem',opacity:0.6 }}>Use the arrow buttons on any card to move books here.</p>}
-            </div>
-          ):(
-            <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'0.75rem' }}>
-              {filtered.map((b:any)=>{
-                const cfg=GENRE_CFG[b.genre]||GENRE_CFG['Fantasy'];
-                const bst=b.status||'shelf';
-                const isWishlist = bst==='wishlist';
-                const moves=Object.entries(TAB_CFG).filter(([k])=>k!=='home'&&k!==bst);
-                return(
-                  <div key={b.id} style={{ background:isWishlist?'rgba(244,114,182,0.07)':cfg.dim+'66',borderRadius:'1rem',border:`1px solid ${isWishlist?'rgba(244,114,182,0.25)':cfg.accent+'30'}`,borderLeft:`3px solid ${isWishlist?'#f472b6':cfg.accent}`,padding:'0.875rem',paddingTop:'2.1rem',position:'relative',transition:'transform 0.15s' }}
-                    onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.01)')} onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}>
-
-                    {/* Status badge on shelf tab */}
-                    {tab==='shelf'&&bst!=='shelf'&&(
-                      <div style={{ position:'absolute',top:'0.45rem',left:'0.5rem',fontSize:'0.58rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:(STATUS_COLORS as any)[bst]+'22',border:`1px solid ${(STATUS_COLORS as any)[bst]}`,color:(STATUS_COLORS as any)[bst],fontWeight:600 }}>
-                        {bst==='tbr'?'🔖 TBR':bst==='reading'?'📖 Reading':'✨ Wishlist'}
-                      </div>
-                    )}
-
-                    {/* Move buttons */}
-                    {tab!=='shelf'&&(
-                      <div style={{ position:'absolute',top:'0.45rem',left:'0.5rem',display:'flex',gap:'0.25rem',flexWrap:'wrap' }}>
-                        {moves.slice(0,3).map(([k,c2])=>(
-                          <button key={k} onClick={()=>update(b.id,{status:k})} style={{ fontSize:'0.55rem',padding:'0.15rem 0.35rem',borderRadius:'9999px',border:`1px solid ${c2.color}`,background:c2.color+'18',color:c2.color,cursor:'pointer',whiteSpace:'nowrap' }}>
-                            →{k==='shelf'?'Shelf':k==='tbr'?'TBR':k==='reading'?'Reading':'Wishlist'}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {tab==='shelf'&&bst==='shelf'&&(
-                      <div style={{ position:'absolute',top:'0.45rem',left:'0.5rem',display:'flex',gap:'0.25rem' }}>
-                        {moves.filter(([k])=>k!=='wishlist').map(([k,c2])=>(
-                          <button key={k} onClick={()=>update(b.id,{status:k})} style={{ fontSize:'0.55rem',padding:'0.15rem 0.35rem',borderRadius:'9999px',border:`1px solid ${c2.color}`,background:c2.color+'18',color:c2.color,cursor:'pointer',whiteSpace:'nowrap' }}>
-                            →{k==='tbr'?'TBR':'Reading'}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Read toggle for shelf + reading */}
-                    {(bst==='shelf'||bst==='reading')&&(
-                      <>
-                        {pendingRead?.id===b.id?(
-                          <div style={{ position:'absolute',top:'0.4rem',right:'0.5rem',display:'flex',alignItems:'center',gap:'0.3rem' }}>
-                            <input type="number" value={pendingRead!.year} onChange={e=>setPendingRead(pendingRead?{...pendingRead,year:e.target.value}:null)} placeholder={String(THIS_YEAR)}
-                              style={{ width:'62px',background:'rgba(255,255,255,0.08)',border:'1px solid #34d399',borderRadius:'0.4rem',padding:'0.15rem 0.35rem',color:'white',fontSize:'0.65rem',textAlign:'center' }} autoFocus/>
-                            <button onClick={()=>{ const yr=Number(pendingRead!.year)||THIS_YEAR; update(b.id,{status:'shelf',read:true,readAt:Date.now(),readYear:yr}); setPendingRead(null); }} style={{ fontSize:'0.62rem',padding:'0.2rem 0.4rem',borderRadius:'9999px',border:'1px solid #34d399',background:'#05653044',color:'#34d399',cursor:'pointer',fontWeight:700 }}>✓</button>
-                            <button onClick={()=>setPendingRead(null)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.35rem',borderRadius:'9999px',border:'1px solid rgba(255,255,255,0.15)',background:'transparent',color:'rgba(255,255,255,0.35)',cursor:'pointer' }}>✕</button>
-                          </div>
-                        ):(
-                          <button onClick={()=>{ if(bst==='shelf'&&b.read){update(b.id,{read:false});}else{setPendingRead({id:b.id,year:String(THIS_YEAR)});} }}
-                            style={{ position:'absolute',top:'0.5rem',right:'0.5rem',fontSize:'0.62rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',fontWeight:500,cursor:'pointer',border:'1px solid',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.3)'}) }}>
-                            {b.read?`✓ Read ${b.readYear&&b.readYear!==THIS_YEAR?b.readYear:''}`.trim():bst==='reading'?'✓ Finished':'Unread'}
-                          </button>
-                        )}
-                      </>
-                    )}
-
-                    <div onClick={()=>setDetailBook(b)} style={{ fontWeight:'bold',color:'white',fontSize:'0.875rem',lineHeight:'1.3',paddingRight:'3.5rem',marginBottom:'0.2rem',cursor:'pointer' }}>{b.title}</div>
-                    <div style={{ fontSize:'0.75rem',color:isWishlist?'#f472b6bb':cfg.accent+'bb',marginBottom:'0.2rem' }}>{b.author}</div>
-                    {b.series&&<div style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.28)' }}>{b.series}{b.sn!=null?` #${b.sn}`:''}</div>}
-
-                    {/* Rating display */}
-                    {b.rating && <div style={{ marginTop:'0.3rem' }}><StarRating rating={b.rating} size="sm"/></div>}
-
-                    {/* Rereads badge */}
-                    {(b.rereads||[]).length > 0 && <div style={{ fontSize:'0.6rem',color:'#a78bfa',marginTop:'0.2rem' }}>🔁 ×{b.rereads.length} re-read</div>}
-
-                    {/* Note snippet */}
-                    {b.note && <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',marginTop:'0.3rem',fontStyle:'italic',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>"{b.note}"</div>}
-
-                    <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'0.5rem' }}>
-                      <div style={{ display:'flex',gap:'0.35rem',flexWrap:'wrap',alignItems:'center' }}>
-                        <span style={{ fontSize:'0.65rem',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:isWishlist?'rgba(244,114,182,0.15)':cfg.dim,color:isWishlist?'#f472b6':cfg.accent }}>{b.genre}</span>
-                        {b.subgenre&&<span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.22)' }}>{b.subgenre}</span>}
-                      </div>
-                      <div style={{ display:'flex',gap:'0.4rem' }}>
-                        <button onClick={()=>setDetailBook(b)} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.25)',cursor:'pointer',fontSize:'0.9rem' }}>📖</button>
-                        <button onClick={()=>setEditBook(b)} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.25)',cursor:'pointer',fontSize:'0.9rem' }}>✎</button>
-                        <button onClick={()=>setDelId(b.id)} style={{ background:'none',border:'none',color:'rgba(255,255,255,0.25)',cursor:'pointer',fontSize:'0.9rem' }}>✕</button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {modal==='add'&&<ModalForm book={null} tab={tab==='home'?'shelf':tab} allSeries={allSeries} allBooks={books} onSave={b=>{persist([...books,b]);setModal(null);}} onSaveMany={bs=>{persist([...books,...bs]);setModal(null);}} onClose={()=>setModal(null)}/>}
-      {editBook&&<ModalForm book={editBook} tab={tab==='home'?'shelf':tab} allSeries={allSeries} allBooks={books} onSave={b=>{persist(books.map((x:any)=>x.id===b.id?b:x));setEditBook(null);}} onSaveMany={()=>{}} onClose={()=>setEditBook(null)}/>}
-      {goalModal&&<GoalSetModal goals={goals} onSave={g=>{persistGoals(g);setGoalModal(false);}} onClose={()=>setGoalModal(false)}/>}
-
-      {/* Random pick modal */}
-      {randomPick&&(
-        <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.8)',padding:'1rem' }}>
-          <div style={{ background:'#0e0b1a',border:'1px solid rgba(251,146,60,0.3)',borderRadius:'1rem',padding:'1.75rem',width:'100%',maxWidth:'360px',textAlign:'center' }}>
-            <div style={{ fontSize:'2rem',marginBottom:'0.5rem' }}>🎲</div>
-            <div style={{ fontSize:'0.75rem',color:'rgba(255,255,255,0.4)',marginBottom:'0.75rem' }}>Your next read should be…</div>
-            <div style={{ fontSize:'1.1rem',fontWeight:'bold',color:'white',marginBottom:'0.3rem' }}>{randomPick.title}</div>
-            <div style={{ fontSize:'0.85rem',color:GENRE_CFG[randomPick.genre]?.accent||'#a78bfa',marginBottom:'0.25rem' }}>{randomPick.author}</div>
-            {randomPick.series&&<div style={{ fontSize:'0.75rem',color:'rgba(255,255,255,0.3)',marginBottom:'1rem' }}>{randomPick.series}{randomPick.sn!=null?` #${randomPick.sn}`:''}</div>}
-            <div style={{ display:'flex',gap:'0.75rem',marginTop:'1rem' }}>
-              <button onClick={pickRandom} style={{ flex:1,background:'rgba(251,146,60,0.15)',color:'#fb923c',border:'1px solid rgba(251,146,60,0.3)',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer',fontWeight:600 }}>Try again 🎲</button>
-              <button onClick={()=>setRandomPick(null)} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.6rem',cursor:'pointer' }}>Close</button>
-            </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.75rem', marginTop: '1rem' }}>
+        {books.map((b) => (
+          <div key={b.id} onClick={() => setDetailBook(b)} style={{ background: '#0e0b1e', borderRadius: '0.75rem', padding: '0.875rem', border: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer' }}>
+            <div style={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>{b.title}</div>
+            <div style={{ fontSize: '0.75rem', color: '#a78bfa', marginTop: '0.1rem' }}>{b.author}</div>
+            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.4rem' }}>{b.genre}</div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {delId&&(
-        <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.75)',padding:'1rem' }}>
-          <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'320px' }}>
-            <h3 style={{ color:'white',fontWeight:'bold',marginBottom:'0.375rem' }}>Remove this book?</h3>
-            <p style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.85rem',marginBottom:'1.25rem' }}>This cannot be undone.</p>
-            <div style={{ display:'flex',gap:'0.75rem' }}>
-              <button onClick={()=>{persist(books.filter((b:any)=>b.id!==delId));setDelId(null);}} style={{ flex:1,background:'#dc2626',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.625rem',fontWeight:'600',cursor:'pointer' }}>Remove</button>
-              <button onClick={()=>setDelId(null)} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.625rem',cursor:'pointer' }}>Cancel</button>
-            </div>
-          </div>
-        </div>
+      {modal === 'add' && (
+        <ModalForm
+          book={null}
+          tab={tab}
+          allSeries={[]}
+          allBooks={books}
+          onSave={(nb) => {
+            persist([...books, nb]);
+            setModal(null);
+          }}
+          onSaveMany={(nbs) => {
+            persist([...books, ...nbs]);
+            setModal(null);
+          }}
+          onClose={() => setModal(null)}
+        />
       )}
     </div>
   );
