@@ -4177,52 +4177,6 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
     }
     setScanning(false);
   };
-
-      // Catch HTTP API errors (400, 413, 500)
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `Server error ${res.status}`);
-      }
-
-      const data = await res.json();
-      const rawText = data.content?.[0]?.text || '';
-
-      // Safely match JSON array inside response text
-      const match = rawText.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (!match) throw new Error("Could not parse book list from photo response.");
-
-      const list = JSON.parse(match[0]);
-      if (!Array.isArray(list)) throw new Error("Parsed result is not an array.");
-
-      setScanned(list.map((b: any) => ({
-        title: b.title || '',
-        author: b.author || '',
-        selected: true
-      })));
-    } catch (err: any) { 
-      setScanErr(err.message || "Couldn't read the shelf — try a clearer photo with good lighting."); 
-    }
-    setScanning(false);
-  };
-
-      const data=await res.json();
-
-      const raw=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
-
-      const list=JSON.parse(raw);
-
-      if(!Array.isArray(list)) throw new Error();
-
-      setScanned(list.map((b:any)=>({title:b.title||'',author:b.author||'',selected:true})));
-
-    } catch { setScanErr("Couldn't read the shelf — try a clearer photo with good lighting."); }
-
-    setScanning(false);
-
-  };
-
-
-
   const toggleOne=(i:number)=>setScanned(p=>p.map((b,j)=>j===i?{...b,selected:!b.selected}:b));
 
   const toggleAll=(v:boolean)=>setScanned(p=>p.map(b=>({...b,selected:v})));
@@ -5454,8 +5408,6 @@ export default function App() {
           </div>
         );
       })()}
-
-
       {tab!=='home'&&tab!=='insights'&&(
 
         <div style={{ maxWidth:'960px',margin:'0 auto',padding:'1rem' }}>
