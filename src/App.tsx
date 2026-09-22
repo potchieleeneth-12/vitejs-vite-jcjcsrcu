@@ -169,7 +169,7 @@ const exportCSV = (books: any[]) => {
 };
 
 // ── Seed Data ─────────────────────────────────────────────────────────────────
-cconst SEED = [
+const SEED = [
   // Zodiac Academy & Spinoffs (C.Peckham & S.Valenti)
   fa(1,'The Awakening','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',1),
   fa(2,'Ruthless Fae','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',2),
@@ -1416,14 +1416,6 @@ function StarRating({ rating, onChange, size = 'sm' }: { rating: number|null; on
   );
 }
 
-function Pill({ label, active, color, onClick }: { label: string; active: boolean; color: string; onClick: () => void }) {
-  return (
-    <button onClick={onClick} style={{ whiteSpace:'nowrap',fontSize:'0.7rem',padding:'0.3rem 0.75rem',borderRadius:'9999px',border:active?`1px solid ${color}`:'1px solid rgba(255,255,255,0.1)',background:active?color+'25':'transparent',color:active?color:'rgba(255,255,255,0.35)',cursor:'pointer',fontWeight:active?600:400 }}>
-      {label}
-    </button>
-  );
-}
-
 function GoalRing({ count, goal, label, emoji, gradStart, gradEnd, gradId }: {
   count: number; goal: number; label: string; emoji: string; gradStart: string; gradEnd: string; gradId: string;
 }) {
@@ -1639,7 +1631,6 @@ function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: any; onC
   const [loadingTropes, setLoadingTropes] = useState(false);
   const [note, setNote] = useState(book.note || '');
   const [rating, setRating] = useState<number|null>(book.rating ?? null);
-  const [editingNote, setEditingNote] = useState(false);
   const cfg = GENRE_CFG[book.genre] || GENRE_CFG['Fantasy'];
   const rereads: number[] = book.rereads || [];
 
@@ -1674,8 +1665,6 @@ function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: any; onC
     } catch {}
     setLoadingTropes(false);
   };
-
-  const saveNote = () => { onUpdate(book.id,{note,rating}); setEditingNote(false); };
 
   return (
     <div style={{ position:'fixed',inset:0,zIndex:60,display:'flex',alignItems:'flex-end',justifyContent:'center',background:'rgba(0,0,0,0.85)' }} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
@@ -1889,7 +1878,6 @@ export default function App() {
   const [fSeries,     setFSeries]     = useState('All');
   const [sortBy,      setSortBy]      = useState<'title'|'author'|'dateAdded'|'series'>('title');
   const [modal,       setModal]       = useState<string|null>(null);
-  const [editBook,    setEditBook]    = useState<any>(null);
   const [randomPick,  setRandomPick]  = useState<any[] | null>(null);
   const [detailBook,  setDetailBook]  = useState<any>(null);
 
@@ -1940,7 +1928,7 @@ export default function App() {
     });
   }, [tabBooks, search, fGenre, fSub, fRead, fSeries, tab]);
 
-  // Surprise Me Handler: Picks 5 random unread books
+  // Surprise Me Handler: Selects 5 random unread books
   const pickRandom = useCallback(() => {
     const unreadBooks = books.filter((b: any) => !b.read);
     if (!unreadBooks.length) return;
