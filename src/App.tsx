@@ -246,6 +246,36 @@ const fileToBase64 = (file: File): Promise<string> => new Promise((res, rej) => 
 
 });
 
+// Place this right below fileToBase64
+const processAndCompressImage = (file: File, maxDimension = 1500): Promise<{ b64: string; mime: string }> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas context failed'));
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const b64 = dataUrl.split(',')[1];
+      resolve({ b64, mime: 'image/jpeg' });
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+};
 
 
 // ── Export CSV ────────────────────────────────────────────────────────────────
@@ -3949,39 +3979,49 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
 
 
   const handleCoverPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; 
+    if (!file) return;
 
-    const file = e.target.files?.[0]; if (!file) return;
-
-    setId(true); setIdMsg('Identifying…');
+    setId(true); 
+    setIdMsg('Identifying…');
 
     try {
-
-      const b64 = await fileToBase64(file);
-
-      const res = await fetch('/.netlify/functions/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:200, messages:[{ role:'user', content:[
-
-          { type:'image', source:{ type:'base64', media_type:file.type, data:b64 } },
-
-          { type:'text', text:'Identify the book. Return ONLY JSON: {"title":"…","author":"…"}. Unknown: {"title":"","author":""}.' },
-
-        ]}]}),
-
+      const { b64, mime } = await processAndCompressImage(file);
+      const res = await fetch('/.netlify/functions/claude', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          model: 'claude-3-5-sonnet-20241022', // Fixed model identifier
+          max_tokens: 200, 
+          messages: [{ 
+            role: 'user', 
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } },
+              { type: 'text', text: 'Identify the book. Return ONLY JSON: {"title":"…","author":"…"}. Unknown: {"title":"","author":""}.' },
+            ]
+          }]
+        }),
       });
 
+      if (!res.ok) throw new Error();
+
       const data = await res.json();
+      const text = data.content?.[0]?.text || '';
+      const match = text.match(/\{[\s\S]*\}/);
 
-      const p = JSON.parse((data.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
-
-      if (p.title) { set('title',p.title); setIdMsg('✓ Book identified!'); } else setIdMsg("Couldn't identify — fill in manually.");
-
-      if (p.author) set('author',p.author);
-
-    } catch { setIdMsg("Couldn't identify — fill in manually."); }
-
-    setId(false); setTimeout(()=>setIdMsg(''),3000);
-
+      if (match) {
+        const p = JSON.parse(match[0]);
+        if (p.title) { set('title', p.title); setIdMsg('✓ Book identified!'); } 
+        else setIdMsg("Couldn't identify — fill in manually.");
+        if (p.author) set('author', p.author);
+      } else {
+        setIdMsg("Couldn't identify — fill in manually.");
+      }
+    } catch { 
+      setIdMsg("Couldn't identify — fill in manually."); 
+    }
+    setId(false); 
+    setTimeout(() => setIdMsg(''), 3000);
   };
 
 
@@ -4071,34 +4111,74 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
 
 
   const handleShelfFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; 
+    if (!file) return;
 
-    const file=e.target.files?.[0]; if(!file) return;
-
-    const b64=await fileToBase64(file); setShelfB64(b64); setShelfMime(file.type);
-
-    setShelfImg(URL.createObjectURL(file)); setScanned([]); setScanErr(''); setScanDone(false);
-
+    try {
+      // Compress image before saving to state
+      const { b64, mime } = await processAndCompressImage(file);
+      setShelfB64(b64); 
+      setShelfMime(mime);
+      setShelfImg(URL.createObjectURL(file)); 
+      setScanned([]); 
+      setScanErr(''); 
+      setScanDone(false);
+    } catch {
+      setScanErr("Failed to process image format. Try another photo.");
+    }
   };
 
 
 
   const runScan = async () => {
-
-    if(!shelfB64) return; setScanning(true); setScanErr(''); setScanned([]);
+    if (!shelfB64) return; 
+    setScanning(true); 
+    setScanErr(''); 
+    setScanned([]);
 
     try {
-
-      const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},
-
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:[
-
-          {type:'image',source:{type:'base64',media_type:shelfMime,data:shelfB64}},
-
-          {type:'text',text:`Look at every single book spine visible in this bookshelf photo. Read each title and author carefully.\nReturn ONLY a raw JSON array:\n[{"title":"Exact Title","author":"Author Name"},...]\n- Include every spine you can read\n- Empty string for unknown author\n- Do not skip any books`},
-
-        ]}]}),
-
+      const res = await fetch('/.netlify/functions/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022', // Updated to valid Anthropic model
+          max_tokens: 3000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: shelfMime, data: shelfB64 } },
+              { type: 'text', text: `Look at every single book spine visible in this bookshelf photo. Read each title and author carefully.\nReturn ONLY a raw JSON array:\n[{"title":"Exact Title","author":"Author Name"},...]\n- Include every spine you can read\n- Empty string for unknown author\n- Do not skip any books` }
+            ]
+          }]
+        }),
       });
+
+      // Catch HTTP API errors (400, 413, 500)
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+      const rawText = data.content?.[0]?.text || '';
+
+      // Safely match JSON array inside response text
+      const match = rawText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (!match) throw new Error("Could not parse book list from photo response.");
+
+      const list = JSON.parse(match[0]);
+      if (!Array.isArray(list)) throw new Error("Parsed result is not an array.");
+
+      setScanned(list.map((b: any) => ({
+        title: b.title || '',
+        author: b.author || '',
+        selected: true
+      })));
+    } catch (err: any) { 
+      setScanErr(err.message || "Couldn't read the shelf — try a clearer photo with good lighting."); 
+    }
+    setScanning(false);
+  };
 
       const data=await res.json();
 
