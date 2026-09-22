@@ -154,7 +154,7 @@ const SUBGENRES: Record<string, string[]> = {
 
 
 
-const STORAGE_KEY = 'myshelf-v7';
+const STORAGE_KEY = 'myshelf-v8';
 
 const GOALS_KEY   = 'myshelf-goals-v1';
 
@@ -303,47 +303,78 @@ const exportCSV = (books: any[]) => {
 // ── Seed Data ─────────────────────────────────────────────────────────────────
 
 const SEED = [
+  // Zodiac Academy & Spinoffs (C.Peckham & S.Valenti)
   fa(1,'The Awakening','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',1),
   fa(2,'Ruthless Fae','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',2),
   fa(3,'The Reckoning','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',3),
   fa(4,'Shadow Princess','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',4),
   fa(5,'Cursed Fates','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',5),
+  fa(11,'The Big Ass Party','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',5.5),
   fa(6,'Fated Throne','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',6),
   fa(7,'Heartless Sky','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',7),
   fa(8,'Sorrow and Starlight','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',8),
   fa(9,'Beyond the Veil','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',8.5),
   fa(10,'Restless Stars','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',9),
-  fa(11,'The Big Ass Party','C.Peckham & S.Valenti','Paranormal Romance','Zodiac Academy',5.5),
+  fa(779,'Dark Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',1),
+  fa(780,'Savage Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',2),
+  fa(781,'Vicious Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',3),
+  fa(782,'Broken Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',4),
+  fa(783,'Warrior Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',5),
+  fa(510,'Hollow','C. Peckham & S. Valenti','Paranormal Romance','Crown of Hearts & Chaos',1),
+  fa(511,'Never Keep','C. Peckham & S. Valenti','Paranormal Romance','Sins of the Zodiac',1),
+
+  // Stephanie Garber
   fa(12,'Caraval','Stephanie Garber','YA Fantasy','Caraval',1),
   fa(13,'Legendary','Stephanie Garber','YA Fantasy','Caraval',2),
   fa(14,'Finale','Stephanie Garber','YA Fantasy','Caraval',3),
+  fa(700,'Once Upon a Broken Heart','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',1),
+  fa(701,'The Ballad of Never After','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',2),
+  fa(702,'A Curse for True Love','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',3),
   fa(15,'Alchemy of Secrets','Stephanie Garber','YA Fantasy',null,null),
+
+  // Jennifer Lynn Barnes
   m(16,'The Inheritance Games','Jennifer Lynn Barnes','YA Mystery','The Inheritance Games',1),
   m(17,'The Hawthorne Legacy','Jennifer Lynn Barnes','YA Mystery','The Inheritance Games',2),
   m(18,'The Final Gambit','Jennifer Lynn Barnes','YA Mystery','The Inheritance Games',3),
   m(19,'Games Untold','Jennifer Lynn Barnes','YA Mystery','The Inheritance Games',4),
   m(20,'The Brothers Hawthorne','Jennifer Lynn Barnes','YA Mystery','The Inheritance Games',5),
   m(21,'The Naturals','Jennifer Lynn Barnes','YA Mystery','The Naturals',1),
+  m(890,'Killer Spirit','Jennifer Lynn Barnes','YA Mystery','The Squad',2),
+  fa(847,'Glorious Rivals','Jennifer Lynn Barnes','YA Fantasy',null,null),
+
+  // Kerri Maniscalco
   m(22,'Stalking Jack the Ripper','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',1),
-  m(23,'Escaping from Houdini','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',2),
-  m(24,'Hunting Prince Dracula','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',3),
+  m(24,'Hunting Prince Dracula','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',2),
+  m(23,'Escaping from Houdini','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',3),
   m(25,'Capturing the Devil','Kerri Maniscalco','Historical Mystery','Stalking Jack the Ripper',4),
   fa(26,'Kingdom of the Wicked','Kerri Maniscalco','Dark Fantasy','Kingdom of the Wicked',1),
   fa(27,'Kingdom of the Cursed','Kerri Maniscalco','Dark Fantasy','Kingdom of the Wicked',2),
   fa(28,'Kingdom of the Feared','Kerri Maniscalco','Dark Fantasy','Kingdom of the Wicked',3),
   fa(29,'Throne of the Fallen','Kerri Maniscalco','Dark Fantasy','Throne of the Fallen',1),
   fa(30,'Throne of Secrets','Kerri Maniscalco','Dark Fantasy','Throne of the Fallen',2),
+
+  // Rebecca Ross
   fa(31,'Divine Rivals','Rebecca Ross','YA Fantasy','Letters of Enchantment',1),
   fa(32,'Ruthless Vows','Rebecca Ross','YA Fantasy','Letters of Enchantment',2),
+  fa(167,'A River Enchanted','Rebecca Ross','Historical Fantasy','Elements of Cadence',1),
+  fa(168,'A Fire Endless','Rebecca Ross','Historical Fantasy','Elements of Cadence',2),
   fa(33,'Wild Reverence','Rebecca Ross','YA Fantasy',null,null),
+
+  // Hannah Whitten
   fa(34,'The Foxglove King','Hannah Whitten','Dark Fantasy','The Nightshade Crown',1),
   fa(35,'The Hemlock Queen','Hannah Whitten','Dark Fantasy','The Nightshade Crown',2),
   fa(304,'For the Wolf','Hannah Whitten','Dark Fantasy','The Wilderwood',1),
+
+  // Rebecca Yarros
   rt(36,'Fourth Wing','Rebecca Yarros','The Empyrean',1),
   rt(37,'Iron Flame','Rebecca Yarros','The Empyrean',2),
   rt(38,'Onyx Storm','Rebecca Yarros','The Empyrean',3),
+
+  // Danielle L. Jensen
   rt(39,'A Fate Inked in Blood','Danielle L. Jensen','Saga of the Unfated',1),
   rt(40,'A Curse Carved in Bone','Danielle L. Jensen','Saga of the Unfated',2),
+
+  // Sarah J. Maas
   rt(41,"The Assassin's Blade",'Sarah J. Maas','Throne of Glass',0),
   rt(42,'Throne of Glass','Sarah J. Maas','Throne of Glass',1),
   rt(43,'Crown of Midnight','Sarah J. Maas','Throne of Glass',2),
@@ -352,18 +383,38 @@ const SEED = [
   rt(46,'Empire of Storms','Sarah J. Maas','Throne of Glass',5),
   rt(47,'Tower of Dawn','Sarah J. Maas','Throne of Glass',6),
   rt(48,'Kingdom of Ash','Sarah J. Maas','Throne of Glass',7),
+  rt(645,'A Court of Thorns and Roses','Sarah J. Maas','A Court of Thorns and Roses',1),
+  rt(646,'A Court of Mist and Fury','Sarah J. Maas','A Court of Thorns and Roses',2),
+  rt(647,'A Court of Wings and Ruin','Sarah J. Maas','A Court of Thorns and Roses',3),
+  rt(648,'A Court of Frost and Starlight','Sarah J. Maas','A Court of Thorns and Roses',3.5),
+  rt(649,'A Court of Silver Flames','Sarah J. Maas','A Court of Thorns and Roses',4),
+  rt(650,'House of Earth and Blood','Sarah J. Maas','Crescent City',1),
+  rt(651,'House of Sky and Breath','Sarah J. Maas','Crescent City',2),
+  rt(652,'House of Flame and Shadow','Sarah J. Maas','Crescent City',3),
+
+  // V.E. Schwab
   fa(92,'A Darker Shade of Magic','V.E. Schwab','High Fantasy','Shades of Magic',1),
   fa(49,'A Gathering of Shadows','V.E. Schwab','High Fantasy','Shades of Magic',2),
   fa(50,'A Conjuring of Light','V.E. Schwab','High Fantasy','Shades of Magic',3),
   fa(91,'The Fragile Threads of Power','V.E. Schwab','High Fantasy','Shades of Magic',4),
   fa(90,'Vicious','V.E. Schwab','Dark Fantasy','Villains',1),
   fa(51,'Gallant','V.E. Schwab','Dark Fantasy',null,null),
+  fa(496,'Bury Our Bones in the Midnight Soil','V.E. Schwab','Dark Fantasy',null,null),
+  fa(575,'The Invisible Life of Addie LaRue','V.E. Schwab','Dark Fantasy',null,null),
+
+  // Cassandra Clare
   fa(52,'City of Bones','Cassandra Clare','Urban Fantasy','The Mortal Instruments',1),
   fa(53,'City of Ashes','Cassandra Clare','Urban Fantasy','The Mortal Instruments',2),
   fa(54,'City of Glass','Cassandra Clare','Urban Fantasy','The Mortal Instruments',3),
   fa(55,'City of Fallen Angels','Cassandra Clare','Urban Fantasy','The Mortal Instruments',4),
   fa(56,'City of Lost Souls','Cassandra Clare','Urban Fantasy','The Mortal Instruments',5),
   fa(57,'City of Heavenly Fire','Cassandra Clare','Urban Fantasy','The Mortal Instruments',6),
+  fa(883,'Clockwork Angel','Cassandra Clare','YA Fantasy','The Infernal Devices',1),
+  fa(884,'Clockwork Prince','Cassandra Clare','YA Fantasy','The Infernal Devices',2),
+  fa(885,'Clockwork Princess','Cassandra Clare','YA Fantasy','The Infernal Devices',3),
+  fa(679,'Sword Catcher','Cassandra Clare','High Fantasy','Sword Catcher',1),
+
+  // Jennifer L. Armentrout
   rt(93,'From Blood and Ash','Jennifer L. Armentrout','Blood and Ash',1),
   rt(94,'A Kingdom of Flesh and Fire','Jennifer L. Armentrout','Blood and Ash',2),
   rt(95,'The Crown of Gilded Bones','Jennifer L. Armentrout','Blood and Ash',3),
@@ -376,59 +427,93 @@ const SEED = [
   fa(442,'Obsidian','Jennifer L. Armentrout','Paranormal Romance','Lux',1),
   fa(443,'Onyx','Jennifer L. Armentrout','Paranormal Romance','Lux',2),
   fa(444,'Opal','Jennifer L. Armentrout','Paranormal Romance','Lux',3),
-  rt(58,'Shield of Sparrows','Devney Perry',null,null),
-  rt(59,'The Hurricane Wars','Thea Guanzon','The Hurricane Wars',1),
-  fa(60,'A Tempest of Tea','Hafsah Faizal','YA Fantasy','Blood and Tea',1),
-  fa(61,'Sweet Nightmare','Tracy Wolff','Dark Fantasy',null,null),
-  rt(63,'The Serpent and the Wolf','Rebecca Robinson',null,null),
-  fa(64,'House of Blight','Mayen R. Martineau','Dark Fantasy',null,null),
+
+  // Carissa Broadbent
   fa(65,'Daughter of No Worlds','Carissa Broadbent','Dark Fantasy','War of Lost Hearts',1),
+  fa(784,'Children of Fallen Gods','Carissa Broadbent','Dark Fantasy','War of Lost Hearts',2),
   fa(66,'Mother of Death & Dawn','Carissa Broadbent','Dark Fantasy','War of Lost Hearts',3),
-  fa(67,'I Will Not Let Them Take Me','Unknown','Dark Fantasy',null,null),
+  fa(262,'Serpent & the Wings of Night','Carissa Broadbent','Dark Fantasy','Crowns of Nyaxia',1),
+  fa(263,'Ashes & the Star-Cursed King','Carissa Broadbent','Dark Fantasy','Crowns of Nyaxia',2),
+  fa(264,'Songbird & the Heart of Stone','Carissa Broadbent','Dark Fantasy','Crowns of Nyaxia',3),
+  fa(265,'The Fallen & the Kiss of Dusk','Carissa Broadbent','Dark Fantasy','Crowns of Nyaxia',null),
+
+  // Amber V. Nicole
+  fa(495,'The Book of Azrael','Amber V. Nicole','Dark Fantasy','Gods & Monsters',1),
   fa(68,'The Wrath of the Fallen','Amber V. Nicole','Dark Fantasy','Gods & Monsters',4),
-  rt(69,'Behooved','M. Stevenson',null,null),
+
+  // Penn Cole
+  fa(653,'Spark of the Everflame','Penn Cole','High Fantasy','Forging of Light',1),
+  fa(654,'Glow of Everflame','Penn Cole','High Fantasy','Forging of Light',2),
   fa(70,'Heat of Everflame','Penn Cole','High Fantasy','Forging of Light',3),
+
+  // Sarah A. Parker
   rt(71,'When the Moon Hatched','Sarah A. Parker','The Moonfall Series',1),
+  rt(823,'The Ballad of Falling Dragons','Sarah A. Parker','The Moonfall Series',2),
+  rt(905,'To Bleed a Crystal Bloom','Sarah A. Parker','A Crystal Bloom Novel',1),
+  rt(906,'To Snap a Silver Stem','Sarah A. Parker','A Crystal Bloom Novel',2),
+
+  // Briar Boleyn
+  fa(603,'On Wings of Blood','Briar Boleyn','Dark Fantasy','Bloodwing Academy',1),
+  fa(602,'The Bond That Burns','Briar Boleyn','Dark Fantasy','Bloodwing Academy',2),
+  fa(904,'The Wings That Bind','Briar Boleyn','Dark Fantasy','Bloodwing Academy',3),
+
+  // Tessa Gratton & Justina Ireland
   fa(102,'Chaos & Flame','Tessa Gratton & Justina Ireland','YA Fantasy','Chaos & Flame',1),
   fa(103,'Blood & Fury','Tessa Gratton & Justina Ireland','YA Fantasy','Chaos & Flame',2),
+
+  // Lynette Noni
   fa(104,'The Prison Healer','Lynette Noni','YA Fantasy','The Prison Healer',1),
   fa(105,'The Blood Traitor','Lynette Noni','YA Fantasy','The Prison Healer',3),
-  fa(106,'The Nightblood Prince','Molly X. Chang','YA Fantasy',null,null),
-  fa(107,'A Forgery of Fate','Elizabeth Lim','Historical Fantasy',null,null),
-  fa(109,'A Forbidden Alchemy','Stacey McEwan','Dark Fantasy',null,null),
+
+  // Becca Fitzpatrick
   fa(111,'Hush, Hush','Becca Fitzpatrick','Paranormal Romance','Hush Hush',1),
+  fa(660,'Crescendo','Becca Fitzpatrick','Paranormal Romance','Hush Hush',2),
+  fa(661,'Silence','Becca Fitzpatrick','Paranormal Romance','Hush Hush',3),
+  fa(662,'Finale','Becca Fitzpatrick','Paranormal Romance','Hush Hush',4),
+
+  // Ava Reid
+  fa(644,'A Study in Drowning','Ava Reid','YA Fantasy','A Study in Drowning',1),
   fa(160,'A Theory of Dreaming','Ava Reid','YA Fantasy','A Study in Drowning',2),
-  fa(161,'Dawn of the Firebird','Sarah Mughal Rana','YA Fantasy',null,null),
-  fa(162,'Coldwire','Chloe Gong','YA Fantasy',null,null),
-  rt(163,'Thorn Season','Kiera Azar',null,null),
-  fa(164,'Fallen City','Adrienne Young','YA Fantasy',null,null),
-  fa(165,'Seven Deadly Thorns','Amber Hamilton','Dark Fantasy',null,null),
-  rt(166,'Alchemised','Senlinyu',null,null),
-  fa(167,'A River Enchanted','Rebecca Ross','Historical Fantasy','Elements of Cadence',1),
-  fa(168,'A Fire Endless','Rebecca Ross','Historical Fantasy','Elements of Cadence',2),
+
+  // C.Doyle & K.Webber
   fa(169,'Twin Crowns','C.Doyle & K.Webber','YA Fantasy','Twin Crowns',1),
   fa(170,'Cursed Crowns','C.Doyle & K.Webber','YA Fantasy','Twin Crowns',2),
+
+  // Sara Holland
   fa(171,'Everless','Sara Holland','YA Fantasy','Everless',1),
   fa(172,'Evermore','Sara Holland','YA Fantasy','Everless',2),
+
+  // Abigail Owen
   fa(176,'The Rogue King','Abigail Owen','Paranormal Romance','Inferno Rising',1),
   fa(177,'The Warrior King','Abigail Owen','Paranormal Romance','Inferno Rising',2),
   fa(178,'The Blood King','Abigail Owen','Paranormal Romance','Inferno Rising',3),
   fa(179,'The Cursed King','Abigail Owen','Paranormal Romance','Inferno Rising',4),
+  fa(600,'The Games Gods Play','Abigail Owen','Paranormal Romance',null,null),
+  fa(604,'The Things Gods Break','Abigail Owen','Paranormal Romance',null,null),
+
+  // Scarlett St. Clair
+  fa(776,'A Touch of Darkness','Scarlett St. Clair','Mythology Romance','Hades x Persephone',1),
   fa(180,'A Touch of Ruin','Scarlett St. Clair','Mythology Romance','Hades x Persephone',2),
   fa(181,'A Touch of Malice','Scarlett St. Clair','Mythology Romance','Hades x Persephone',3),
   fa(182,'A Touch of Chaos','Scarlett St. Clair','Mythology Romance','Hades x Persephone',4),
+  fa(777,'A Game of Fate','Scarlett St. Clair','Mythology Romance','Hades Saga',1),
   fa(183,'A Game of Retribution','Scarlett St. Clair','Mythology Romance','Hades Saga',2),
   fa(184,'A Game of Gods','Scarlett St. Clair','Mythology Romance','Hades Saga',3),
+
+  // Erin A. Craig
   fa(186,'House of Salt and Sorrows','Erin A. Craig','Dark Fantasy','Sisters of the Salt',1),
   fa(187,'House of Roots and Ruin','Erin A. Craig','Dark Fantasy','Sisters of the Salt',2),
   fa(188,'Small Favors','Erin A. Craig','Dark Fantasy',null,null),
   fa(328,'The Thirteenth Child','Erin A. Craig','Dark Fantasy',null,null),
-  rt(190,'Inadequate Heir','Bridget E. Baker',null,null),
+
+  // Stephenie Meyer
   fa(198,'Twilight','Stephenie Meyer','Paranormal Romance','Twilight Saga',1),
   fa(199,'New Moon','Stephenie Meyer','Paranormal Romance','Twilight Saga',2),
   fa(200,'Eclipse','Stephenie Meyer','Paranormal Romance','Twilight Saga',3),
   fa(201,'Breaking Dawn','Stephenie Meyer','Paranormal Romance','Twilight Saga',4),
   fa(202,'Midnight Sun','Stephenie Meyer','Paranormal Romance','Twilight Saga',5),
+
+  // Rick Riordan
   fa(222,'The Lightning Thief','Rick Riordan','YA Fantasy','Percy Jackson',1),
   fa(223,'The Sea of Monsters','Rick Riordan','YA Fantasy','Percy Jackson',2),
   fa(224,"The Titan's Curse",'Rick Riordan','YA Fantasy','Percy Jackson',3),
@@ -443,6 +528,8 @@ const SEED = [
   fa(233,'The Red Pyramid','Rick Riordan','YA Fantasy','Kane Chronicles',1),
   fa(234,'The Throne of Fire','Rick Riordan','YA Fantasy','Kane Chronicles',2),
   fa(235,"The Serpent's Shadow",'Rick Riordan','YA Fantasy','Kane Chronicles',3),
+
+  // Tahereh Mafi
   fa(236,'Shatter Me','Tahereh Mafi','YA Fantasy','Shatter Me',1),
   fa(237,'Unravel Me','Tahereh Mafi','YA Fantasy','Shatter Me',2),
   fa(238,'Unite Me','Tahereh Mafi','YA Fantasy','Shatter Me',2.5),
@@ -453,59 +540,93 @@ const SEED = [
   fa(243,'Imagine Me','Tahereh Mafi','YA Fantasy','Shatter Me',6),
   fa(244,'Believe Me','Tahereh Mafi','YA Fantasy','Shatter Me',6.5),
   fa(245,'Watch Me','Tahereh Mafi','YA Fantasy','Shatter Me',null),
+  fa(835,'Release Me','Tahereh Mafi','YA Fantasy','Shatter Me: Series Two',2),
   fa(246,'This Woven Kingdom','Tahereh Mafi','YA Fantasy','This Woven Kingdom',1),
   fa(247,'These Infinite Threads','Tahereh Mafi','YA Fantasy','This Woven Kingdom',2),
   fa(248,'All This Twisted Glory','Tahereh Mafi','YA Fantasy','This Woven Kingdom',3),
+  fa(824,'Every Spiral of Fate','Tahereh Mafi','YA Fantasy',null,4),
+
+  // Alex Aster
   fa(249,'Lightlark','Alex Aster','YA Fantasy','Lightlark',1),
   fa(250,'Nightbane','Alex Aster','YA Fantasy','Lightlark',2),
   fa(251,'Skyshade','Alex Aster','YA Fantasy','Lightlark',3),
+  fa(846,'Crowntide','Alex Aster','YA Fantasy','Lightlark',4),
+  rt(633,'Grim and Oro: Dueling Crowns Edition','Alex Aster','Lightlark',null),
+  r(252,'Summer in the City','Alex Aster','Contemporary Romance',null,null),
+
+  // Dana Schwartz
   fa(253,'Anatomy: A Love Story','Dana Schwartz','Historical Fantasy','Anatomy Duology',1),
   fa(254,'Immortality: A Love Story','Dana Schwartz','Historical Fantasy','Anatomy Duology',2),
+
+  // Katherine Quinn
   fa(255,'To Kill a Shadow','Katherine Quinn','Dark Fantasy','Kingdom of Lies',1),
   fa(256,'To Shatter the Night','Katherine Quinn','Dark Fantasy','Kingdom of Lies',2),
+
+  // Lauren Roberts
+  fa(259,'Powerful','Lauren Roberts','YA Fantasy','Powerless',0.5),
   fa(257,'Powerless','Lauren Roberts','YA Fantasy','Powerless',1),
   fa(258,'Reckless','Lauren Roberts','YA Fantasy','Powerless',2),
-  fa(259,'Powerful','Lauren Roberts','YA Fantasy','Powerless',0.5),
+
+  // Kristen Ciccarelli
   fa(260,'Heartless Hunter','Kristen Ciccarelli','Dark Fantasy','Crimson Moth',1),
   fa(261,'Rebel Witch','Kristen Ciccarelli','Dark Fantasy','Crimson Moth',2),
-  fa(262,'Serpent & the Wings of Night','Carissa Broadbent','Dark Fantasy','Crowns of Nyaxia',1),
-  fa(263,'Ashes & the Star-Cursed King','Carissa Broadbent','Dark Fantasy','Crowns of Nyaxia',2),
-  fa(264,'Songbird & the Heart of Stone','Carissa Broadbent','Dark Fantasy','Crowns of Nyaxia',3),
-  fa(265,'The Fallen & the Kiss of Dusk','Carissa Broadbent','Dark Fantasy','Crowns of Nyaxia',null),
+
+  // Tricia Levenseller
   fa(266,'Daughter of the Pirate King','Tricia Levenseller','YA Fantasy','Daughter of the Pirate King',1),
   fa(267,'Daughter of the Siren Queen','Tricia Levenseller','YA Fantasy','Daughter of the Pirate King',2),
   fa(268,'Vengeance of the Pirate Queen','Tricia Levenseller','YA Fantasy','Daughter of the Pirate King',3),
+  fa(594,'The Shadows Between Us','Tricia Levenseller','YA Fantasy',null,null),
+  fa(627,'The Darkness Within Us','Tricia Levenseller','YA Fantasy',null,null),
+  fa(833,'What Fury Brings','Tricia Levenseller','YA Fantasy',null,null),
+
+  // Adalyn Grace
   fa(269,'Belladonna','Adalyn Grace','Dark Fantasy','Belladonna',1),
   fa(574,'Foxglove','Adalyn Grace','Dark Fantasy','Belladonna',2),
   fa(270,'Wisteria','Adalyn Grace','Dark Fantasy','Belladonna',3),
   fa(159,'Holly','Adalyn Grace','Dark Fantasy','Belladonna',3.5),
-  fa(306,'The Phoenix King','Aparna Verma','High Fantasy','The Ravence Trilogy',1),
+
+  // Leigh Bardugo
   fa(317,'Ninth House','Leigh Bardugo','Dark Fantasy','Alex Stern',1),
   fa(318,'Hell Bent','Leigh Bardugo','Dark Fantasy','Alex Stern',2),
   fa(319,'Shadow and Bone','Leigh Bardugo','YA Fantasy','Shadow and Bone Trilogy',1),
   fa(320,'Siege and Storm','Leigh Bardugo','YA Fantasy','Shadow and Bone Trilogy',2),
   fa(321,'Ruin and Rising','Leigh Bardugo','YA Fantasy','Shadow and Bone Trilogy',3),
+
+  // Raven Kennedy
   fa(322,'Gild','Raven Kennedy','Mythology Romance','The Plated Prisoner',1),
   fa(323,'Glint','Raven Kennedy','Mythology Romance','The Plated Prisoner',2),
   fa(324,'Gleam','Raven Kennedy','Mythology Romance','The Plated Prisoner',3),
   fa(325,'Glow','Raven Kennedy','Mythology Romance','The Plated Prisoner',4),
-  rt(327,'Dire Bound','Sable Sorensen',null,null),
-  rt(330,'Assistant to the Villain','Hannah Nicole Maehren','The Villain',1),
-  rt(331,'Apprentice to the Villain','Hannah Nicole Maehren','The Villain',2),
-  rt(332,'Accomplice to the Villain','Hannah Nicole Maehren','The Villain',3),
-  fa(333,'Broken Bonds','J. Bree','Paranormal Romance',null,null),
-  fa(334,'In the Veins of the Drowning','Kalie Cassidy','Dark Fantasy',null,null),
-  fa(335,'Book of Night','Holly Black','Dark Fantasy',null,null),
-  fa(336,"The Prisoner's Throne",'Holly Black','YA Fantasy','The Stolen Heir Duology',2),
+
+  // Hannah Nicole Maehrer
+  rt(330,'Assistant to the Villain','Hannah Nicole Maehrer','The Villain',1),
+  rt(331,'Apprentice to the Villain','Hannah Nicole Maehrer','The Villain',2),
+  rt(332,'Accomplice to the Villain','Hannah Nicole Maehrer','The Villain',3),
+  rt(869,'Adversary to the Villain','Hannah Nicole Maehrer','The Villain',4),
+
+  // Holly Black
   fa(337,'The Stolen Heir','Holly Black','YA Fantasy','The Stolen Heir Duology',1),
-  fa(338,'How the King of Elfhame Learned to Hate Stories','Holly Black','YA Fantasy','The Folk of the Air',null),
+  fa(336,"The Prisoner's Throne",'Holly Black','YA Fantasy','The Stolen Heir Duology',2),
   fa(339,'The Cruel Prince','Holly Black','YA Fantasy','The Folk of the Air',1),
   fa(340,'The Wicked King','Holly Black','YA Fantasy','The Folk of the Air',2),
   fa(341,'The Queen of Nothing','Holly Black','YA Fantasy','The Folk of the Air',3),
+  fa(338,'How the King of Elfhame Learned to Hate Stories','Holly Black','YA Fantasy','The Folk of the Air',null),
+  fa(335,'Book of Night','Holly Black','Dark Fantasy',null,null),
+
+  // Laura Thalassa
   fa(342,'Rhapsodic','Laura Thalassa','Mythology Romance','The Bargainer',1),
   fa(343,'A Strange Hymn','Laura Thalassa','Mythology Romance','The Bargainer',2),
   fa(344,'The Emperor of Evening Stars','Laura Thalassa','Mythology Romance','The Bargainer',3),
   fa(345,'Dark Harmony','Laura Thalassa','Mythology Romance','The Bargainer',4),
+  r(346,'Pestilence','Laura Thalassa','Dark Romance','The Four Horsemen',1),
+  r(348,'War','Laura Thalassa','Dark Romance','The Four Horsemen',2),
+  r(347,'Famine','Laura Thalassa','Dark Romance','The Four Horsemen',3),
+  r(349,'Death','Laura Thalassa','Dark Romance','The Four Horsemen',4),
+  r(350,'Bewitched','Laura Thalassa','Dark Romance','Bewitched',1),
+  r(351,'Bespelled','Laura Thalassa','Dark Romance','Bewitched',2),
+  r(352,'The Curse That Binds','Laura Thalassa','Dark Romance','Bewitched',3),
+
+  // J.K. Rowling
   fa(353,"Harry Potter and the Philosopher's Stone",'J.K. Rowling','YA Fantasy','Harry Potter',1),
   fa(354,'Harry Potter and the Chamber of Secrets','J.K. Rowling','YA Fantasy','Harry Potter',2),
   fa(355,'Harry Potter and the Prisoner of Azkaban','J.K. Rowling','YA Fantasy','Harry Potter',3),
@@ -513,31 +634,49 @@ const SEED = [
   fa(357,'Harry Potter and the Order of the Phoenix','J.K. Rowling','YA Fantasy','Harry Potter',5),
   fa(358,'Harry Potter and the Half-Blood Prince','J.K. Rowling','YA Fantasy','Harry Potter',6),
   fa(359,'Harry Potter and the Deathly Hallows','J.K. Rowling','YA Fantasy','Harry Potter',7),
+
+  // Nisha J. Tuli
   rt(437,'Rule of the Aurora King','Nisha J. Tuli','Artefacts of Ouranos',2),
   rt(155,'Fate of the Sun King','Nisha J. Tuli','Artefacts of Ouranos',3),
   rt(156,'Tale of the Heart Queen','Nisha J. Tuli','Artefacts of Ouranos',4),
+  rt(787,'Storm Breaker','Nisha J. Tuli',null,null),
+
+  // Mai Corland
   fa(439,'Five Broken Blades','Mai Corland','High Fantasy','Five Broken Blades',1),
   fa(440,'Four Ruined Realms','Mai Corland','High Fantasy','Five Broken Blades',2),
   fa(441,'Three Stolen Oaths','Mai Corland','High Fantasy','Five Broken Blades',3),
+  fa(601,'Three Shattered Souls','Mai Corland','High Fantasy','Five Broken Blades',null),
+  fa(822,'Verity Guild','Mai Corland','High Fantasy',null,null),
+
+  // Kate Golden
   rt(434,'A Dawn of Onyx','Kate Golden','Sacred Stones',1),
   rt(435,'A Promise of Peridot','Kate Golden','Sacred Stones',2),
-  rt(436,'Metal Signer','Rachel Schneider',null,null),
-  h(72,'House of Hollow','Krystal Sutherland','Dark Fiction',null,null),
+
+  // Brynne Weaver
   h(119,'Tourist Season','Brynne Weaver','Horror Comedy','Seasons of Carnage',1),
   h(120,'Butcher & Blackbird','Brynne Weaver','Dark Fiction','The Ruinous Love Trilogy',1),
   h(121,'Leather & Lark','Brynne Weaver','Dark Fiction','The Ruinous Love Trilogy',2),
   h(122,'Scythe & Sparrow','Brynne Weaver','Dark Fiction','The Ruinous Love Trilogy',3),
+
+  // Harley Laroux
   h(123,'Her Soul to Take','Harley Laroux','Dark Fiction','Soul Cauldron',1),
   h(124,'Her Soul for Revenge','Harley Laroux','Dark Fiction','Soul Cauldron',2),
-  h(312,'Gothikana','RuNyx','Gothic Horror',null,null),
+  r(62,'House of Rayne','Harley Laroux','Dark Romance',null,null),
+
+  // Elle Cosimano
   m(75,'Finlay Donovan is Killing It','Elle Cosimano','Cozy Mystery','Finlay Donovan',1),
   m(76,'Finlay Donovan Knocks Em Dead','Elle Cosimano','Cozy Mystery','Finlay Donovan',2),
   m(77,'Finlay Donovan Jumps the Gun','Elle Cosimano','Cozy Mystery','Finlay Donovan',3),
   m(78,'Finlay Donovan Rolls the Dice','Elle Cosimano','Cozy Mystery','Finlay Donovan',4),
+  m(859,'Finlay Donovan Digs Her Own Grave','Elle Cosimano','Cozy Mystery','Finlay Donovan',5),
+
+  // Mia P. Manansala
   m(86,'Arsenic and Adobo','Mia P. Manansala','Cozy Mystery','Tita Rosies Kitchen Mystery',1),
   m(87,'Homicide and Halo-Halo','Mia P. Manansala','Cozy Mystery','Tita Rosies Kitchen Mystery',2),
   m(88,'Blackmail and Bibingka','Mia P. Manansala','Cozy Mystery','Tita Rosies Kitchen Mystery',3),
   m(89,'Murder and Mamon','Mia P. Manansala','Cozy Mystery','Tita Rosies Kitchen Mystery',4),
+
+  // Dan Brown
   m(191,'Angels & Demons','Dan Brown','Conspiracy Thriller','Robert Langdon',1),
   m(192,'The Da Vinci Code','Dan Brown','Conspiracy Thriller','Robert Langdon',2),
   m(193,'The Lost Symbol','Dan Brown','Conspiracy Thriller','Robert Langdon',3),
@@ -545,38 +684,12 @@ const SEED = [
   m(195,'Origin','Dan Brown','Conspiracy Thriller','Robert Langdon',5),
   m(196,'Deception Point','Dan Brown','Thriller',null,null),
   m(197,'Digital Fortress','Dan Brown','Thriller',null,null),
-  m(203,'Gone Girl','Gillian Flynn','Thriller',null,null),
-  m(204,'The Witness','Sandra Brown','Thriller',null,null),
-  m(275,'Verity','Colleen Hoover','Thriller',null,null),
-  m(313,'Silence and Shadows','Beaty','Thriller',null,null),
-  m(126,'The Mindfck Series','S.T. Abby','Dark Thriller','The Mindfck Series',null),
-  cl(205,'Dracula','Bram Stoker','Gothic Classic'),
-  cl(206,'The Phantom of the Opera','Gaston Leroux','Gothic Classic'),
-  cl(207,'Animal Farm','George Orwell','British Lit'),
-  cl(208,'Pride and Prejudice','Jane Austen','British Lit'),
-  cl(209,'Anna Karenina','Leo Tolstoy','Russian Lit'),
-  cl(210,'The Picture of Dorian Gray','Oscar Wilde','British Lit'),
-  cl(211,'The Jungle Book','Rudyard Kipling','British Lit'),
-  cl(212,"Grimm's Fairy Tales",'J.L.C. & W.C. Grimm','Fairy Tales'),
-  cl(214,'A Christmas Carol','Charles Dickens','British Lit'),
-  cl(215,'Crime and Punishment','Fyodor Dostoevsky','Russian Lit'),
-  cl(216,'Great Expectations','Charles Dickens','British Lit'),
-  cl(217,'Frankenstein','Mary Shelley','Gothic Classic'),
-  cl(218,'For Whom the Bell Tolls','Ernest Hemingway','American Lit'),
-  co(112,'Legends & Lattes','Travis Baldree','Cozy Fiction',null,null),
-  co(329,'Bookshops & Bonedust','Travis Baldree','Cozy Fiction',null,null),
+
+  // Erin Sterling
+  fa(532,'The Ex Hex','Erin Sterling','Contemporary Romance','Graves Glen',1),
   co(173,'The Wedding Witch','Erin Sterling','Cozy Fiction','Graves Glen',null),
-  co(274,'It Ends With Us','Colleen Hoover','Contemporary Fiction',null,null),
-  co(276,'Me Before You','Jojo Moyes','Contemporary Fiction','Me Before You',1),
-  co(280,'Normal People','Sally Rooney','Literary Fiction',null,null),
-  co(281,'The Fault in Our Stars','John Green','Contemporary Fiction',null,null),
-  co(282,'The Party Crasher','Sophie Kinsella','Chick Lit',null,null),
-  co(298,"To All the Boys I've Loved Before",'Jenny Han','New Adult','To All the Boys',1),
-  co(299,'P.S. I Still Love You','Jenny Han','New Adult','To All the Boys',2),
-  co(300,'Always and Forever, Lara Jean','Jenny Han','New Adult','To All the Boys',3),
-  co(301,'Lessons in Chemistry','Bonnie Garmus','Literary Fiction',null,null),
-  co(308,'The Perks of Being a Wallflower','Stephen Chbosky','Contemporary Fiction',null,null),
-  co(315,'A Brief History of Living Forever','Jaroslav Kalfar','Literary Fiction',null,null),
+
+  // Katee Robert
   r(79,'Neon Gods','Katee Robert','Dark Romance','Dark Olympus',1),
   r(80,'Electric Idol','Katee Robert','Dark Romance','Dark Olympus',2),
   r(81,'Cruel Seduction','Katee Robert','Dark Romance','Dark Olympus',3),
@@ -584,78 +697,64 @@ const SEED = [
   r(83,'Wicked Beauty','Katee Robert','Dark Romance','Dark Olympus',5),
   r(84,'Midnight Ruin','Katee Robert','Dark Romance','Dark Olympus',6),
   r(85,'Dark Restraint','Katee Robert','Dark Romance','Dark Olympus',7),
-  r(62,'House of Rayne','Harley Laroux','Dark Romance',null,null),
-  r(108,'Anathema','Keri Lake','Dark Romance',null,null),
-  r(118,'The Predator','RUNYX','Dark Romance',null,null),
-  r(125,'Highest Bidder','L.Landish & W.Winters','Dark Romance',null,null),
+  r(534,'Court of the Vampire Queen','Katee Robert','Dark Romance',null,null),
+
+  // Danielle Lori
   r(127,'The Sweetest Obsession','Danielle Lori','Dark Romance','The Made',null),
   r(128,'The Darkest Temptation','Danielle Lori','Dark Romance','The Made',null),
-  r(129,'Lights Out','Navessa Allen','Dark Romance',null,null),
-  r(130,'Caught Up','Navessa Allen','Dark Romance',null,null),
-  r(131,"The Mercenary's Mortician",'Alexandra St. Pierre','Dark Romance',null,null),
+
+  // Emily McIntire
   r(132,'Hooked','Emily McIntire','Dark Romance','Never After',1),
   r(133,'Scarred','Emily McIntire','Dark Romance','Never After',2),
   r(134,'Wretched','Emily McIntire','Dark Romance','Never After',3),
   r(135,'Twisted','Emily McIntire','Dark Romance','Never After',4),
   r(136,'Crossed','Emily McIntire','Dark Romance','Never After',5),
   r(137,'Hexed','Emily McIntire','Dark Romance','Never After',6),
+
+  // P. Rayne
   r(138,'Vow of Revenge','P. Rayne','Dark Romance','Mafia Marriages',1),
   r(139,"The Mafia King's Sister",'P. Rayne','Dark Romance','Mafia Marriages',2),
   r(140,'Craving My Rival','P. Rayne','Dark Romance','Mafia Marriages',3),
+
+  // Penelope Douglas
   r(141,'Nightfall','Penelope Douglas','Dark Romance',"Devil's Night",4),
   r(142,'Credence','Penelope Douglas','Dark Romance',null,null),
-  r(143,'Pen Pal','J.T. Geissinger','Contemporary Romance',null,null),
+
+  // J.T. Geissinger
   r(144,'Brutal Vows','J.T. Geissinger','Dark Romance','Queens & Monsters',1),
   r(145,'Savage Hearts','J.T. Geissinger','Dark Romance','Queens & Monsters',2),
+  r(143,'Pen Pal','J.T. Geissinger','Contemporary Romance',null,null),
+  fa(843,'Blackthorn','J.T. Geissinger','Dark Fantasy',null,null),
+
+  // H.D. Carlton
   r(146,'Haunting Adeline','H.D. Carlton','Dark Romance','Cat and Mouse',1),
   r(147,'Hunting Adeline','H.D. Carlton','Dark Romance','Cat and Mouse',2),
   r(148,'Does It Hurt','H.D. Carlton','Dark Romance',null,null),
-  r(149,'The Initiation','Nikki Sloane','Dark Romance',null,null),
-  r(150,'Insatiable','Leigh Rivers','Dark Romance','Edge of Darkness',1),
-  r(151,'Priest','Sierra Simone','Dark Romance','New Camelot',1),
-  r(152,'That Sik Luv','Jescie Hall','Dark Romance',null,null),
-  r(185,'Promises & Pomegranates','Sav R. Miller','Dark Romance','Monsters & Muses',1),
-  r(189,'Beautiful Villain','Rebecca Kenney','Dark Romance',null,null),
+
+  // Sierra Simone
+  r(151,'Priest','Sierra Simone','Dark Romance','Priest Series',1),
   r(305,'American Queen','Sierra Simone','Dark Romance','New Camelot',1),
-  r(346,'Pestilence','Laura Thalassa','Dark Romance','The Four Horsemen',1),
-  r(347,'Famine','Laura Thalassa','Dark Romance','The Four Horsemen',2),
-  r(348,'War','Laura Thalassa','Dark Romance','The Four Horsemen',3),
-  r(349,'Death','Laura Thalassa','Dark Romance','The Four Horsemen',4),
-  r(350,'Bewitched','Laura Thalassa','Dark Romance','Bewitched',1),
-  r(351,'Bespelled','Laura Thalassa','Dark Romance','Bewitched',2),
-  r(352,'The Curse That Binds','Laura Thalassa','Dark Romance','Bewitched',3),
-  r(73,'Love Wager','Lynn Painter','Contemporary Romance',null,null),
+
+  // Lynn Painter
   r(74,'Mr. Wrong Number','Lynn Painter','Contemporary Romance','Wrong Number',1),
-  r(113,'Pucking Strong','Emily Rath','Sports Romance',null,null),
-  r(114,'Fake Skating','Lynn Painter','Sports Romance',null,null),
-  r(115,'The Christmas Fix','Lucy Score','Holiday Romance',null,null),
-  r(116,'Something Wilder','Christina Lauren','Contemporary Romance',null,null),
-  r(117,'A Heart for Christmas','Sophie Jomain','Holiday Romance',null,null),
-  r(174,'Hot Hex Boyfriend','Carly Bloom','Contemporary Romance',null,null),
-  r(175,'Happy Medium','Sarah Adler','Contemporary Romance',null,null),
-  r(252,'Summer in the City','Alex Aster','Contemporary Romance',null,null),
   r(277,'Better Than the Movies','Lynn Painter','Contemporary Romance','Better Than the Movies',1),
   r(278,'Nothing Like the Movies','Lynn Painter','Contemporary Romance','Better Than the Movies',2),
+  r(73,'Love Wager','Lynn Painter','Contemporary Romance',null,null),
+  r(114,'Fake Skating','Lynn Painter','Sports Romance',null,null),
   r(279,'The Do-Over','Lynn Painter','Contemporary Romance',null,null),
-  r(283,'Pucking Sweet','Emily Rath','Sports Romance',null,null),
-  r(284,'Pucking Around','Emily Rath','Sports Romance',null,null),
-  r(285,'Flock','Kate Stewart','Contemporary Romance','The Ravenhood',1),
-  r(286,'Exodus','Kate Stewart','Contemporary Romance','The Ravenhood',2),
-  r(287,'The Finish Line','Kate Stewart','Contemporary Romance','The Ravenhood',3),
-  r(288,'A Long Time Coming','Meghan Quinn','Contemporary Romance',null,null),
-  r(289,'So Not Meant to Be','Meghan Quinn','Contemporary Romance',null,null),
-  r(290,'A Not So Meet Cute','Meghan Quinn','Contemporary Romance',null,null),
-  r(291,'Unsteady','Peyton Corinne','New Adult Romance',null,null),
-  r(292,'Unloved','Peyton Corinne','New Adult Romance',null,null),
-  r(293,'All Rhodes Lead Here','Mariana Zapata','Contemporary Romance',null,null),
-  r(294,'It Happened One Christmas','Hannah Bonam-Young','Holiday Romance',null,null),
+
+  // Jenny Han
+  co(298,"To All the Boys I've Loved Before",'Jenny Han','New Adult','To All the Boys',1),
+  co(299,'P.S. I Still Love You','Jenny Han','New Adult','To All the Boys',2),
+  co(300,'Always and Forever, Lara Jean','Jenny Han','New Adult','To All the Boys',3),
+
+  // E.L. James
   r(295,'Fifty Shades of Grey','E.L. James','Contemporary Romance','Fifty Shades',1),
   r(296,'Fifty Shades Darker','E.L. James','Contemporary Romance','Fifty Shades',2),
   r(297,'Fifty Shades Freed','E.L. James','Contemporary Romance','Fifty Shades',3),
-  r(302,'The Trouble with Dating Lexi','Madyn Rose','Contemporary Romance',null,null),
-  r(303,'The Enchanted Hacienda','J.C. Cervantes','Contemporary Romance',null,null),
-  r(314,'The Striker','Ana Huang','Sports Romance','Gods of the Game',1),
-  r(316,'Ruling Destiny','Alyson Noel','Contemporary Romance',null,null),
+  r(583,'Grey','E.L. James','Contemporary Romance','Fifty Shades',null),
+
+  // Ana Huang
   r(271,'Twisted Games','Ana Huang','Contemporary Romance','Twisted',2),
   r(272,'Twisted Hate','Ana Huang','Contemporary Romance','Twisted',3),
   r(273,'Twisted Lies','Ana Huang','Contemporary Romance','Twisted',4),
@@ -664,16 +763,22 @@ const SEED = [
   r(362,'King of Greed','Ana Huang','Contemporary Romance','Kings of Sin',3),
   r(363,'King of Sloth','Ana Huang','Contemporary Romance','Kings of Sin',4),
   r(364,'King of Envy','Ana Huang','Contemporary Romance','Kings of Sin',5),
-  r(365,'If We Ever Meet Again','Ana Huang','Contemporary Romance','Dirty Air',1),
-  r(366,'If the Sun Never Sets','Ana Huang','Contemporary Romance','Dirty Air',2),
-  r(367,'If Love Had a Price','Ana Huang','Contemporary Romance','Dirty Air',3),
-  r(368,'If We Were Perfect','Ana Huang','Contemporary Romance','Dirty Air',4),
+  r(365,'If We Ever Meet Again','Ana Huang','Contemporary Romance','If Love',1),
+  r(366,'If the Sun Never Sets','Ana Huang','Contemporary Romance','If Love',2),
+  r(367,'If Love Had a Price','Ana Huang','Contemporary Romance','If Love',3),
+  r(368,'If We Were Perfect','Ana Huang','Contemporary Romance','If Love',4),
+  r(314,'The Striker','Ana Huang','Sports Romance','Gods of the Game',1),
+  r(857,'The Defender','Ana Huang','Sports Romance',null,null),
+
+  // Chloe Walsh
   r(369,'Binding 13','Chloe Walsh','New Adult Romance','Boys of Tommen',1),
   r(370,'Keeping 13','Chloe Walsh','New Adult Romance','Boys of Tommen',2),
   r(371,'Saving 6','Chloe Walsh','New Adult Romance','Boys of Tommen',3),
   r(372,'Redeeming 6','Chloe Walsh','New Adult Romance','Boys of Tommen',4),
   r(373,'Losing 6','Chloe Walsh','New Adult Romance','Boys of Tommen',5),
   r(374,'Releasing 10','Chloe Walsh','New Adult Romance','Boys of Tommen',6),
+
+  // Elle Kennedy
   r(375,'The Deal','Elle Kennedy','College Romance','Off Campus',1),
   r(376,'The Mistake','Elle Kennedy','College Romance','Off Campus',2),
   r(377,'The Score','Elle Kennedy','College Romance','Off Campus',3),
@@ -683,21 +788,33 @@ const SEED = [
   r(381,'The Risk','Elle Kennedy','College Romance','Briar U',2),
   r(382,'The Play','Elle Kennedy','College Romance','Briar U',3),
   r(383,'The Date','Elle Kennedy','College Romance','Briar U',4),
+  r(491,'Good Girl Complex','Elle Kennedy','Contemporary Romance','Avalon Bay',1),
+  r(492,'Bad Girl Reputation','Elle Kennedy','Contemporary Romance','Avalon Bay',2),
+  r(493,'The Summer Girl','Elle Kennedy','Contemporary Romance','Avalon Bay',3),
+  r(895,'Love Song','Elle Kennedy','College Romance','Campus Diaries',3),
   r(384,'The Graham Effect','Elle Kennedy','Sports Romance',null,null),
   r(385,'The Dixon Rule','Elle Kennedy','Sports Romance',null,null),
   r(386,'The Charlie Method','Elle Kennedy','Sports Romance',null,null),
+  r(490,'Body Check','Elle Kennedy','Sports Romance',null,null),
+
+  // Liz Tomforde
   r(387,'Mile High','Liz Tomforde','Sports Romance','Windy City',1),
   r(388,'The Right Move','Liz Tomforde','Sports Romance','Windy City',2),
   r(389,'Caught Up','Liz Tomforde','Sports Romance','Windy City',3),
   r(390,'Play Along','Liz Tomforde','Sports Romance','Windy City',4),
   r(391,'Rewind It Back','Liz Tomforde','Sports Romance','Windy City',5),
   r(392,'Garrett & Hannah','Liz Tomforde','Sports Romance',null,null),
+  r(875,'In Her Own League','Liz Tomforde','Sports Romance',null,null),
+
+  // Piper Rayne
   r(393,'Mr. Charming','Piper Rayne','Contemporary Romance','Whoever Next Door',1),
   r(394,'Mr. Swoony','Piper Rayne','Contemporary Romance','Whoever Next Door',2),
   r(395,'Mr. Broody','Piper Rayne','Contemporary Romance','Whoever Next Door',3),
   r(396,'Mr. Heartbreaker','Piper Rayne','Contemporary Romance','Whoever Next Door',4),
   r(397,"The One I Didn't Expect",'Piper Rayne','Contemporary Romance','Whoever Next Door',5),
   r(398,'The One I Stole Beside','Piper Rayne','Contemporary Romance','Whoever Next Door',6),
+
+  // Elsie Silver
   r(399,'Flawless','Elsie Silver','Contemporary Romance','Chestnut Springs',1),
   r(400,'Heartless','Elsie Silver','Contemporary Romance','Chestnut Springs',2),
   r(401,'Powerless','Elsie Silver','Contemporary Romance','Chestnut Springs',3),
@@ -708,37 +825,64 @@ const SEED = [
   r(406,'Wild Side','Elsie Silver','Contemporary Romance','Rose Hill',3),
   r(407,'Wild Card','Elsie Silver','Contemporary Romance','Rose Hill',4),
   r(433,'Off to the Races','Elsie Silver','Contemporary Romance',null,null),
+
+  // Becka Mack
   r(408,'Consider Me','Becka Mack','Sports Romance','Playing for Keeps',1),
   r(409,'Unravel Me','Becka Mack','Sports Romance','Playing for Keeps',2),
   r(410,'Play With Me','Becka Mack','Sports Romance','Playing for Keeps',3),
   r(411,'Fall With Me','Becka Mack','Sports Romance','Playing for Keeps',4),
+
+  // Devney Perry
   r(412,'Indigo Ridge','Devney Perry','Contemporary Romance','Edens',1),
   r(413,'Juniper Hill','Devney Perry','Contemporary Romance','Edens',2),
-  r(414,'Whiskey Business','K.A. Tucker','Contemporary Romance',null,null),
-  r(415,'The Simple Wild','K.A. Tucker','Contemporary Romance','Wild',1),
-  r(420,'The Love Hypothesis','Ali Hazelwood','Contemporary Romance',null,null),
-  r(421,'Love on the Brain','Ali Hazelwood','Contemporary Romance',null,null),
-  r(422,'Love, Theoretically','Ali Hazelwood','Contemporary Romance',null,null),
-  r(423,'Loathe to Love You','Ali Hazelwood','Contemporary Romance',null,null),
-  r(425,'It Happened in a Heartbeat','Unknown','Contemporary Romance',null,null),
-  r(426,'Hook, Line, and Sinker','Tessa Bailey','Contemporary Romance',null,null),
-  r(427,'Secretly Yours','Helena Hunting','Contemporary Romance',null,null),
-  r(428,'Unfortunately Yours','Tessa Bailey','Contemporary Romance',null,null),
-  r(432,'Dishonestly Yours','Krista & Becca Ritchie','Contemporary Romance',null,null),
-  nf(307,'The Glass Castle','Jeannette Walls','Memoir'),
-  nf(309,'The Present Age','Soren Kierkegaard','Philosophy'),
-  nf(310,'Kind of Coping','Sarah Andersen','Self-Help'),
-  nf(311,'Prime Nihongo','Masatomi Shigo','Language Learning'),
-  r(445,'Secretly Married','Trrevistenglimmer','Contemporary Romance',null,null),
+  rt(58,'Shield of Sparrows','Devney Perry',null,null),
+  rt(840,'Rites of the Starling','Devney Perry',null,null),
+
+  // Lyla Sage
+  r(546,'Done and Dusted','Lyla Sage','Contemporary Romance','Dusty Boots',1),
+  r(547,'Swift and Saddled','Lyla Sage','Contemporary Romance','Dusty Boots',2),
+  r(548,'Lost and Lassoed','Lyla Sage','Contemporary Romance','Dusty Boots',3),
+  r(489,'Wild and Wrangled','Lyla Sage','Contemporary Romance','Dusty Boots',null),
+
+  // Lauren Asher
+  r(552,'The Fine Print','Lauren Asher','Contemporary Romance','Bandini Brothers',1),
+  r(553,'Terms and Conditions','Lauren Asher','Contemporary Romance','Bandini Brothers',2),
+  r(554,'Final Offer','Lauren Asher','Contemporary Romance','Bandini Brothers',3),
+  r(557,'Throttled','Lauren Asher','Sports Romance','Dirty Air',1),
+  r(555,'Love Redesigned','Lauren Asher','Contemporary Romance',null,null),
+  r(556,'Love Unwritten','Lauren Asher','Contemporary Romance',null,null),
+
+  // L.J. Shen
+  r(569,'Pretty Reckless','L.J. Shen','New Adult Romance','All Saints',1),
+  r(570,'Broken Knight','L.J. Shen','New Adult Romance','All Saints',2),
+  r(571,'Angry God','L.J. Shen','New Adult Romance','All Saints',3),
+  r(572,'Damaged Goods','L.J. Shen','New Adult Romance','All Saints',4),
+
+  // Hannah Grace
+  r(589,'Icebreaker','Hannah Grace','Sports Romance','Maple Hills',1),
+  r(590,'Wildfire','Hannah Grace','Sports Romance','Maple Hills',2),
+  r(591,'Daydream','Hannah Grace','Sports Romance','Maple Hills',3),
+
+  // Kate Stewart
+  r(285,'Flock','Kate Stewart','Contemporary Romance','The Ravenhood',1),
+  r(286,'Exodus','Kate Stewart','Contemporary Romance','The Ravenhood',2),
+  r(287,'The Finish Line','Kate Stewart','Contemporary Romance','The Ravenhood',3),
+  r(856,'Severed Heart','Kate Stewart','Dark Romance',null,null),
+
+  // Jonaxx
   r(446,'Baka Sakali','Jonaxx','Contemporary Romance','Jonaxx War Series',1),
   r(447,'Mapansin Kaya?','Jonaxx','Contemporary Romance','Jonaxx War Series',2),
   r(448,'End This War','Jonaxx','Contemporary Romance','Jonaxx War Series',3),
-  r(449,'My Prince (Books 1 & 2)','Alyloony','Contemporary Romance','My Prince',null),
+
+  // HaveYouSeenThisGirL
   r(450,'Voiceless','HaveYouSeenThisGirL','Contemporary Romance','Voiceless',1),
   r(451,'Voiceless 2','HaveYouSeenThisGirL','Contemporary Romance','Voiceless',2),
-  r(452,'Love Me Harder','Jamille Fuma','Contemporary Romance',null,null),
+
+  // Jonquil
   r(453,'Spending the Night with the Ellison Heir','Jonquil','Contemporary Romance','Heir Series',1),
   r(454,'In Love with the Campus Heir','Jonquil','Contemporary Romance','Heir Series',2),
+
+  // Sonia Francesca
   r(455,'Treize de Cordova','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',1),
   r(456,'Randolf Emmanuel Fontanilla','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',2),
   r(457,'Juanito "Yeoji" Buenzalido','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',3),
@@ -751,207 +895,68 @@ const SEED = [
   r(464,'Rex Zagdameo','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',10),
   r(465,'Ken Arboleda','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',11),
   r(466,'Rath Zagdameo','Sonia Francesca','Contemporary Romance','The Billionaire Boys Club',12),
-  r(467,'Toxic','Shana Del Viejo','Contemporary Romance',null,null),
-  r(468,'My Not-So Secret Fiancé','Autumn Castillo','Contemporary Romance',null,null),
-  r(469,"Creed's Lover",'C.C.','Dark Romance',null,null),
+
+  // Martha Cecilia
   r(470,"The Devil's Kiss",'Martha Cecilia','Contemporary Romance','K Series',1),
   r(471,'Ang Sisiw at ang Agila','Martha Cecilia','Contemporary Romance','K Series',2),
   r(472,'Dahil Ikaw','Martha Cecilia','Contemporary Romance','K Series',3),
   r(473,'Jewel, Black Diamond','Martha Cecilia','Contemporary Romance','K Series',4),
+
+  // 4Reuminct
   r(474,'The Rain in España','4Reuminct','Contemporary Romance','University Series',1),
   r(475,'Safe Skies, Archer','4Reuminct','Contemporary Romance','University Series',2),
   r(476,'Chasing in the Wild','4Reuminct','Contemporary Romance','University Series',3),
   r(477,'Avenues of the Diamond','4Reuminct','Contemporary Romance','University Series',4),
-  r(478,'Play the Queen','AkosiIbarra','Contemporary Romance',null,null),
+
+  // SielAlstreim
   co(479,'Montello High: School of Gangsters','SielAlstreim','Contemporary Fiction','Montello High Saga',1),
   co(480,'Snow White is a Gangster','SielAlstreim','Contemporary Fiction','Montello High Saga',2),
   co(481,'Dark Fairy Tale','SielAlstreim','Contemporary Fiction','Montello High Saga',3),
-  r(482,'Marrying Mr. Popular','Chrispepper','Contemporary Romance',null,null),
-  r(483,'Unwanted Marriage','OwwSIC','Contemporary Romance',null,null),
-  r(484,"Let's Talk About Us",'Marielicious','New Adult Romance',null,null),
-  r(485,'The Sixth String','Purplena','Contemporary Romance',null,null),
-  r(486,'Apple Snap','Crestfallenmoon','Contemporary Romance',null,null),
-  r(487,'Bridal Shower','Soju','Contemporary Romance',null,null),
-  r(488,'My Naughty Love','Mizrian49','Contemporary Romance',null,null),
-  r(489,'Wild and Wrangled','Lyla Sage','Contemporary Romance','Dusty Boots',null),
-  r(490,'Body Check','Elle Kennedy','Sports Romance',null,null),
-  r(491,'Good Girl Complex','Elle Kennedy','Contemporary Romance','Avalon Bay',1),
-  r(492,'Bad Girl Reputation','Elle Kennedy','Contemporary Romance','Avalon Bay',2),
-  r(493,'The Summer Girl','Elle Kennedy','Contemporary Romance','Avalon Bay',3),
-  r(494,'Say You Swear','Meagan Brandy','Contemporary Romance',null,null),
-  fa(495,'The Book of Azrael','Amber V. Nicole','Dark Fantasy','Gods & Monsters',1),
-  fa(496,'Bury Our Bones in the Midnight Soil','V.E. Schwab','Dark Fantasy',null,null),
-  fa(497,'For She is Wrath','Emily Varga','Dark Fantasy',null,null),
-  fa(498,'The Gods Below','Andrea Stewart','High Fantasy','The Hollow Covenant',1),
-  co(499,'The Seven Husbands of Evelyn Hugo','Taylor Jenkins Reid','Literary Fiction',null,null),
-  fa(500,'Immortal','Sue Lynn Tan','High Fantasy',null,null),
-  fa(501,'Heir of Storms','Lauryn Hamilton Murray','High Fantasy',null,null),
-  fa(502,'The God and the Gumiho','Sophie Kim','YA Fantasy',null,null),
-  fa(503,'The Girl With No Reflection','Keshe Chow','YA Fantasy',null,null),
-  fa(504,'The Teller of Small Fortunes','Julie Leong','High Fantasy',null,null),
-  fa(505,"The Swan's Daughter",'Roshani Chokshi','YA Fantasy',null,null),
-  fa(506,'Long Live Evil','Sarah Rees Brennan','Dark Fantasy',null,null),
-  fa(507,'The Dagger and the Flame','Catherine Doyle','Dark Fantasy','The City of Fantome',1),
-  fa(508,'Immortal Dark','Tigest Girma','Dark Fantasy',null,null),
-  m(509,'The Last One','Rachel Howzell Hall','Thriller',null,null),
-  fa(510,'Hollow','C. Peckham & S. Valenti','Paranormal Romance','Crown of Hearts & Chaos',1),
-  fa(511,'Never Keep','C. Peckham & S. Valenti','Paranormal Romance','Sins of the Zodiac',1),
-  fa(512,'Filthy Rich Fae','Geneva Lee','Dark Romantasy','Filthy Rich Fae',null),
-  fa(513,'Filthy Rich Vampire','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',1),
-  fa(514,'Godkiller','Hannah Kaner','High Fantasy','Fallen Gods',1),
-  fa(515,'The Gilded Crown','Marianne Gordon','High Fantasy',null,null),
-  fa(516,'House of Bone and Blood','Alexis L. Menard','Dark Fantasy',null,null),
-  fa(517,'Never the Roses','Jennifer K. Lambert','Dark Fantasy',null,null),
-  fa(518,'North is the Night','Emily Rath','Dark Fantasy',null,null),
-  fa(519,'Nightweaver','R.M. Gray','Dark Fantasy',null,null),
-  fa(520,'The Cursed','Harper L. Woods','Dark Fantasy','The Coven',1),
-  fa(521,'The Coven','Harper L. Woods','Dark Fantasy','The Coven',2),
-  fa(522,'Heir','Sabaa Tahir','High Fantasy',null,null),
-  fa(523,'The Night Ends with Fire','K.X. Song','High Fantasy',null,null),
-  fa(524,'The Night Is Defying','Chloe C. Penaranda','Dark Fantasy','Night Is Series',1),
-  fa(525,'The Stars Are Dying','Chloe C. Penaranda','Dark Fantasy','Night Is Series',2),
-  fa(526,'The Courting of Bristol Keats','Mary E. Pearson','High Fantasy',null,null),
-  fa(527,'This Monster of Mine','Shalini Abeysekara','YA Fantasy',null,null),
-  fa(528,'Where Shadows Meet','Patrice Caldwell','YA Fantasy',null,null),
-  fa(529,'The Scorpion and the Night Blossom','Amélie Wen Zhao','Historical Fantasy',null,null),
-  fa(530,'Between Two Kings','Lindsay Straube','Dark Fantasy','Poison Beauties',1),
-  fa(531,'Kiss of the Basilisk','Lindsay Straube','Dark Fantasy','Poison Beauties',2),
-  fa(532,'The Ex Hex','Erin Sterling','Contemporary Romance','Graves Glen',1),
-  fa(533,"Barbarian's Mate",'Ruby Dixon','Paranormal Romance','Ice Planet Barbarians',null),
-  r(534,'Court of the Vampire Queen','Katee Robert','Dark Romance',null,null),
-  r(535,'Dowry of Blood','S.T. Gibson','Dark Romance',null,null),
-  r(536,"A Demon's Guide to Wooing a Witch",'Sarah Hawley','Contemporary Romance',null,null),
-  r(537,'What the Hex','Jessica Clare','Contemporary Romance',null,null),
-  r(538,'Check & Mate','Ali Hazelwood','Contemporary Romance',null,null),
-  r(539,'Deep End','Ali Hazelwood','Contemporary Romance',null,null),
-  r(540,'It Happened One Summer','Tessa Bailey','Contemporary Romance','Bellinger Sisters',1),
-  r(541,'Secretly Yours','Tessa Bailey','Contemporary Romance',null,null),
+
+  // Lucy Score
   r(542,'Things We Never Got Over','Lucy Score','Contemporary Romance','Knockemout',1),
   r(543,'Things We Hide from the Light','Lucy Score','Contemporary Romance','Knockemout',2),
   r(544,'Things We Left Behind','Lucy Score','Contemporary Romance','Knockemout',3),
-  r(545,'Chasing Hardlee','Madyn Rose','Contemporary Romance',null,null),
-  r(546,'Done and Dusted','Lyla Sage','Contemporary Romance','Dusty Boots',1),
-  r(547,'Swift and Saddled','Lyla Sage','Contemporary Romance','Dusty Boots',2),
-  r(548,'Lost and Lassoed','Lyla Sage','Contemporary Romance','Dusty Boots',3),
-  r(549,'The American Roommate Experiment','Elena Armas','Contemporary Romance',null,null),
-  r(550,'Love and Other Flight Delays','Denise Williams','Contemporary Romance',null,null),
-  r(551,'Not Another Love Song','Julie Soto','Contemporary Romance',null,null),
-  r(552,'The Fine Print','Lauren Asher','Contemporary Romance','Bandini Brothers',1),
-  r(553,'Terms and Conditions','Lauren Asher','Contemporary Romance','Bandini Brothers',2),
-  r(554,'Final Offer','Lauren Asher','Contemporary Romance','Bandini Brothers',3),
-  r(555,'Love Redesigned','Lauren Asher','Contemporary Romance',null,null),
-  r(556,'Love Unwritten','Lauren Asher','Contemporary Romance',null,null),
-  r(557,'Throttled','Lauren Asher','Sports Romance','Dirty Air',1),
-  r(558,'The Happy Ever After Playlist','Abby Jimenez','Contemporary Romance',null,null),
-  r(559,'The Friend Zone','Abby Jimenez','Contemporary Romance',null,null),
-  r(560,'Next-Door Nemesis','Alexa Martin','Contemporary Romance',null,null),
+  r(115,'The Christmas Fix','Lucy Score','Holiday Romance',null,null),
   r(561,'Mr. Fixer Upper','Lucy Score','Contemporary Romance',null,null),
-  r(562,"Archer's Voice",'Mia Sheridan','Contemporary Romance',null,null),
-  r(563,'Same Time Next Summer','Annabel Monaghan','Contemporary Romance',null,null),
-  r(564,'The Breakup Tour','E. Wibberley & A. Siegemund-Broka','Contemporary Romance',null,null),
-  r(565,'Summer Reading','Jenn McKinlay','Contemporary Romance',null,null),
-  r(566,'Collide','Bal Khabra','Sports Romance',null,null),
-  r(567,'Canadian Boyfriend','Jenny Holiday','Contemporary Romance',null,null),
-  r(568,'Love Your Life','Sophie Kinsella','Contemporary Romance',null,null),
-  r(569,'Pretty Reckless','L.J. Shen','New Adult Romance','All Saints',1),
-  r(570,'Broken Knight','L.J. Shen','New Adult Romance','All Saints',2),
-  r(571,'Angry God','L.J. Shen','New Adult Romance','All Saints',3),
-  r(572,'Damaged Goods','L.J. Shen','New Adult Romance','All Saints',4),
-  r(573,'Psyche and Eros','Luna McNamara','Contemporary Romance',null,null),
-  fa(575,'The Invisible Life of Addie LaRue','V.E. Schwab','Dark Fantasy',null,null),
-  r(576,'Tweet Cute','Emma Lord','Contemporary Romance',null,null),
-  r(577,'Love & Other Words','Christina Lauren','Contemporary Romance',null,null),
-  r(578,'Book Lovers','Emily Henry','Contemporary Romance',null,null),
-  r(579,'If I Stopped Haunting You','Colby Wilkens','Contemporary Romance',null,null),
-  r(580,'Twisted Knight','K. Bromberg','Contemporary Romance',null,null),
-  r(581,"Life's Too Short",'K. Bromberg','Contemporary Romance',null,null),
-  r(582,'The Dead Romantics','Ashley Poston','Contemporary Romance',null,null),
-  r(583,'Grey','E.L. James','Contemporary Romance','Fifty Shades',null),
-  r(584,'Cross My Heart','Roxy Sloane','Contemporary Romance',null,null),
-  r(585,'That Prince is Mine','Jacy Lee','Contemporary Romance',null,null),
-  r(586,'The Long Game','Elena Armas','Contemporary Romance',null,null),
-  r(587,'The Spanish Love Deception','Elena Armas','Contemporary Romance',null,null),
-  r(588,'The Seven Year Slip','Ashley Poston','Contemporary Romance',null,null),
-  r(589,'Icebreaker','Hannah Grace','Sports Romance','Maple Hills',1),
-  r(590,'Wildfire','Hannah Grace','Sports Romance','Maple Hills',2),
-  r(591,'Daydream','Hannah Grace','Sports Romance','Maple Hills',3),
-  r(592,'Sanctuary of the Shadow','Aurora Ascher','Dark Romance',null,null),
-  r(593,'Heavenbreaker','Sara Wolf','Dark Romance',null,null),
-  fa(594,'The Shadows Between Us','Tricia Levenseller','YA Fantasy',null,null),
-  fa(595,'The Robin on the Oak Throne','K.A. Linde','Dark Fantasy','Wren & Robin',1),
-  fa(596,'The Wren in the Holly Library','K.A. Linde','Dark Fantasy','Wren & Robin',2),
-  fa(597,'The Monster and the Last Blood Match','K.A. Linde','Dark Fantasy',null,null),
-  fa(598,'Blood of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',1),
-  fa(599,'Bonds of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',2),
-  fa(600,'The Games Gods Play','Abigail Owen','Paranormal Romance',null,null),
-  fa(601,'Three Shattered Souls','Mai Corland','High Fantasy','Five Broken Blades',null),
-  fa(602,'The Bond That Burns','Briar Boleyn','Dark Fantasy',null,null),
-  fa(603,'On Wings of Blood','Briar Boleyn','Dark Fantasy',null,null),
-  fa(604,'The Things Gods Break','Abigail Owen','Paranormal Romance',null,null),
-  fa(605,'A Dance of Lies','Brittney Arena','YA Fantasy',null,null),
-  fa(606,'Sorcery and Small Magics','Maiga Doocy','YA Fantasy',null,null),
-  fa(607,'Graceless Heart','Isabel Ibanez','YA Fantasy',null,null),
-  fa(608,'A Song to Drown Rivers','Ann Liang','Historical Fantasy',null,null),
-  fa(609,'Firebird','Juliette Cross','Dark Fantasy',null,null),
-  rt(610,'Immortal Consequences','I.V. Marie',null,null),
-  cl(611,'The Long Valley','John Steinbeck','American Lit'),
-  cl(612,'The Screwtape Letters','C.S. Lewis','British Lit'),
-  fa(613,'The Knight and the Moth','Rachel Gillig','Dark Fantasy',null,null),
-  fa(614,'Never Ever After','Sue Lynn Tan','High Fantasy',null,null),
-  fa(615,'The Rose Bargain','Sasha Peyton Smith','YA Fantasy',null,null),
-  fa(616,'The Floating World','Axie Oh','YA Fantasy',null,null),
-  fa(617,'Katabasis','R.F. Kuang','Historical Fantasy',null,null),
-  fa(618,'A Language of Dragons','S.F. Williamson','YA Fantasy',null,null),
-  fa(619,'Sleep Like Death','Kalynn Bayron','YA Fantasy',null,null),
-  r(620,'Nocticadia','Keri Lake','Dark Romance',null,null),
-  fa(621,'The Glittering Edge','Alyssa Villaire','Dark Fantasy',null,null),
-  fa(622,'Gifted & Talented','Olivie Blake','Dark Fantasy',null,null),
-  fa(623,'Cruel is the Light','Sophie Clark','YA Fantasy',null,null),
-  fa(624,'The Never List','Jade Presley','Dark Fantasy',null,null),
-  fa(625,'The Half King','Melissa Landers','YA Fantasy',null,null),
-  fa(626,'For Whom the Belle Tolls','Jaysea Lynn','Dark Fantasy',null,null),
-  fa(627,'The Darkness Within Us','Tricia Levenseller','YA Fantasy',null,null),
-  r(628,'Rose in Chains','Julie Soto','Contemporary Romance',null,null),
-  r(629,'Repeat After Me','Jessica Warman','Contemporary Romance',null,null),
+
+  // Rachel Gillig
   fa(630,'One Dark Window','Rachel Gillig','Dark Fantasy','The Shepherd King',1),
   fa(631,'Two Twisted Crowns','Rachel Gillig','Dark Fantasy','The Shepherd King',2),
-  nf(632,'On the Origins and History of Consciousness','Erich Neumann','Philosophy'),
-  rt(633,'Grim and Oro: Dueling Crowns Edition','Alex Aster','Lightlark',null),
-  fa(634,'Taken to the Fae','Jesse Elliott','Dark Fantasy',null,null),
-  rt(635,'The Wingless King','K.C. Wayssem',null,null),
+  fa(613,'The Knight and the Moth','Rachel Gillig','Dark Fantasy',null,null),
+
+  // LJ Andrews
   fa(636,'The Ever King','LJ Andrews','Dark Fantasy','The Ever King',1),
   fa(637,'The Ever Queen','LJ Andrews','Dark Fantasy','The Ever King',2),
-  fa(638,'Phantasma','Kaylie Smith','Dark Fantasy',null,null),
-  fa(639,'Enchantry','Kaylie Smith','Dark Fantasy',null,null),
+
+  // Callie Hart
   rt(640,'Quicksilver','Callie Hart','Fae & Alchemy',1),
   rt(641,'Brimstone','Callie Hart','Fae & Alchemy',2),
-  co(642,'The Spellshop','Sarah Henning','Cozy Fiction',null,null),
-  co(643,'The Enchanted Greenhouse','Unknown','Cozy Fiction',null,null),
-  fa(644,'A Study in Drowning','Ava Reid','YA Fantasy','A Study in Drowning',1),
-  rt(645,'A Court of Thorns and Roses','Sarah J. Maas','A Court of Thorns and Roses',1),
-  rt(646,'A Court of Mist and Fury','Sarah J. Maas','A Court of Thorns and Roses',2),
-  rt(647,'A Court of Wings and Ruin','Sarah J. Maas','A Court of Thorns and Roses',3),
-  rt(648,'A Court of Frost and Starlight','Sarah J. Maas','A Court of Thorns and Roses',3.5),
-  rt(649,'A Court of Silver Flames','Sarah J. Maas','A Court of Thorns and Roses',4),
-  rt(650,'House of Earth and Blood','Sarah J. Maas','Crescent City',1),
-  rt(651,'House of Sky and Breath','Sarah J. Maas','Crescent City',2),
-  rt(652,'House of Flame and Shadow','Sarah J. Maas','Crescent City',3),
-  fa(653,'Spark of the Everflame','Penn Cole','High Fantasy','Forging of Light',1),
-  fa(654,'Glow of Everflame','Penn Cole','High Fantasy','Forging of Light',2),
+
+  // Sabaa Tahir
   fa(656,'An Ember in the Ashes','Sabaa Tahir','High Fantasy','An Ember in the Ashes',1),
   fa(657,'A Torch Against the Night','Sabaa Tahir','High Fantasy','An Ember in the Ashes',2),
   fa(658,'A Reaper at the Gates','Sabaa Tahir','High Fantasy','An Ember in the Ashes',3),
   fa(659,'A Sky Beyond the Storm','Sabaa Tahir','High Fantasy','An Ember in the Ashes',4),
-  fa(660,'Crescendo','Becca Fitzpatrick','Paranormal Romance','Hush Hush',2),
-  fa(661,'Silence','Becca Fitzpatrick','Paranormal Romance','Hush Hush',3),
-  fa(662,'Finale','Becca Fitzpatrick','Paranormal Romance','Hush Hush',4),
+  fa(522,'Heir','Sabaa Tahir','High Fantasy',null,null),
+
+  // Jay Kristoff
   fa(663,'Empire of the Vampire','Jay Kristoff','Dark Fantasy','Empire of the Vampire',1),
   fa(664,'Empire of the Damned','Jay Kristoff','Dark Fantasy','Empire of the Vampire',2),
+  fa(874,'Nevernight','Jay Kristoff','Dark Fantasy','The Nevernight Chronicle',1),
+
+  // Brigid Kemmerer
   fa(665,'Forging Silver into Stars','Brigid Kemmerer','YA Fantasy','Forging Silver into Stars',1),
   fa(666,'Carving Shadows into Gold','Brigid Kemmerer','YA Fantasy','Forging Silver into Stars',2),
-  fa(667,'A Broken Blade','Melissa Blair','Dark Fantasy','The Halfling series',1),
-  fa(668,'A Vicious Game','Melissa Blair','Dark Fantasy','The Halfling series',3),
-  fa(669,'An Honored Vow','Melissa Blair','Dark Fantasy','The Halfling series',4),
+  fa(845,'Warrior Princess Assassin','Brigid Kemmerer','YA Fantasy',null,null),
+
+  // Melissa Blair
+  fa(667,'A Broken Blade','Melissa Blair','Dark Fantasy','The Halfling Saga',1),
+  fa(899,'A Shadow Crown','Melissa Blair','Dark Fantasy','The Halfling Saga',2),
+  fa(668,'A Vicious Game','Melissa Blair','Dark Fantasy','The Halfling Saga',3),
+  fa(669,'An Honored Vow','Melissa Blair','Dark Fantasy','The Halfling Saga',4),
+
+  // Sophie Lark
   r(671,'Brutal Prince','Sophie Lark','Dark Romance','Brutal Birthright',1),
   r(672,'Stolen Heir','Sophie Lark','Dark Romance','Brutal Birthright',2),
   r(673,'Savage Lover','Sophie Lark','Dark Romance','Brutal Birthright',3),
@@ -960,229 +965,564 @@ const SEED = [
   r(676,'Heavy Crown','Sophie Lark','Dark Romance','Brutal Birthright',6),
   r(677,'There Are No Saints','Sophie Lark','Dark Romance','Sinners Duet',1),
   r(678,'There Is No Devil','Sophie Lark','Dark Romance','Sinners Duet',2),
-  fa(679,'Sword Catcher','Cassandra Clare','High Fantasy','Sword Catcher',1),
+
+  // Harper L. Woods
   fa(680,'What Lies Beyond the Veil','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',1),
   fa(681,'What Hunts Inside the Shadows','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',2),
   fa(682,'What Lurks Between the Fates','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',3),
   fa(683,'What Sleeps Within the Cove','Harper L. Woods','Dark Fantasy','Of Flesh & Bone',4),
+  fa(520,'The Cursed','Harper L. Woods','Dark Fantasy','The Coven',1),
+  fa(521,'The Coven','Harper L. Woods','Dark Fantasy','The Coven',2),
+  fa(827,'The Heir & The Spare','Harper L. Woods','Dark Fantasy',null,null),
+  fa(828,'The Damned','Harper L. Woods','Dark Fantasy',null,null),
+
+  // Brandon Sanderson
   fa(684,'The Final Empire','Brandon Sanderson','High Fantasy','Mistborn',1),
   fa(685,'The Well of Ascension','Brandon Sanderson','High Fantasy','Mistborn',2),
   fa(686,'The Hero of Ages','Brandon Sanderson','High Fantasy','Mistborn',3),
-  cl(687,'The Metamorphosis','Franz Kafka','German Lit'),
-  cl(688,'The Trial','Franz Kafka','German Lit'),
-  cl(689,'The Castle','Franz Kafka','German Lit'),
-  cl(690,'Amerika','Franz Kafka','German Lit'),
-  cl(691,'In the Penal Colony and Other Short Stories','Franz Kafka','German Lit'),
+
+  // Tracy Wolff
   fa(692,'Crave','Tracy Wolff','Paranormal Romance','Crave',1),
   fa(693,'Crush','Tracy Wolff','Paranormal Romance','Crave',2),
   fa(694,'Covet','Tracy Wolff','Paranormal Romance','Crave',3),
   fa(695,'Court','Tracy Wolff','Paranormal Romance','Crave',4),
   fa(696,'Charm','Tracy Wolff','Paranormal Romance','Crave',5),
   fa(697,'Cherish','Tracy Wolff','Paranormal Romance','Crave',6),
-  nf(698,'12 Rules for Life','Jordan B. Peterson','Self-Help'),
-  nf(699,'Beyond Order','Jordan B. Peterson','Self-Help'),
-  fa(700,'Once Upon a Broken Heart','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',1),
-  fa(701,'The Ballad of Never After','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',2),
-  fa(702,'A Curse for True Love','Stephanie Garber','YA Fantasy','Once Upon a Broken Heart',3),
+  fa(61,'Sweet Nightmare','Tracy Wolff','Dark Fantasy',null,null),
+
+  // Victoria Aveyard
   fa(703,'Red Queen','Victoria Aveyard','YA Fantasy','Red Queen',1),
   fa(704,'Glass Sword','Victoria Aveyard','YA Fantasy','Red Queen',2),
   fa(705,"King's Cage",'Victoria Aveyard','YA Fantasy','Red Queen',3),
   fa(706,'War Storm','Victoria Aveyard','YA Fantasy','Red Queen',4),
   fa(707,'Broken Throne','Victoria Aveyard','YA Fantasy','Red Queen',4.5),
+
+  // Holly Jackson
   m(708,"A Good Girl's Guide to Murder",'Holly Jackson','YA Mystery',"A Good Girl's Guide to Murder",1),
   m(709,'Good Girl, Bad Blood','Holly Jackson','YA Mystery',"A Good Girl's Guide to Murder",2),
   m(710,'As Good as Dead','Holly Jackson','YA Mystery',"A Good Girl's Guide to Murder",3),
+  m(773,'Five Survive','Holly Jackson','Thriller',null,null),
+
+  // Freida McFadden
   m(711,'The Housemaid','Freida McFadden','Thriller','The Housemaid',1),
   m(712,"The Housemaid's Secret",'Freida McFadden','Thriller','The Housemaid',2),
   m(713,"The Housemaid's Husband",'Freida McFadden','Thriller','The Housemaid',3),
+
+  // Elizabeth Lim
+  fa(753,'Her Radiant Curse','Elizabeth Lim','Historical Fantasy','Six Crimson Cranes',0),
+  fa(778,'Six Crimson Cranes','Elizabeth Lim','Historical Fantasy','Six Crimson Cranes',1),
+  fa(754,"The Dragon's Promise",'Elizabeth Lim','Historical Fantasy','Six Crimson Cranes',2),
+  fa(107,'A Forgery of Fate','Elizabeth Lim','Historical Fantasy',null,null),
+
+  // Shelby Mahurin
+  fa(775,'Serpent & Dove','Shelby Mahurin','Dark Fantasy','Serpent & Dove',1),
+  fa(756,'Blood & Honey','Shelby Mahurin','Dark Fantasy','Serpent & Dove',2),
+  fa(757,'Gods & Monsters','Shelby Mahurin','Dark Fantasy','Serpent & Dove',3),
+
+  // Mariely Lares
+  fa(762,'Sun of Blood and Ruin','Mariely Lares','Historical Fantasy','Sun of Blood and Ruin',1),
+  fa(763,'Dawn of Fate and Fire','Mariely Lares','Historical Fantasy','Sun of Blood and Ruin',2),
+
+  // Chloe Gong
+  fa(764,'Foul Lady Fortune','Chloe Gong','Historical Fantasy','Foul Lady Fortune',1),
+  fa(765,'Foul Heart Huntsman','Chloe Gong','Historical Fantasy','Foul Lady Fortune',2),
+  fa(162,'Coldwire','Chloe Gong','YA Fantasy',null,null),
+
+  // J.R.R. Tolkien
+  fa(766,'The Hobbit','J.R.R. Tolkien','High Fantasy','Middle-earth',0),
+  fa(767,'The Fellowship of the Ring','J.R.R. Tolkien','High Fantasy','The Lord of the Rings',1),
+  fa(768,'The Two Towers','J.R.R. Tolkien','High Fantasy','The Lord of the Rings',2),
+  fa(769,'The Return of the King','J.R.R. Tolkien','High Fantasy','The Lord of the Rings',3),
+
+  // Sylvia Mercedes
+  fa(791,'Heart of the Shadow King','Sylvia Mercedes','Dark Fantasy','Shadow King',1),
+  fa(792,'Vow of the Shadow King','Sylvia Mercedes','Dark Fantasy','Shadow King',2),
+
+  // Vrana
+  fa(797,'The Hollow Gods','Vrana','Dark Fantasy','The Chaos Cycle',1),
+  fa(798,'The Echoed Realm','Vrana','Dark Fantasy','The Chaos Cycle',2),
+  fa(799,'Stray Feathers','Vrana','Dark Fantasy',null,null),
+
+  // Elena Lawson
+  r(803,'Black Heart Painted Gold','Elena Lawson','Dark Romance','Painted',1),
+  r(804,'White Rose Painted Red','Blake & Elena Lawson','Dark Romance','Painted',2),
+  r(819,'Wicked Trials','Elena Lawson','Dark Romance','Wicked Games',1),
+  r(820,'Twisted Games','Elena Lawson','Dark Romance','Wicked Games',2),
+  r(821,'Warped Minds','Elena Lawson','Dark Romance','Wicked Games',3),
+
+  // A.L. Maruga
+  r(809,'Be My Salvation','A.L. Maruga','Dark Romance','Be My',1),
+  r(810,'Be My Sacrifice','A.L. Maruga','Dark Romance','Be My',2),
+  r(811,'Be My Sinner','A.L. Maruga','Dark Romance','Be My',3),
+  r(896,'Reign of the Queen','A.L. Maruga','Dark Romance','The Crowned Series',1),
+  r(897,'Fall of a King','A.L. Maruga','Dark Romance','The Crowned Series',2),
+  r(898,'Corrupted Kingdom','A.L. Maruga','Dark Romance','The Crowned Series',3),
+  r(805,'Venomous King','A.L. Maruga','Dark Romance',null,null),
+  r(806,"The Queen's Serpent",'A.L. Maruga','Dark Romance',null,null),
+  r(807,'Dark Dare','A.L. Maruga','Dark Romance',null,null),
+  r(808,'Stalking Christmas','A.L. Maruga','Dark Romance',null,null),
+
+  // Brooklyn Cross
+  r(813,'Burn for Me','Brooklyn Cross','Dark Romance','Burn',1),
+  r(814,'Burn with Me','Brooklyn Cross','Dark Romance','Burn',2),
+  r(815,'Burn Me Down','Brooklyn Cross','Dark Romance','Burn',3),
+  r(816,'Bloody Quarter','Brooklyn Cross','Dark Romance',null,null),
+
+  // Laura Sebastian
+  fa(862,'Ash Princess','Laura Sebastian','YA Fantasy','Ash Princess',1),
+  fa(863,'Lady Smoke','Laura Sebastian','YA Fantasy','Ash Princess',2),
+  fa(864,'Ember Queen','Laura Sebastian','YA Fantasy','Ash Princess',3),
+
+  // Sasha Peyton Smith
+  fa(615,'The Rose Bargain','Sasha Peyton Smith','YA Fantasy','The Rose Bargain',1),
+  fa(872,'The Thorn Queen','Sasha Peyton Smith','YA Fantasy','The Rose Bargain',2),
+
+  // R.M. Gray
+  fa(519,'Nightweaver','R.M. Gray','Dark Fantasy','Nightweaver',1),
+  fa(876,'Starchaser','R.M. Gray','Dark Fantasy','Nightweaver',2),
+
+  // Sara Cate
+  r(882,'Praise','Sara Cate','Dark Romance','Salacious Players Club',1),
+  r(881,'Eyes On Me','Sara Cate','Dark Romance','Salacious Players Club',2),
+  r(880,'Give Me More','Sara Cate','Dark Romance','Salacious Players Club',3),
+  r(879,'Mercy','Sara Cate','Dark Romance','Salacious Players Club',4),
+  r(878,'Highest Bidder','Sara Cate','Dark Romance','Salacious Players Club',5),
+  r(877,'Madame','Sara Cate','Dark Romance','Salacious Players Club',6),
+
+  // K.A. Linde
+  fa(595,'The Robin on the Oak Throne','K.A. Linde','Dark Fantasy','Wren & Robin',1),
+  fa(596,'The Wren in the Holly Library','K.A. Linde','Dark Fantasy','Wren & Robin',2),
+  fa(597,'The Monster and the Last Blood Match','K.A. Linde','Dark Fantasy',null,null),
+  r(886,'The Rebel and the Final Blood War','K.A. Linde','Dark Romance','Blood Type',3),
+  fa(861,'The Captive and the First Blood Game','K.A. Linde','Dark Fantasy',null,null),
+
+  // Jasmine Mas
+  fa(598,'Blood of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',1),
+  fa(599,'Bonds of Hercules','Jasmine Mas','Dark Fantasy','Villains of Lore',2),
+
+  // Lauren Palphreyman
+  rt(893,'The Wolf King','Lauren Palphreyman','The Wolf King',1),
+  rt(894,'The Night Prince','Lauren Palphreyman','The Wolf King',2),
+
+  // Imani Erriu
+  rt(902,'Heavenly Bodies','Imani Erriu','The Heavenly Bodies Series',1),
+  rt(903,'Fallen Stars','Imani Erriu','The Heavenly Bodies Series',2),
+
+  // Chloe C. Penaranda
+  fa(524,'The Night Is Defying','Chloe C. Penaranda','Dark Fantasy','Night Is Series',1),
+  fa(525,'The Stars Are Dying','Chloe C. Penaranda','Dark Fantasy','Night Is Series',2),
+  fa(789,'The Dark is Descending','Chloe C. Penaranda','Dark Fantasy',null,null),
+
+  // Lindsay Straube
+  fa(530,'Between Two Kings','Lindsay Straube','Dark Fantasy','Poison Beauties',1),
+  fa(531,'Kiss of the Basilisk','Lindsay Straube','Dark Fantasy','Poison Beauties',2),
+
+  // Geneva Lee
+  fa(512,'Filthy Rich Fae','Geneva Lee','Dark Romantasy','Filthy Rich Fae',null),
+  fa(513,'Filthy Rich Vampire','Geneva Lee','Dark Romantasy','Filthy Rich Vampires',1),
+
+  // Alexis L. Menard
+  fa(516,'House of Bone and Blood','Alexis L. Menard','Dark Fantasy',null,null),
+  fa(793,'City of Mirth and Malice','Alexis L. Menard','Dark Fantasy',null,null),
+
+  // Mary E. Pearson
+  fa(526,'The Courting of Bristol Keats','Mary E. Pearson','High Fantasy',null,null),
+  fa(844,'The Last Wish of Bristol Keats','Mary E. Pearson','High Fantasy',null,null),
+
+  // Hafsah Faizal
+  fa(60,'A Tempest of Tea','Hafsah Faizal','YA Fantasy','Blood and Tea',1),
+  fa(834,'A Steeping of Blood','Hafsah Faizal','YA Fantasy','Blood and Tea',2),
+
+  // Axie Oh
+  fa(616,'The Floating World','Axie Oh','YA Fantasy',null,null),
+  fa(837,'The Girl Who Fell Beneath the Sea','Axie Oh','YA Fantasy',null,null),
+
+  // Samantha Shannon
+  fa(758,'The Bone Season','Samantha Shannon','Dark Fantasy','The Bone Season',1),
+  fa(759,'The Priory of the Orange Tree','Samantha Shannon','High Fantasy',null,null),
+  fa(760,'A Day of Fallen Night','Samantha Shannon','High Fantasy',null,null),
+  fa(838,'Among the Burning Flowers','Samantha Shannon','High Fantasy',null,null),
+
+  // T. Kingfisher
+  fa(761,'What Feasts at Night','T. Kingfisher','Dark Fantasy','Sworn Soldier',2),
+  fa(831,'What Stalks the Deep','T. Kingfisher','Dark Fantasy',null,null),
+
+  // Tigest Girma
+  fa(508,'Immortal Dark','Tigest Girma','Dark Fantasy',null,null),
+  fa(832,'Eternal Ruin','Tigest Girma','Dark Fantasy','Immortal Dark',2),
+
+  // Sue Lynn Tan
+  fa(500,'Immortal','Sue Lynn Tan','High Fantasy',null,null),
+  fa(614,'Never Ever After','Sue Lynn Tan','High Fantasy',null,null),
+
+  // Keri Lake
+  r(108,'Anathema','Keri Lake','Dark Romance',null,null),
+  r(620,'Nocticadia','Keri Lake','Dark Romance',null,null),
+  rt(866,'Eldritch','Keri Lake','The Eating Woods',2),
+
+  // Navessa Allen
+  r(129,'Lights Out','Navessa Allen','Dark Romance',null,null),
+  r(130,'Caught Up','Navessa Allen','Dark Romance',null,null),
+  r(855,'Game On','Navessa Allen','Sports Romance',null,null),
+  r(870,'The Kings of Kearny','Navessa Allen','Dark Romance',null,null),
+
+  // Colleen Hoover
+  m(275,'Verity','Colleen Hoover','Thriller',null,null),
+  co(274,'It Ends With Us','Colleen Hoover','Contemporary Fiction',null,null),
+
+  // Travis Baldree
+  co(112,'Legends & Lattes','Travis Baldree','Cozy Fiction',null,null),
+  co(329,'Bookshops & Bonedust','Travis Baldree','Cozy Fiction',null,null),
+
+  // Emily Rath
+  r(113,'Pucking Strong','Emily Rath','Sports Romance',null,null),
+  r(283,'Pucking Sweet','Emily Rath','Sports Romance',null,null),
+  r(284,'Pucking Around','Emily Rath','Sports Romance',null,null),
+  fa(518,'North is the Night','Emily Rath','Dark Fantasy',null,null),
+
+  // Christina Lauren
+  r(116,'Something Wilder','Christina Lauren','Contemporary Romance',null,null),
+  r(577,'Love & Other Words','Christina Lauren','Contemporary Romance',null,null),
+
+  // Meghan Quinn
+  r(288,'A Long Time Coming','Meghan Quinn','Contemporary Romance',null,null),
+  r(289,'So Not Meant to Be','Meghan Quinn','Contemporary Romance',null,null),
+  r(290,'A Not So Meet Cute','Meghan Quinn','Contemporary Romance',null,null),
+
+  // Peyton Corinne
+  r(291,'Unsteady','Peyton Corinne','New Adult Romance',null,null),
+  r(292,'Unloved','Peyton Corinne','New Adult Romance',null,null),
+
+  // Hannah Bonam-Young
+  r(294,'It Happened One Christmas','Hannah Bonam-Young','Holiday Romance',null,null),
   r(714,'Out on a Limb','Hannah Bonam-Young','Contemporary Romance',null,null),
-  nf(715,'Tao Te Ching','Lao Tzu (trans. Stephen Mitchell)','Philosophy'),
-  nf(716,'Meditations','Marcus Aurelius','Philosophy'),
+
+  // Madyn Rose
+  r(302,'The Trouble with Dating Lexi','Madyn Rose','Contemporary Romance',null,null),
+  r(545,'Chasing Hardlee','Madyn Rose','Contemporary Romance',null,null),
+
+  // K.A. Tucker
+  r(414,'Whiskey Business','K.A. Tucker','Contemporary Romance',null,null),
+  r(415,'The Simple Wild','K.A. Tucker','Contemporary Romance','Wild',1),
+
+  // Ali Hazelwood
+  r(420,'The Love Hypothesis','Ali Hazelwood','Contemporary Romance',null,null),
+  r(421,'Love on the Brain','Ali Hazelwood','Contemporary Romance',null,null),
+  r(422,'Love, Theoretically','Ali Hazelwood','Contemporary Romance',null,null),
+  r(423,'Loathe to Love You','Ali Hazelwood','Contemporary Romance',null,null),
+  r(538,'Check & Mate','Ali Hazelwood','Contemporary Romance',null,null),
+  r(539,'Deep End','Ali Hazelwood','Contemporary Romance',null,null),
+
+  // Tessa Bailey
+  r(426,'Hook, Line, and Sinker','Tessa Bailey','Contemporary Romance',null,null),
+  r(428,'Unfortunately Yours','Tessa Bailey','Contemporary Romance',null,null),
+  r(540,'It Happened One Summer','Tessa Bailey','Contemporary Romance','Bellinger Sisters',1),
+  r(541,'Secretly Yours','Tessa Bailey','Contemporary Romance',null,null),
+
+  // Krista & Becca Ritchie
+  r(432,'Dishonestly Yours','Krista & Becca Ritchie','Contemporary Romance',null,null),
+  r(888,'Destructively Mine','Krista & Becca Ritchie','Contemporary Romance','Webs We Weave',2),
+
+  // Rachel Schneider
+  rt(436,'Metal Signer','Rachel Schneider',null,null),
+  rt(786,'Light Wielder','Rachel Schneider','Fire & Metal',2),
+
+  // Stacey McEwan
+  fa(109,'A Forbidden Alchemy','Stacey McEwan','Dark Fantasy',null,null),
+  fa(865,'A Forsaken Prophecy','Stacey McEwan','Dark Fantasy','The Artisan Trilogy',2),
+
+  // Rachel Howzell Hall
+  m(509,'The Last One','Rachel Howzell Hall','Thriller',null,null),
+  m(848,'The Cruel Dawn','Rachel Howzell Hall','Thriller',null,null),
+
+  // Rebecca Kenney
+  r(189,'Beautiful Villain','Rebecca Kenney','Dark Romance',null,null),
+  r(794,'Charming Devil','Rebecca Kenney','Dark Romance',null,null),
+
+  // R.F. Kuang
+  fa(617,'Katabasis','R.F. Kuang','Historical Fantasy',null,null),
+  co(795,'Yellowface','R.F. Kuang','Literary Fiction',null,null),
+
+  // Letizia Firmani
+  r(800,'Black Silk','Letizia Firmani','Dark Romance',null,null),
+  fa(801,"The Crown's Soul Prophecy",'Letizia Firmani','Dark Romance',null,null),
+
+  // Sable Sorensen
+  rt(327,'Dire Bound','Sable Sorensen',null,null),
+  rt(825,'Fury Bound','Sable Sorensen',null,null),
+  rt(826,'The Wolves of Ruin','Sable Sorensen',null,null),
+
+  // Alta Hensley
+  r(849,"He Knows When You're Awake",'Alta Hensley','Dark Romance',null,null),
+  r(853,"He Sees You When You're Sleeping",'Alta Hensley','Dark Romance',null,null),
+
+  // Elliott Rose
+  r(851,'Chasing the Wild','Elliott Rose','Contemporary Romance',null,null),
+  r(852,'Taming the Heart','Elliott Rose','Contemporary Romance',null,null),
+
+  // Julie Soto
+  r(551,'Not Another Love Song','Julie Soto','Contemporary Romance',null,null),
+  r(628,'Rose in Chains','Julie Soto','Contemporary Romance',null,null),
+
+  // Elena Armas
+  r(549,'The American Roommate Experiment','Elena Armas','Contemporary Romance',null,null),
+  r(586,'The Long Game','Elena Armas','Contemporary Romance',null,null),
+  r(587,'The Spanish Love Deception','Elena Armas','Contemporary Romance',null,null),
+
+  // Ashley Poston
+  r(582,'The Dead Romantics','Ashley Poston','Contemporary Romance',null,null),
+  r(588,'The Seven Year Slip','Ashley Poston','Contemporary Romance',null,null),
+
+  // K. Bromberg
+  r(580,'Twisted Knight','K. Bromberg','Contemporary Romance',null,null),
+  r(581,"Life's Too Short",'K. Bromberg','Contemporary Romance',null,null),
+
+  // Sophie Kinsella
+  co(282,'The Party Crasher','Sophie Kinsella','Chick Lit',null,null),
+  r(568,'Love Your Life','Sophie Kinsella','Contemporary Romance',null,null),
+
+  // Charles Dickens
+  cl(214,'A Christmas Carol','Charles Dickens','British Lit'),
+  cl(216,'Great Expectations','Charles Dickens','British Lit'),
+
+  // Fyodor Dostoevsky
+  cl(215,'Crime and Punishment','Fyodor Dostoevsky','Russian Lit'),
+  cl(850,'Great Short Works of Fyodor Dostoevsky','Fyodor Dostoevsky','Russian Lit'),
+
+  // Franz Kafka
+  cl(687,'The Metamorphosis','Franz Kafka','German Lit'),
+  cl(688,'The Trial','Franz Kafka','German Lit'),
+  cl(689,'The Castle','Franz Kafka','German Lit'),
+  cl(690,'Amerika','Franz Kafka','German Lit'),
+  cl(691,'In the Penal Colony and Other Short Stories','Franz Kafka','German Lit'),
+
+  // Søren Kierkegaard
+  nf(309,'The Present Age','Soren Kierkegaard','Philosophy'),
+  nf(730,'Works of Love','Søren Kierkegaard','Philosophy'),
+
+  // Sigmund Freud
   nf(717,'The Psychology of Love','Sigmund Freud','Philosophy'),
   nf(718,'The Uncanny','Sigmund Freud','Philosophy'),
+
+  // C.G. Jung
   nf(719,'The Undiscovered Self','C.G. Jung','Philosophy'),
-  nf(720,'The Story of Philosophy','Will Durant','Philosophy'),
-  nf(721,'The Cosmic Serpent','Jeremy Narby','Philosophy'),
-  nf(722,'Cosmic Consciousness','Richard Maurice Bucke','Philosophy'),
+  nf(632,'On the Origins and History of Consciousness','Erich Neumann','Philosophy'),
+
+  // Walter Kaufmann
   nf(723,'Greek Philosophy','Walter Kaufmann','Philosophy'),
   nf(724,'Existentialism: From Dostoevsky to Sartre','Walter Kaufmann','Philosophy'),
-  nf(725,'The Essential Schopenhauer','Arthur Schopenhauer','Philosophy'),
+
+  // Friedrich Nietzsche
   nf(726,'The Birth of Tragedy and The Genealogy of Morals','Friedrich Nietzsche','Philosophy'),
   nf(727,'Basic Writings of Nietzsche','Friedrich Nietzsche','Philosophy'),
   nf(728,'On Truth and Untruth','Friedrich Nietzsche','Philosophy'),
   nf(729,'Thus Spoke Zarathustra','Friedrich Nietzsche','Philosophy'),
-  nf(730,'Works of Love','Søren Kierkegaard','Philosophy'),
-  nf(731,'The Last Superstition','Edward Feser','Philosophy'),
+
+  // Karl Marx & Friedrich Engels
   nf(732,'Capital Volume I','Karl Marx','Philosophy'),
   nf(733,'The Communist Manifesto','Karl Marx & Friedrich Engels','Philosophy'),
+
+  // Daniel H. Pink
+  nf(736,'When','Daniel H. Pink','Self-Help'),
+  nf(738,'To Sell Is Human','Daniel H. Pink','Self-Help'),
+
+  // C.S. Lewis
+  cl(612,'The Screwtape Letters','C.S. Lewis','British Lit'),
+  nf(742,'The Abolition of Man','C.S. Lewis','Philosophy'),
+
+  // Jordan B. Peterson
+  nf(698,'12 Rules for Life','Jordan B. Peterson','Self-Help'),
+  nf(699,'Beyond Order','Jordan B. Peterson','Self-Help'),
+
+  // Charles Bukowski
+  cl(750,'Women','Charles Bukowski','American Lit'),
+  cl(751,'Post Office','Charles Bukowski','American Lit'),
+  cl(752,'Ham on Rye','Charles Bukowski','American Lit'),
+
+  // Standalones / Miscellaneous Classics & Non-Fiction
+  cl(205,'Dracula','Bram Stoker','Gothic Classic'),
+  cl(206,'The Phantom of the Opera','Gaston Leroux','Gothic Classic'),
+  cl(207,'Animal Farm','George Orwell','British Lit'),
+  cl(208,'Pride and Prejudice','Jane Austen','British Lit'),
+  cl(209,'Anna Karenina','Leo Tolstoy','Russian Lit'),
+  cl(210,'The Picture of Dorian Gray','Oscar Wilde','British Lit'),
+  cl(211,'The Jungle Book','Rudyard Kipling','British Lit'),
+  cl(212,"Grimm's Fairy Tales",'J.L.C. & W.C. Grimm','Fairy Tales'),
+  cl(217,'Frankenstein','Mary Shelley','Gothic Classic'),
+  cl(218,'For Whom the Bell Tolls','Ernest Hemingway','American Lit'),
+  cl(611,'The Long Valley','John Steinbeck','American Lit'),
+  cl(749,'Purgatorio','Dante','Italian Lit'),
+
+  nf(307,'The Glass Castle','Jeannette Walls','Memoir'),
+  nf(310,'Kind of Coping','Sarah Andersen','Self-Help'),
+  nf(311,'Prime Nihongo','Masatomi Shigo','Language Learning'),
+  nf(715,'Tao Te Ching','Lao Tzu (trans. Stephen Mitchell)','Philosophy'),
+  nf(716,'Meditations','Marcus Aurelius','Philosophy'),
+  nf(720,'The Story of Philosophy','Will Durant','Philosophy'),
+  nf(721,'The Cosmic Serpent','Jeremy Narby','Philosophy'),
+  nf(722,'Cosmic Consciousness','Richard Maurice Bucke','Philosophy'),
+  nf(725,'The Essential Schopenhauer','Arthur Schopenhauer','Philosophy'),
+  nf(731,'The Last Superstition','Edward Feser','Philosophy'),
   nf(734,'Lenin in Zurich','Aleksandr Solzhenitsyn','Memoir'),
   nf(735,'Designing Your Life','Bill Burnett & Dave Evans','Self-Help'),
-  nf(736,'When','Daniel H. Pink','Self-Help'),
   nf(737,'Purposeful Empathy','Anita Nowak','Self-Help'),
-  nf(738,'To Sell Is Human','Daniel H. Pink','Self-Help'),
   nf(739,'Mycelium Running','Paul Stamets','Self-Help'),
   nf(740,'How to Change Your Mind','Michael Pollan','Self-Help'),
   nf(741,'The Subtle Art of Not Giving a F*ck','Mark Manson','Self-Help'),
-  nf(742,'The Abolition of Man','C.S. Lewis','Philosophy'),
   nf(743,'Groundwork of the Metaphysics of Morals','Immanuel Kant','Philosophy'),
   nf(744,"It's Not Luck",'Eliyahu Goldratt','Self-Help'),
   nf(745,'Christianity for Modern Pagans','Peter Kreeft','Philosophy'),
   nf(746,'The Rationalists','Descartes, Spinoza & Leibniz','Philosophy'),
   nf(747,'The Art of Living','Epictetus','Philosophy'),
   nf(748,'Mythology','Edith Hamilton','Philosophy'),
-  cl(749,'Purgatorio','Dante','Italian Lit'),
-  cl(750,'Women','Charles Bukowski','American Lit'),
-  cl(751,'Post Office','Charles Bukowski','American Lit'),
-  cl(752,'Ham on Rye','Charles Bukowski','American Lit'),
-  fa(753,'Her Radiant Curse','Elizabeth Lim','Historical Fantasy','Six Crimson Cranes',0),
-  fa(754,"The Dragon's Promise",'Elizabeth Lim','Historical Fantasy','Six Crimson Cranes',2),
-  fa(755,'Blood and Moonlight','Erin Beaty','YA Fantasy','Blood and Moonlight',1),
-  fa(756,'Blood & Honey','Shelby Mahurin','Dark Fantasy','Serpent & Dove',2),
-  fa(757,'Gods & Monsters','Shelby Mahurin','Dark Fantasy','Serpent & Dove',3),
-  fa(758,'The Bone Season','Samantha Shannon','Dark Fantasy','The Bone Season',1),
-  fa(759,'The Priory of the Orange Tree','Samantha Shannon','High Fantasy',null,null),
-  fa(760,'A Day of Fallen Night','Samantha Shannon','High Fantasy',null,null),
-  fa(761,'What Feasts at Night','T. Kingfisher','Dark Fantasy','Sworn Soldier',2),
-  fa(762,'Sun of Blood and Ruin','Mariely Lares','Historical Fantasy','Sun of Blood and Ruin',1),
-  fa(763,'Dawn of Fate and Fire','Mariely Lares','Historical Fantasy','Sun of Blood and Ruin',2),
-  fa(764,'Foul Lady Fortune','Chloe Gong','Historical Fantasy','Foul Lady Fortune',1),
-  fa(765,'Foul Heart Huntsman','Chloe Gong','Historical Fantasy','Foul Lady Fortune',2),
-  fa(766,'The Hobbit','J.R.R. Tolkien','High Fantasy','Middle-earth',0),
-  fa(767,'The Fellowship of the Ring','J.R.R. Tolkien','High Fantasy','The Lord of the Rings',1),
-  fa(768,'The Two Towers','J.R.R. Tolkien','High Fantasy','The Lord of the Rings',2),
-  fa(769,'The Return of the King','J.R.R. Tolkien','High Fantasy','The Lord of the Rings',3),
-  m(773,'Five Survive','Holly Jackson','Thriller',null,null),
-  fa(774,'Blood Scion','Deborah Falaye','YA Fantasy',null,null),
-  fa(775,'Serpent & Dove','Shelby Mahurin','Dark Fantasy','Serpent & Dove',1),
-  fa(776,'A Touch of Darkness','Scarlett St. Clair','Mythology Romance','Hades x Persephone',1),
-  fa(777,'A Game of Fate','Scarlett St. Clair','Mythology Romance','Hades Saga',1),
-  fa(778,'Six Crimson Cranes','Elizabeth Lim','Historical Fantasy','Six Crimson Cranes',1),
-  fa(779,'Dark Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',1),
-  fa(780,'Savage Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',2),
-  fa(781,'Vicious Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',3),
-  fa(782,'Broken Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',4),
-  fa(783,'Warrior Fae','C.Peckham & S.Valenti','Paranormal Romance','Ruthless Boys of the Zodiac',5),
-  fa(784,'Children of Fallen Gods','Carissa Broadbent','Dark Fantasy','War of Lost Hearts',2),
-  fa(785,'The Library at Hellebore','Cassandra Khaw','Dark Fantasy',null,null),
-  rt(786,'Light Wielder','Rachel Schneider','Fire & Metal',2),
-  rt(787,'Storm Breaker','Nisha J. Tuli',null,null),
-  rt(788,'Fallen Gods','Rachel Van Dyken',null,null),
-  fa(789,'The Dark is Descending','Chloe C. Peñaranda','Dark Fantasy',null,null),
-  r(790,'Hideaway Heart','Melanie Harlow','Contemporary Romance',null,null),
-  fa(791,'Heart of the Shadow King','Sylvia Mercedes','Dark Fantasy','Shadow King',1),
-  fa(792,'Vow of the Shadow King','Sylvia Mercedes','Dark Fantasy','Shadow King',2),
-  fa(793,'City of Mirth and Malice','Alexis L. Menard','Dark Fantasy',null,null),
-  r(794,'Charming Devil','Rebecca Kenney','Dark Romance',null,null),
-  co(795,'Yellowface','R.F. Kuang','Literary Fiction',null,null),
-  r(796,'Just Ducky','C.A. King','Contemporary Romance',null,null),
-  fa(797,'The Hollow Gods','Vrana','Dark Fantasy','The Chaos Cycle',1),
-  fa(798,'The Echoed Realm','Vrana','Dark Fantasy','The Chaos Cycle',2),
-  fa(799,'Stray Feathers','Vrana','Dark Fantasy',null,null),
-  r(800,'Black Silk','Letizia Firmani','Dark Romance',null,null),
-  fa(801,"The Crown's Soul Prophecy",'Letizia Firmani','Dark Romance',null,null),
-  r(802,'Wreath of Love','Vanessa Stock','Dark Romance',null,null),
-  r(803,'Black Heart Painted Gold','Elena Lawson','Dark Romance','Painted',1),
-  r(804,'White Rose Painted Red','Blake & Elena Lawson','Dark Romance','Painted',2),
-  r(805,'Venomous King','A.L. Maruga','Dark Romance',null,null),
-  r(806,"The Queen's Serpent",'A.L. Maruga','Dark Romance',null,null),
-  r(807,'Dark Dare','A.L. Maruga','Dark Romance',null,null),
-  r(808,'Stalking Christmas','A.L. Maruga','Dark Romance',null,null),
-  r(809,'Be My Salvation','A.L. Maruga','Dark Romance','Be My',1),
-  r(810,'Be My Sacrifice','A.L. Maruga','Dark Romance','Be My',2),
-  r(811,'Be My Sinner','A.L. Maruga','Dark Romance','Be My',3),
-  fa(812,'Blood Oath','J.A. Carter','High Fantasy',null,null),
-  r(813,'Burn for Me','Brooklyn Cross','Dark Romance','Burn',1),
-  r(814,'Burn with Me','Brooklyn Cross','Dark Romance','Burn',2),
-  r(815,'Burn Me Down','Brooklyn Cross','Dark Romance','Burn',3),
-  r(816,'Bloody Quarter','Brooklyn Cross','Dark Romance',null,null),
-  r(817,'Little Mouse','Emily Rose','Dark Romance',null,null),
-  r(819,'Wicked Trials','Elena Lawson','Dark Romance','Wicked Games',1),
-  r(820,'Twisted Games','Elena Lawson','Dark Romance','Wicked Games',2),
-  r(821,'Warped Minds','Elena Lawson','Dark Romance','Wicked Games',3),
-  fa(822,'Verity Guild','Mai Corland','High Fantasy',null,null),
-  rt(823,'The Ballad of Falling Dragons','Sarah A. Parker','The Moonfall Series',2),
-  fa(824,'Every Spiral of Fate','Tahereh Mafi','YA Fantasy',null,4),
-  rt(825,'Fury Bound','Sable Sorensen',null,null),
-  rt(826,'The Wolves of Ruin','Sable Sorensen',null,null),
-  fa(827,'The Heir & The Spare','Harper L. Woods','Dark Fantasy',null,null),
-  fa(828,'The Damned','Harper L. Woods','Dark Fantasy',null,null),
-  fa(829,'One Dark Kiss','Rebecca Zanetti','Paranormal Romance',null,null),
-  fa(830,'Den of Liars','Olson','Dark Fantasy',null,null),
-  fa(831,'What Stalks the Deep','T. Kingfisher','Dark Fantasy',null,null),
-  fa(832,'Eternal Ruin','Tigest Girma','Dark Fantasy','Immortal Dark',2),
-  fa(833,'What Fury Brings','Tricia Levenseller','YA Fantasy',null,null),
-  fa(834,'A Steeping of Blood','Hafsah Faizal','YA Fantasy','Blood and Tea',2),
-  fa(835,'Release Me','Tahereh Mafi','YA Fantasy','Shatter Me: Series Two',2),
-  fa(836,'Song of the Six Realms','Lin','Historical Fantasy',null,null),
-  fa(837,'The Girl Who Fell Beneath the Sea','Axie Oh','YA Fantasy',null,null),
-  fa(838,'Among the Burning Flowers','Samantha Shannon','High Fantasy',null,null),
-  fa(839,'A Curse of Shadows and Ice','Catharina Maura','Dark Fantasy',null,null),
-  rt(840,'Rites of the Starling','Devney Perry',null,null),
-  fa(841,'I, Songbird of the Sorrows','Braidee Otto','Dark Fantasy',null,null),
-  fa(842,'Deathbringer','Sonia Tagliareni','Dark Fantasy',null,null),
-  fa(843,'Blackthorn','J.T. Geissinger','Dark Fantasy',null,null),
-  fa(844,'The Last Wish of Bristol Keats','Mary E. Pearson','High Fantasy',null,null),
-  fa(845,'Warrior Princess Assassin','Brigid Kemmerer','YA Fantasy',null,null),
-  fa(846,'Crowntide','Alex Aster','YA Fantasy','Lightlark',4),
-  fa(847,'Glorious Rivals','Jennifer Lynn Barnes','YA Fantasy',null,null),
-  m(848,'The Cruel Dawn','Rachel Howzell Hall','Thriller',null,null),
-  r(849,"He Knows When You're Awake",'Alta Hensley','Dark Romance',null,null),
-  cl(850,'Great Short Works of Fyodor Dostoevsky','Fyodor Dostoevsky','Russian Lit'),
-  r(851,'Chasing the Wild','Elliott Rose','Contemporary Romance',null,null),
-  r(852,'Taming the Heart','Elliott Rose','Contemporary Romance',null,null),
-  r(853,"He Sees You When You're Sleeping",'Alta Hensley','Dark Romance',null,null),
-  co(854,'One Golden Summer','Carley Fortune','Contemporary Fiction',null,null),
-  r(855,'Game On','Navessa Allen','Sports Romance',null,null),
-  r(856,'Severed Heart','Kate Stewart','Dark Romance',null,null),
-  r(857,'The Defender','Ana Huang','Sports Romance',null,null),
-  r(858,'Scotch on the Rocks','Elliot Fletcher','Contemporary Romance',null,null),
-  m(859,'Finlay Donovan Digs Her Own Grave','Elle Cosimano','Cozy Mystery','Finlay Donovan',5),
-  fa(860,'House of Pounding Hearts','Olivia Wildenstein','Dark Fantasy',null,null),
-  fa(861,'The Captive and the First Blood Game','K.A. Linde','Dark Fantasy',null,null),
 
-  // New additions & stack inclusions
-  fa(862,'Ash Princess','Laura Sebastian','YA Fantasy','Ash Princess',1),
-  fa(863,'Lady Smoke','Laura Sebastian','YA Fantasy','Ash Princess',2),
-  fa(864,'Ember Queen','Laura Sebastian','YA Fantasy','Ash Princess',3),
-  fa(865,'A Forsaken Prophecy','Stacey McEwan','Dark Fantasy','The Artisan Trilogy',2),
-  rt(866,'Eldritch','Keri Lake','The Eating Woods',2),
+  // Other Standalone Romances & Fiction
+  h(72,'House of Hollow','Krystal Sutherland','Dark Fiction',null,null),
+  h(312,'Gothikana','RuNyx','Gothic Horror',null,null),
+  m(203,'Gone Girl','Gillian Flynn','Thriller',null,null),
+  m(204,'The Witness','Sandra Brown','Thriller',null,null),
+  m(313,'Silence and Shadows','Beaty','Thriller',null,null),
+  m(126,'The Mindfck Series','S.T. Abby','Dark Thriller','The Mindfck Series',null),
+  m(887,'Murdles: Ready, Set, Solve!','G.T. Karber','Cozy Mystery','Murdles',2),
+
+  co(276,'Me Before You','Jojo Moyes','Contemporary Fiction','Me Before You',1),
+  co(280,'Normal People','Sally Rooney','Literary Fiction',null,null),
+  co(281,'The Fault in Our Stars','John Green','Contemporary Fiction',null,null),
+  co(301,'Lessons in Chemistry','Bonnie Garmus','Literary Fiction',null,null),
+  co(308,'The Perks of Being a Wallflower','Stephen Chbosky','Contemporary Fiction',null,null),
+  co(315,'A Brief History of Living Forever','Jaroslav Kalfar','Literary Fiction',null,null),
+  co(499,'The Seven Husbands of Evelyn Hugo','Taylor Jenkins Reid','Literary Fiction',null,null),
+  co(642,'The Spellshop','Sarah Henning','Cozy Fiction',null,null),
+  co(643,'The Enchanted Greenhouse','Unknown','Cozy Fiction',null,null),
+  co(854,'One Golden Summer','Carley Fortune','Contemporary Fiction',null,null),
+
+  r(118,'The Predator','RUNYX','Dark Romance',null,null),
+  r(125,'Highest Bidder','L.Landish & W.Winters','Dark Romance',null,null),
+  r(131,"The Mercenary's Mortician",'Alexandra St. Pierre','Dark Romance',null,null),
+  r(149,'The Initiation','Nikki Sloane','Dark Romance',null,null),
+  r(150,'Insatiable','Leigh Rivers','Dark Romance','Edge of Darkness',1),
+  r(152,'That Sik Luv','Jescie Hall','Dark Romance',null,null),
+  r(185,'Promises & Pomegranates','Sav R. Miller','Dark Romance','Monsters & Muses',1),
+  r(174,'Hot Hex Boyfriend','Carly Bloom','Contemporary Romance',null,null),
+  r(175,'Happy Medium','Sarah Adler','Contemporary Romance',null,null),
+  r(117,'A Heart for Christmas','Sophie Jomain','Holiday Romance',null,null),
+  r(293,'All Rhodes Lead Here','Mariana Zapata','Contemporary Romance',null,null),
+  r(303,'The Enchanted Hacienda','J.C. Cervantes','Contemporary Romance',null,null),
+  r(316,'Ruling Destiny','Alyson Noel','Contemporary Romance',null,null),
+  r(414,'Whiskey Business','K.A. Tucker','Contemporary Romance',null,null),
+  r(425,'It Happened in a Heartbeat','Unknown','Contemporary Romance',null,null),
+  r(427,'Secretly Yours','Helena Hunting','Contemporary Romance',null,null),
+  r(445,'Secretly Married','Trrevistenglimmer','Contemporary Romance',null,null),
+  r(449,'My Prince (Books 1 & 2)','Alyloony','Contemporary Romance','My Prince',null),
+  r(452,'Love Me Harder','Jamille Fuma','Contemporary Romance',null,null),
+  r(467,'Toxic','Shana Del Viejo','Contemporary Romance',null,null),
+  r(468,'My Not-So Secret Fiancé','Autumn Castillo','Contemporary Romance',null,null),
+  r(469,"Creed's Lover",'C.C.','Dark Romance',null,null),
+  r(478,'Play the Queen','AkosiIbarra','Contemporary Romance',null,null),
+  r(482,'Marrying Mr. Popular','Chrispepper','Contemporary Romance',null,null),
+  r(483,'Unwanted Marriage','OwwSIC','Contemporary Romance',null,null),
+  r(484,"Let's Talk About Us",'Marielicious','New Adult Romance',null,null),
+  r(485,'The Sixth String','Purplena','Contemporary Romance',null,null),
+  r(486,'Apple Snap','Crestfallenmoon','Contemporary Romance',null,null),
+  r(487,'Bridal Shower','Soju','Contemporary Romance',null,null),
+  r(488,'My Naughty Love','Mizrian49','Contemporary Romance',null,null),
+  r(494,'Say You Swear','Meagan Brandy','Contemporary Romance',null,null),
+  fa(533,"Barbarian's Mate",'Ruby Dixon','Paranormal Romance','Ice Planet Barbarians',null),
+  r(535,'Dowry of Blood','S.T. Gibson','Dark Romance',null,null),
+  r(536,"A Demon's Guide to Wooing a Witch",'Sarah Hawley','Contemporary Romance',null,null),
+  r(537,'What the Hex','Jessica Clare','Contemporary Romance',null,null),
+  r(550,'Love and Other Flight Delays','Denise Williams','Contemporary Romance',null,null),
+  r(558,'The Happy Ever After Playlist','Abby Jimenez','Contemporary Romance',null,null),
+  r(559,'The Friend Zone','Abby Jimenez','Contemporary Romance',null,null),
+  r(560,'Next-Door Nemesis','Alexa Martin','Contemporary Romance',null,null),
+  r(562,"Archer's Voice",'Mia Sheridan','Contemporary Romance',null,null),
+  r(563,'Same Time Next Summer','Annabel Monaghan','Contemporary Romance',null,null),
+  r(564,'The Breakup Tour','E. Wibberley & A. Siegemund-Broka','Contemporary Romance',null,null),
+  r(565,'Summer Reading','Jenn McKinlay','Contemporary Romance',null,null),
+  r(566,'Collide','Bal Khabra','Sports Romance',null,null),
+  r(567,'Canadian Boyfriend','Jenny Holiday','Contemporary Romance',null,null),
+  r(573,'Psyche and Eros','Luna McNamara','Contemporary Romance',null,null),
+  r(576,'Tweet Cute','Emma Lord','Contemporary Romance',null,null),
+  r(578,'Book Lovers','Emily Henry','Contemporary Romance',null,null),
+  r(579,'If I Stopped Haunting You','Colby Wilkens','Contemporary Romance',null,null),
+  r(584,'Cross My Heart','Roxy Sloane','Contemporary Romance',null,null),
+  r(585,'That Prince is Mine','Jacy Lee','Contemporary Romance',null,null),
+  r(592,'Sanctuary of the Shadow','Aurora Ascher','Dark Romance',null,null),
+  r(593,'Heavenbreaker','Sara Wolf','Dark Romance',null,null),
+  r(629,'Repeat After Me','Jessica Warman','Contemporary Romance',null,null),
+  r(790,'Hideaway Heart','Melanie Harlow','Contemporary Romance',null,null),
+  r(796,'Just Ducky','C.A. King','Contemporary Romance',null,null),
+  r(802,'Wreath of Love','Vanessa Stock','Dark Romance',null,null),
+  r(817,'Little Mouse','Emily Rose','Dark Romance',null,null),
+  r(858,'Scotch on the Rocks','Elliot Fletcher','Contemporary Romance',null,null),
   rt(867,'The Poison Daughter','Sheila Masterson',null,null),
   rt(868,"The Dark Lord's Guide to Dating",'Tiffany Hunt','Guides to Villainy and Love',1),
-  rt(869,'Adversary to the Villain','Hannah Nicole Maehrer','The Villain',4),
-  r(870,'The Kings of Kearny','Navessa Allen','Dark Romance',null,null),
   rt(871,'Rings of Fate','Melissa de la Cruz','Curses and Crowns',1),
-  fa(872,'The Thorn Queen','Sasha Peyton Smith','YA Fantasy','The Rose Bargain',2),
-  r(873,'The Wicked','Rebecca Johnpee','Dark Romance','The Wicked Trilogy',1),
-  fa(874,'Nevernight','Jay Kristoff','Dark Fantasy','The Nevernight Chronicle',1),
-  r(875,'In Her Own League','Liz Tomforde','Sports Romance',null,null),
-  fa(876,'Starchaser','R.M. Gray','Dark Fantasy','Nightweaver',2),
-  r(877,'Madame','Sara Cate','Dark Romance','Salacious Players Club',6),
-  r(878,'Highest Bidder','Sara Cate','Dark Romance','Salacious Players Club',5),
-  r(879,'Mercy','Sara Cate','Dark Romance','Salacious Players Club',4),
-  r(880,'Give Me More','Sara Cate','Dark Romance','Salacious Players Club',3),
-  r(881,'Eyes On Me','Sara Cate','Dark Romance','Salacious Players Club',2),
-  r(882,'Praise','Sara Cate','Dark Romance','Salacious Players Club',1),
-  fa(883,'Clockwork Angel','Cassandra Clare','YA Fantasy','The Infernal Devices',1),
-  fa(884,'Clockwork Prince','Cassandra Clare','YA Fantasy','The Infernal Devices',2),
-  fa(885,'Clockwork Princess','Cassandra Clare','YA Fantasy','The Infernal Devices',3),
-  r(886,'The Rebel and the Final Blood War','K.A. Linde','Dark Romance','Blood Type',3),
-  m(887,'Murdles: Ready, Set, Solve!','G.T. Karber','Cozy Mystery','Murdles',2),
-  r(888,'Destructively Mine','Krista & Becca Ritchie','Contemporary Romance','Webs We Weave',2),
-  fa(889,'Daggermouth','H.M. Wolfe','Dark Fantasy','The Heart Duology',1),
-  m(890,'Killer Spirit','Jennifer Lynn Barnes','YA Mystery','The Squad',2),
-  fa(891,'Steelborn','Taylor J. LaRue','High Fantasy','The Steelborn Saga',1),
+  rt(873,'The Wicked','Rebecca Johnpee','Dark Romance','The Wicked Trilogy',1),
   rt(892,'The Witch in the Dead of Night','Charlotte Buckley','The Flamebearer Trilogy',1),
-  rt(893,'The Wolf King','Lauren Palphreyman','The Wolf King',1),
-  rt(894,'The Night Prince','Lauren Palphreyman','The Wolf King',2),
-  r(895,'Love Song','Elle Kennedy','College Romance','Campus Diaries',3),
-  r(896,'Reign of the Queen','A.L. Maruga','Dark Romance','The Crowned Series',1),
-  r(897,'Fall of a King','A.L. Maruga','Dark Romance','The Crowned Series',2),
-  r(898,'Corrupted Kingdom','A.L. Maruga','Dark Romance','The Crowned Series',3),
-  fa(899,'A Shadow Crown','Melissa Blair','Dark Fantasy','The Halfling Saga',2),
-  fa(900,'The Lies of Lena','Kylie Snow','YA Fantasy',null,null),
   rt(901,'Blood Bound','Ellis Hunter',null,null),
-  rt(902,'Heavenly Bodies','Imani Erriu','The Heavenly Bodies Series',1),
-  rt(903,'Fallen Stars','Imani Erriu','The Heavenly Bodies Series',2),
+
+  // Other Standalone Fantasy
+  fa(64,'House of Blight','Mayen R. Martineau','Dark Fantasy',null,null),
+  fa(67,'I Will Not Let Them Take Me','Unknown','Dark Fantasy',null,null),
+  rt(69,'Behooved','M. Stevenson',null,null),
+  rt(63,'The Serpent and the Wolf','Rebecca Robinson',null,null),
+  fa(106,'The Nightblood Prince','Molly X. Chang','YA Fantasy',null,null),
+  fa(161,'Dawn of the Firebird','Sarah Mughal Rana','YA Fantasy',null,null),
+  rt(163,'Thorn Season','Kiera Azar',null,null),
+  fa(164,'Fallen City','Adrienne Young','YA Fantasy',null,null),
+  fa(165,'Seven Deadly Thorns','Amber Hamilton','Dark Fantasy',null,null),
+  rt(166,'Alchemised','Senlinyu',null,null),
+  rt(190,'Inadequate Heir','Bridget E. Baker',null,null),
+  fa(306,'The Phoenix King','Aparna Verma','High Fantasy','The Ravence Trilogy',1),
+  fa(497,'For She is Wrath','Emily Varga','Dark Fantasy',null,null),
+  fa(498,'The Gods Below','Andrea Stewart','High Fantasy','The Hollow Covenant',1),
+  fa(501,'Heir of Storms','Lauryn Hamilton Murray','High Fantasy',null,null),
+  fa(502,'The God and the Gumiho','Sophie Kim','YA Fantasy',null,null),
+  fa(503,'The Girl With No Reflection','Keshe Chow','YA Fantasy',null,null),
+  fa(504,'The Teller of Small Fortunes','Julie Leong','High Fantasy',null,null),
+  fa(505,"The Swan's Daughter",'Roshani Chokshi','YA Fantasy',null,null),
+  fa(506,'Long Live Evil','Sarah Rees Brennan','Dark Fantasy',null,null),
+  fa(507,'The Dagger and the Flame','Catherine Doyle','Dark Fantasy','The City of Fantome',1),
+  fa(514,'Godkiller','Hannah Kaner','High Fantasy','Fallen Gods',1),
+  fa(515,'The Gilded Crown','Marianne Gordon','High Fantasy',null,null),
+  fa(517,'Never the Roses','Jennifer K. Lambert','Dark Fantasy',null,null),
+  fa(523,'The Night Ends with Fire','K.X. Song','High Fantasy',null,null),
+  fa(527,'This Monster of Mine','Shalini Abeysekara','YA Fantasy',null,null),
+  fa(528,'Where Shadows Meet','Patrice Caldwell','YA Fantasy',null,null),
+  fa(529,'The Scorpion and the Night Blossom','Amélie Wen Zhao','Historical Fantasy',null,null),
+  fa(605,'A Dance of Lies','Brittney Arena','YA Fantasy',null,null),
+  fa(606,'Sorcery and Small Magics','Maiga Doocy','YA Fantasy',null,null),
+  fa(607,'Graceless Heart','Isabel Ibanez','YA Fantasy',null,null),
+  fa(608,'A Song to Drown Rivers','Ann Liang','Historical Fantasy',null,null),
+  fa(609,'Firebird','Juliette Cross','Dark Fantasy',null,null),
+  rt(610,'Immortal Consequences','I.V. Marie',null,null),
+  fa(616,'The Floating World','Axie Oh','YA Fantasy',null,null),
+  fa(618,'A Language of Dragons','S.F. Williamson','YA Fantasy',null,null),
+  fa(619,'Sleep Like Death','Kalynn Bayron','YA Fantasy',null,null),
+  fa(621,'The Glittering Edge','Alyssa Villaire','Dark Fantasy',null,null),
+  fa(622,'Gifted & Talented','Olivie Blake','Dark Fantasy',null,null),
+  fa(623,'Cruel is the Light','Sophie Clark','YA Fantasy',null,null),
+  fa(624,'The Never List','Jade Presley','Dark Fantasy',null,null),
+  fa(625,'The Half King','Melissa Landers','YA Fantasy',null,null),
+  fa(626,'For Whom the Belle Tolls','Jaysea Lynn','Dark Fantasy',null,null),
+  fa(634,'Taken to the Fae','Jesse Elliott','Dark Fantasy',null,null),
+  rt(635,'The Wingless King','K.C. Wayssem',null,null),
+  fa(638,'Phantasma','Kaylie Smith','Dark Fantasy',null,null),
+  fa(639,'Enchantry','Kaylie Smith','Dark Fantasy',null,null),
+  fa(774,'Blood Scion','Deborah Falaye','YA Fantasy',null,null),
+  fa(785,'The Library at Hellebore','Cassandra Khaw','Dark Fantasy',null,null),
+  rt(788,'Fallen Gods','Rachel Van Dyken',null,null),
+  fa(812,'Blood Oath','J.A. Carter','High Fantasy',null,null),
+  fa(830,'Den of Liars','Olson','Dark Fantasy',null,null),
+  fa(836,'Song of the Six Realms','Lin','Historical Fantasy',null,null),
+  fa(839,'A Curse of Shadows and Ice','Catharina Maura','Dark Fantasy',null,null),
+  fa(841,'I, Songbird of the Sorrows','Braidee Otto','Dark Fantasy',null,null),
+  fa(842,'Deathbringer','Sonia Tagliareni','Dark Fantasy',null,null),
+  fa(860,'House of Pounding Hearts','Olivia Wildenstein','Dark Fantasy',null,null),
+  fa(889,'Daggermouth','H.M. Wolfe','Dark Fantasy','The Heart Duology',1),
+  fa(891,'Steelborn','Taylor J. LaRue','High Fantasy','The Steelborn Saga',1),
+  fa(900,'The Lies of Lena','Kylie Snow','YA Fantasy',null,null)
 ];
 
 const seen = new Set<number>();
