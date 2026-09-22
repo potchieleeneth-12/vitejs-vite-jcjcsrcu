@@ -3675,7 +3675,10 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
       })));
     } catch (err: any) { 
       setScanErr(err.message || "Couldn't read the shelf — try a clearer photo with good lighting."); 
-    };
+    }
+    setScanning(false);
+  }; // <--- This properly closes runScan
+
   const toggleOne=(i:number)=>setScanned(p=>p.map((b,j)=>j===i?{...b,selected:!b.selected}:b));
 
   const toggleAll=(v:boolean)=>setScanned(p=>p.map(b=>({...b,selected:v})));
