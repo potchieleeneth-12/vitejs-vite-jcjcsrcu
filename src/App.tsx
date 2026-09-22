@@ -5148,32 +5148,18 @@ export default function App() {
 
 
 
-      {delId&&(
-
+{delId&&(
         <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.75)',padding:'1rem' }}>
-
           <div style={{ background:'#0e0b1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'1rem',padding:'1.5rem',width:'100%',maxWidth:'320px' }}>
-
             <h3 style={{ color:'white',fontWeight:'bold',marginBottom:'0.375rem' }}>Remove this book?</h3>
-
             <p style={{ color:'rgba(255,255,255,0.4)',fontSize:'0.85rem',marginBottom:'1.25rem' }}>This cannot be undone.</p>
-
             <div style={{ display:'flex',gap:'0.75rem' }}>
-
               <button onClick={()=>{persist(books.filter((b:any)=>b.id!==delId));setDelId(null);}} style={{ flex:1,background:'#dc2626',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.625rem',fontWeight:'600',cursor:'pointer' }}>Remove</button>
-
               <button onClick={()=>setDelId(null)} style={{ flex:1,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.5)',border:'none',borderRadius:'0.75rem',padding:'0.625rem',cursor:'pointer' }}>Cancel</button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
     </div>
-
   );
-
 }
