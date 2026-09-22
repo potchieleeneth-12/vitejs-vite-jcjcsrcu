@@ -234,18 +234,6 @@ const nf  = (id: number, t: string, a: string, sg: string)                      
 
 
 
-const fileToBase64 = (file: File): Promise<string> => new Promise((res, rej) => {
-
-  const reader = new FileReader();
-
-  reader.onload  = () => res((reader.result as string).split(',')[1]);
-
-  reader.onerror = rej;
-
-  reader.readAsDataURL(file);
-
-});
-
 // Place this right below fileToBase64
 const processAndCompressImage = (file: File, maxDimension = 1500): Promise<{ b64: string; mime: string }> => {
   return new Promise((resolve, reject) => {
