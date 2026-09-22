@@ -3530,8 +3530,9 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
     } catch {
       setIdMsg("Couldn't identify — fill in manually.");
     }
-
-
+    setId(false);
+    setTimeout(() => setIdMsg(''), 3000);
+  };
 
   const submitSingle = () => {
 
