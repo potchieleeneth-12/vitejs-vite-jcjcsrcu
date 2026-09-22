@@ -218,7 +218,13 @@ const migrateBooks = (books: any[]) => books.map((b: any) => ({
 
 const fa  = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Fantasy',         subgenre: sg, series: sr, sn });
 
-const rt  = (id: number, t: string, a: string, sr: string | null, sn: number | null)              => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romantasy',        subgenre: 'Romantasy', series: sr, sn });
+const rt = (id: number, t: string, a: string, arg4: string | null, arg5: any = null, arg6: number | null = null) => {
+  const has6Args = arg6 !== null && arg6 !== undefined;
+  const subgenre = has6Args ? (arg4 || 'Romantasy') : 'Romantasy';
+  const series = has6Args ? arg5 : arg4;
+  const sn = has6Args ? arg6 : arg5;
+  return base({ id, title: t, author: a, category: 'Fiction', genre: 'Romantasy', subgenre, series, sn });
+};
 
 const r   = (id: number, t: string, a: string, sg: string, sr: string | null, sn: number | null) => base({ id, title: t, author: a, category: 'Fiction', genre: 'Romance',          subgenre: sg, series: sr, sn });
 
@@ -1134,19 +1140,17 @@ const SEED = [
   fa(860,'House of Pounding Hearts','Olivia Wildenstein','Dark Fantasy',null,null),
   fa(861,'The Captive and the First Blood Game','K.A. Linde','Dark Fantasy',null,null),
 
-  // Explicit additions requested
+  // New additions & stack inclusions
   fa(862,'Ash Princess','Laura Sebastian','YA Fantasy','Ash Princess',1),
   fa(863,'Lady Smoke','Laura Sebastian','YA Fantasy','Ash Princess',2),
   fa(864,'Ember Queen','Laura Sebastian','YA Fantasy','Ash Princess',3),
   fa(865,'A Forsaken Prophecy','Stacey McEwan','Dark Fantasy','The Artisan Trilogy',2),
-  rt(866,'Eldritch','Keri Lake','Dark Romance','The Eating Woods',2),
-  rt(867,'The Poison Daughter','Sheila Masterson','Romantasy',null,null),
-  rt(868,"The Dark Lord's Guide to Dating",'Tiffany Hunt','Romantasy','Guides to Villainy and Love',1),
-  rt(869,'Adversary to the Villain','Hannah Nicole Maehrer','Romantasy','The Villain',4),
-
-  // Stack additions from images
+  rt(866,'Eldritch','Keri Lake','The Eating Woods',2),
+  rt(867,'The Poison Daughter','Sheila Masterson',null,null),
+  rt(868,"The Dark Lord's Guide to Dating",'Tiffany Hunt','Guides to Villainy and Love',1),
+  rt(869,'Adversary to the Villain','Hannah Nicole Maehrer','The Villain',4),
   r(870,'The Kings of Kearny','Navessa Allen','Dark Romance',null,null),
-  rt(871,'Rings of Fate','Melissa de la Cruz','Romantasy','Curses and Crowns',1),
+  rt(871,'Rings of Fate','Melissa de la Cruz','Curses and Crowns',1),
   fa(872,'The Thorn Queen','Sasha Peyton Smith','YA Fantasy','The Rose Bargain',2),
   r(873,'The Wicked','Rebecca Johnpee','Dark Romance','The Wicked Trilogy',1),
   fa(874,'Nevernight','Jay Kristoff','Dark Fantasy','The Nevernight Chronicle',1),
@@ -1161,31 +1165,25 @@ const SEED = [
   fa(883,'Clockwork Angel','Cassandra Clare','YA Fantasy','The Infernal Devices',1),
   fa(884,'Clockwork Prince','Cassandra Clare','YA Fantasy','The Infernal Devices',2),
   fa(885,'Clockwork Princess','Cassandra Clare','YA Fantasy','The Infernal Devices',3),
-  rt(886,'The Rebel and the Final Blood War','K.A. Linde','Dark Romance','Blood Type',3),
+  r(886,'The Rebel and the Final Blood War','K.A. Linde','Dark Romance','Blood Type',3),
   m(887,'Murdles: Ready, Set, Solve!','G.T. Karber','Cozy Mystery','Murdles',2),
   r(888,'Destructively Mine','Krista & Becca Ritchie','Contemporary Romance','Webs We Weave',2),
   fa(889,'Daggermouth','H.M. Wolfe','Dark Fantasy','The Heart Duology',1),
   m(890,'Killer Spirit','Jennifer Lynn Barnes','YA Mystery','The Squad',2),
   fa(891,'Steelborn','Taylor J. LaRue','High Fantasy','The Steelborn Saga',1),
-  rt(892,'The Witch in the Dead of Night','Charlotte Buckley','Romantasy','The Flamebearer Trilogy',1),
-
-  // New Image Additions (Batch 2)
-  rt(893,'The Wolf King','Lauren Palphreyman','Romantasy','The Wolf King',1),
-  rt(894,'The Night Prince','Lauren Palphreyman','Romantasy','The Wolf King',2),
+  rt(892,'The Witch in the Dead of Night','Charlotte Buckley','The Flamebearer Trilogy',1),
+  rt(893,'The Wolf King','Lauren Palphreyman','The Wolf King',1),
+  rt(894,'The Night Prince','Lauren Palphreyman','The Wolf King',2),
   r(895,'Love Song','Elle Kennedy','College Romance','Campus Diaries',3),
   r(896,'Reign of the Queen','A.L. Maruga','Dark Romance','The Crowned Series',1),
   r(897,'Fall of a King','A.L. Maruga','Dark Romance','The Crowned Series',2),
   r(898,'Corrupted Kingdom','A.L. Maruga','Dark Romance','The Crowned Series',3),
   fa(899,'A Shadow Crown','Melissa Blair','Dark Fantasy','The Halfling Saga',2),
   fa(900,'The Lies of Lena','Kylie Snow','YA Fantasy',null,null),
-  rt(901,'Blood Bound','Ellis Hunter','Romantasy',null,null),
-
-  // Heavenly Bodies Series
-  rt(902, 'Heavenly Bodies', 'Imani Erriu', 'The Heavenly Bodies Series', 1),
-  rt(903, 'Fallen Stars', 'Imani Erriu', 'The Heavenly Bodies Series', 2),
+  rt(901,'Blood Bound','Ellis Hunter',null,null),
+  rt(902,'Heavenly Bodies','Imani Erriu','The Heavenly Bodies Series',1),
+  rt(903,'Fallen Stars','Imani Erriu','The Heavenly Bodies Series',2),
 ];
-
-
 
 const seen = new Set<number>();
 
