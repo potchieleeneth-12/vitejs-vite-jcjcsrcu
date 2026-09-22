@@ -4141,7 +4141,7 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022', // Updated to valid Anthropic model
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 3000,
           messages: [{
             role: 'user',
@@ -4152,6 +4152,31 @@ function ModalForm({ book, onSave, onSaveMany, onClose, tab, allSeries, allBooks
           }]
         }),
       });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+      const rawText = data.content?.[0]?.text || '';
+
+      const match = rawText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (!match) throw new Error("Could not parse book list from photo response.");
+
+      const list = JSON.parse(match[0]);
+      if (!Array.isArray(list)) throw new Error("Parsed result is not an array.");
+
+      setScanned(list.map((b: any) => ({
+        title: b.title || '',
+        author: b.author || '',
+        selected: true
+      })));
+    } catch (err: any) { 
+      setScanErr(err.message || "Couldn't read the shelf — try a clearer photo with good lighting."); 
+    }
+    setScanning(false);
+  };
 
       // Catch HTTP API errors (400, 413, 500)
       if (!res.ok) {
@@ -5429,53 +5454,6 @@ export default function App() {
           </div>
         );
       })()}
-
-
-
-    {/* Top Authors */}
-
-    {authorData.length>0&&(
-
-      <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-
-        <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Authors</div>
-
-        <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
-
-          {authorData.map(({author,count})=>(
-
-            <div key={author} style={{ marginBottom:'0.35rem',cursor:'pointer' }} onClick={()=>setAuthorModal(author)}>
-
-              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
-
-                <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.65)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'75%' }}>{author}</span>
-
-                <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',flexShrink:0 }}>{count} {count===1?'book':'books'}</span>
-
-              </div>
-
-              <div style={{ height:'5px',borderRadius:'9999px',background:'rgba(255,255,255,0.05)',overflow:'hidden' }}>
-
-                <div style={{ width:`${(count/maxAuthor)*100}%`,height:'100%',background:'#a78bfa',borderRadius:'9999px',transition:'width 0.5s' }}/>
-
-              </div>
-
-            </div>
-
-          ))}
-
-        </div>
-
-      </div>
-
-    )}
-
-  </div>
-
-        );
-
-      })()}
-
 
 
       {tab!=='home'&&tab!=='insights'&&(
