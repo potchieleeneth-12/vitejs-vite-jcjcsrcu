@@ -2423,6 +2423,41 @@ function AllSeriesModal({ seriesData, onClose, onSeriesClick }: { seriesData: an
   );
 }
 
+// ── AllAuthorsModal ────────────────────────────────────────────────────────────
+function AllAuthorsModal({ authorData, onClose, onAuthorClick }: { authorData: any[]; onClose: () => void; onAuthorClick: (name: string) => void }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)', padding: '1rem' }}>
+      <div style={{ background: '#0e0b1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', padding: '1.5rem', width: '100%', maxWidth: '560px', maxHeight: '85vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div>
+            <h3 style={{ color: 'white', fontWeight: 'bold', fontSize: '1rem', marginBottom: '0.2rem' }}>✍️ All Author Collections</h3>
+            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>{authorData.length} authors tracked</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+          {authorData.map(({ author, owned, read, pct }) => (
+            <div 
+              key={author} 
+              onClick={() => { onClose(); onAuthorClick(author); }}
+              style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '0.6rem', padding: '0.5rem 0.65rem', border: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+            >
+              <div style={{ fontSize: '0.7rem', color: 'white', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.2rem' }}>{author}</div>
+              <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', marginBottom: '0.3rem' }}>{read} of {owned} read</div>
+              <div style={{ height: '4px', borderRadius: '9999px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                <div style={{ width: `${pct}%`, height: '100%', background: pct === 100 ? '#34d399' : '#fb7185', borderRadius: '9999px', transition: 'width 0.5s' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── AuthorModal ────────────────────────────────────────────────────────────────
 
 function AuthorModal({ author, books, onClose, onBookDetail }: { author: string; books: any[]; onClose: () => void; onBookDetail: (b: any) => void }) {
@@ -2507,6 +2542,8 @@ function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: any; onC
   const [rating, setRating] = useState<number|null>(book.rating ?? null);
 
   const [editingNote, setEditingNote] = useState(false);
+
+  const [customYear, setCustomYear] = useState<string>(String(book.readYear || THIS_YEAR));
 
   const cfg = GENRE_CFG[book.genre] || GENRE_CFG['Fantasy'];
 
@@ -2698,11 +2735,113 @@ function BookDetailModal({ book, onClose, onUpdate, onReread }: { book: any; onC
 
         )}
 
-        <div style={{ display:'flex',gap:'0.5rem',flexWrap:'wrap' }}>
+        {/* Updated Action Buttons Section */}
 
-          {book.read&&(<button onClick={()=>onReread(book.id)} style={{ flex:1,minWidth:'120px',background:'rgba(167,139,250,0.1)',color:'#a78bfa',border:'1px solid rgba(167,139,250,0.3)',borderRadius:'0.75rem',padding:'0.55rem',fontWeight:600,cursor:'pointer',fontSize:'0.78rem' }}>🔁 Re-read in {THIS_YEAR}</button>)}
+        <div style={{ display:'flex',gap:'0.5rem',flexWrap:'wrap',alignItems:'center' }}>
 
-          <button onClick={()=>{onUpdate(book.id,{read:!book.read,readYear:!book.read?THIS_YEAR:null,readAt:!book.read?Date.now():null});onClose();}} style={{ flex:1,minWidth:'120px',background:book.read?'rgba(239,68,68,0.1)':'rgba(52,211,153,0.1)',color:book.read?'#f87171':'#34d399',border:`1px solid ${book.read?'rgba(239,68,68,0.3)':'rgba(52,211,153,0.3)'}`,borderRadius:'0.75rem',padding:'0.55rem',fontWeight:600,cursor:'pointer',fontSize:'0.78rem' }}>{book.read?'Mark Unread':'✓ Mark Read'}</button>
+          {book.read&&(
+
+            <button onClick={()=>onReread(book.id)} style={{ flex:1,minWidth:'120px',background:'rgba(167,139,250,0.1)',color:'#a78bfa',border:'1px solid rgba(167,139,250,0.3)',borderRadius:'0.75rem',padding:'0.55rem',fontWeight:600,cursor:'pointer',fontSize:'0.78rem' }}>🔁 Re-read in {THIS_YEAR}</button>
+
+          )}
+
+          {!book.read ? (
+
+            <div style={{ display: 'flex', gap: '0.4rem', flex: 1, minWidth: '180px' }}>
+
+              <input
+
+                type="number"
+
+                value={customYear}
+
+                onChange={(e) => setCustomYear(e.target.value)}
+
+                placeholder={String(THIS_YEAR)}
+
+                style={{ width: '75px', background: 'rgba(255,255,255,0.08)', border: '1px solid #34d399', borderRadius: '0.75rem', padding: '0.55rem', color: 'white', fontSize: '0.8rem', textAlign: 'center' }}
+
+              />
+
+              <button
+
+                onClick={() => {
+
+                  const yr = Number(customYear) || THIS_YEAR;
+
+                  onUpdate(book.id, { read: true, readYear: yr, readAt: Date.now(), status: 'shelf' });
+
+                  onClose();
+
+                }}
+
+                style={{ flex: 1, background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)', borderRadius: '0.75rem', padding: '0.55rem', fontWeight: 600, cursor: 'pointer', fontSize: '0.78rem' }}
+
+              >
+
+                ✓ Mark Read
+
+              </button>
+
+            </div>
+
+          ) : (
+
+            <div style={{ display: 'flex', gap: '0.4rem', flex: 1, minWidth: '180px' }}>
+
+              <input
+
+                type="number"
+
+                value={customYear}
+
+                onChange={(e) => setCustomYear(e.target.value)}
+
+                placeholder={String(THIS_YEAR)}
+
+                style={{ width: '75px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '0.75rem', padding: '0.55rem', color: 'white', fontSize: '0.8rem', textAlign: 'center' }}
+
+              />
+
+              <button
+
+                onClick={() => {
+
+                  const yr = Number(customYear) || THIS_YEAR;
+
+                  onUpdate(book.id, { readYear: yr });
+
+                }}
+
+                style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '0.75rem', padding: '0.55rem 0.75rem', fontWeight: 600, cursor: 'pointer', fontSize: '0.78rem' }}
+
+              >
+
+                Update Year
+
+              </button>
+
+              <button
+
+                onClick={() => {
+
+                  onUpdate(book.id, { read: false, readYear: null, readAt: null });
+
+                  onClose();
+
+                }}
+
+                style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '0.75rem', padding: '0.55rem 0.75rem', fontWeight: 600, cursor: 'pointer', fontSize: '0.78rem' }}
+
+              >
+
+                Unread
+
+              </button>
+
+            </div>
+
+          )}
 
         </div>
 
@@ -4292,6 +4431,8 @@ export default function App() {
 
   const [showAllSeriesModal, setShowAllSeriesModal] = useState(false);
 
+  const [showAllAuthorsModal, setShowAllAuthorsModal] = useState(false);
+
   const [pendingRead, setPendingRead] = useState<{id:any;year:string}|null>(null);
 
   const [randomPick,  setRandomPick]  = useState<any[] | null>(null);
@@ -4825,6 +4966,7 @@ export default function App() {
       {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onBookDetail={b=>{setAuthorModal(null);setDetailBook(b);}}/>}
 
       {showAllSeriesModal && (
+
   <AllSeriesModal 
     seriesData={(() => {
       const seriesMap: Record<string,{owned:number,read:number}> = {};
@@ -4841,6 +4983,57 @@ export default function App() {
     onClose={() => setShowAllSeriesModal(false)} 
     onSeriesClick={(name) => setSeriesModal(name)}
   />
+)}
+
+{showAllAuthorsModal && (
+  <AllAuthorsModal 
+    authorData={(() => {
+      const c: Record<string,{owned:number,read:number}> = {};
+      books.forEach((b:any) => {
+        if (!c[b.author]) c[b.author] = {owned:0,read:0};
+        c[b.author].owned++;
+        if (b.read) c[b.author].read++;
+      });
+      return Object.entries(c).filter(([,v]) => v.owned >= 2) // Shows all authors with 2+ books
+        .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
+        .sort((a,b) => b.owned - a.owned);
+    })()} 
+    onClose={() => setShowAllAuthorsModal(false)} 
+    onAuthorClick={(name) => setAuthorModal(name)}
+  />
+)}
+
+{/* Author Collections */}
+{authorOwned.length>0&&(
+  <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
+    
+    {/* Clickable Header */}
+    <div 
+      onClick={() => setShowAllAuthorsModal(true)} 
+      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '0.65rem' }}
+    >
+      <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>
+        ✍️ Author Collections <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',fontWeight:400 }}>(tap to view all)</span>
+      </div>
+      <span style={{ fontSize: '0.72rem', color: '#fb7185', fontWeight: 600 }}>View All ➔</span>
+    </div>
+
+    {/* Truncated Preview (Top 4) */}
+    <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem' }}>
+      {authorOwned.slice(0, 4).map(({author,owned,read,pct})=>(
+        <div key={author} onClick={()=>setAuthorModal(author)} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer' }}
+          onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}
+          onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
+          <div style={{ fontSize:'0.7rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'0.2rem' }}>{author}</div>
+          <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.35)',marginBottom:'0.3rem' }}>{read} of {owned} read</div>
+          <div style={{ height:'4px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
+            <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#fb7185',borderRadius:'9999px',transition:'width 0.5s' }}/>
+          </div>
+        </div>
+      ))}
+    </div>
+
+  </div>
 )}
 
       {/* STICKY HEADER */}
