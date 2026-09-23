@@ -4578,7 +4578,51 @@ export default function App() {
   );
 
 
+  const syncGoodreads = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch('/.netlify/functions/goodreads');
+      if (!res.ok) throw new Error('Failed to fetch from Goodreads');
+      
+      const data = await res.json();
+      const grBooks = data.books || [];
 
+      let updatedBooks = [...books];
+
+      // This converts "House of Earth & Blood!" into "houseofearthandblood" for flawless matching
+      const normalize = (str: string) => 
+        str.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]/g, '');
+
+      grBooks.forEach((grBook: any) => {
+        const grTitleNorm = normalize(grBook.title);
+        
+        // Find matching book using the supercharged normalizer
+        const existingIndex = updatedBooks.findIndex(
+          b => normalize(b.title) === grTitleNorm
+        );
+
+        if (existingIndex >= 0) {
+          // If the book exists in your shelf but is unread, update it
+          if (!updatedBooks[existingIndex].read) {
+            updatedBooks[existingIndex] = {
+              ...updatedBooks[existingIndex],
+              read: true,
+              readAt: grBook.readAt,
+              readYear: new Date(grBook.readAt).getFullYear(),
+              status: 'shelf'
+            };
+          }
+        }
+      });
+
+      persist(updatedBooks);
+
+    } catch (err) {
+      console.error("Goodreads sync failed", err);
+    }
+    setSyncing(false);
+  };
+  
   if(firebaseReady&&!user) return (
 
     <div style={{ background:'#06040f',minHeight:'100vh',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:'2rem' }}>
