@@ -9,8 +9,12 @@ exports.handler = async (event) => {
     const feed = await parser.parseURL(rssUrl);
     
     const books = feed.items.map(item => {
-      // Goodreads titles often include "by Author" in the string. This cleans it up.
-      const titleClean = item.title.split(' by ')[0].trim();
+      // 1. Split out the "by Author" part if it exists
+      let titleClean = item.title.split(' by ')[0].trim();
+      
+      // 2. NEW: Strip out any series info in parentheses (e.g., "(The Empyrean, #1)")
+      titleClean = titleClean.replace(/\s*\(.*?\)\s*/g, '').trim();
+      
       const authorClean = item.creator || item.title.split(' by ')[1]?.trim() || 'Unknown Author';
       
       return {
