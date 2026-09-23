@@ -2369,7 +2369,7 @@ function SeriesModal({ seriesName, books, onClose, onUpdate, onBookDetail }: { s
 
                 <div style={{ display:'flex',flexDirection:'column',gap:'0.3rem',alignItems:'flex-end' }}>
 
-                  <button onClick={()=>onUpdate(b.id,{read:!b.read,readYear:!b.read?THIS_YEAR:null,readAt:!b.read?Date.now():null})} style={{ fontSize:'0.62rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',border:'1px solid',cursor:'pointer',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.4)'}) }}>{b.read?'✓ Read':'Unread'}</button>
+                <button onClick={()=>onBookDetail(b)} style={{ fontSize:'0.62rem',padding:'0.2rem 0.5rem',borderRadius:'9999px',border:'1px solid',cursor:'pointer',...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.4)'}) }}>{b.read?'✓ Read':'Unread'}</button>
 
                   {b.rating&&<StarRating rating={b.rating} size="sm"/>}
 
@@ -4703,7 +4703,7 @@ export default function App() {
 
                 {cfg.label}
 
-                {k!=='home'&&<span style={{ opacity:0.6,fontSize:'0.55rem',display:'block' }}>({k==='shelf'?counts.shelf:k==='tbr'?counts.tbr:k==='reading'?counts.reading:counts.wishlist})</span>}
+                {k!=='home' && k!=='insights' && <span style={{ opacity:0.6,fontSize:'0.55rem',display:'block' }}>({k==='shelf'?counts.shelf:k==='tbr'?counts.tbr:k==='reading'?counts.reading:counts.wishlist})</span>}
 
               </button>
 
@@ -4827,7 +4827,7 @@ export default function App() {
           });
           return Object.entries(seriesMap).filter(([,v]) => v.owned > 1)
             .map(([name,v]) => ({name, ...v, pct: Math.round((v.read/v.owned)*100)}))
-            .sort((a,b) => b.owned - a.owned).slice(0,8);
+            .sort((a,b) => b.owned - a.owned);
         })();
         const authorOwned = (() => {
           const c: Record<string,{owned:number,read:number}> = {};
