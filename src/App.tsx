@@ -4631,6 +4631,98 @@ export default function App() {
     }
     setSyncing(false);
   };
+  const grCsvInputRef = useRef<HTMLInputElement>(null);
+
+  const handleGRCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setSyncing(true);
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      
+      // 1. Custom CSV Parser to handle Goodreads' quoted columns
+      const rows: string[][] = [];
+      let row: string[] = [];
+      let inQuotes = false;
+      let val = '';
+      
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '"' && inQuotes && text[i + 1] === '"') { val += '"'; i++; }
+        else if (char === '"') { inQuotes = !inQuotes; }
+        else if (char === ',' && !inQuotes) { row.push(val.trim()); val = ''; }
+        else if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (char === '\r' && text[i + 1] === '\n') i++;
+          row.push(val.trim()); rows.push(row); row = []; val = '';
+        } else { val += char; }
+      }
+      if (row.length > 0) { row.push(val.trim()); rows.push(row); }
+
+      if (rows.length < 2) { setSyncing(false); return; }
+
+      // 2. Identify the correct columns from the Goodreads header row
+      const headers = rows[0].map(h => h.toLowerCase());
+      const titleIdx = headers.indexOf('title');
+      const authorIdx = headers.indexOf('author');
+      const shelfIdx = headers.indexOf('exclusive shelf');
+      const dateReadIdx = headers.indexOf('date read');
+
+      if (titleIdx === -1 || authorIdx === -1) {
+        alert("Invalid Goodreads CSV format. Make sure you exported directly from Goodreads.");
+        setSyncing(false);
+        return;
+      }
+
+      // 3. Match and Update
+      let updatedBooks = [...books];
+      const normalize = (str: string) => (str || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]/g, '');
+      let matchCount = 0;
+
+      for (let i = 1; i < rows.length; i++) {
+        const cols = rows[i];
+        if (cols.length < headers.length) continue;
+
+        const grTitle = normalize(cols[titleIdx]);
+        const grAuthor = normalize(cols[authorIdx]);
+        const shelf = cols[shelfIdx];
+        const dateRead = cols[dateReadIdx];
+
+        if (shelf === 'read') {
+          const existingIndex = updatedBooks.findIndex(b => {
+            const bTitle = normalize(b.title);
+            const bAuthor = normalize(b.author);
+            return (bAuthor.includes(grAuthor) || grAuthor.includes(bAuthor)) && 
+                   (bTitle.includes(grTitle) || grTitle.includes(bTitle));
+          });
+
+          // Only update if the book is found and currently marked as unread in your app
+          if (existingIndex >= 0 && !updatedBooks[existingIndex].read) {
+            const parsedDate = dateRead ? new Date(dateRead) : new Date();
+            updatedBooks[existingIndex] = {
+              ...updatedBooks[existingIndex],
+              read: true,
+              readAt: parsedDate.getTime() || Date.now(),
+              readYear: parsedDate.getFullYear() || THIS_YEAR,
+              status: 'shelf' // Moves it out of TBR if it was sitting there
+            };
+            matchCount++;
+          }
+        }
+      }
+
+      persist(updatedBooks);
+      setSyncing(false);
+      alert(`CSV Sync Complete! Found and updated ${matchCount} historical reads.`);
+      
+      // Reset the file input so you can use it again if needed
+      if (grCsvInputRef.current) grCsvInputRef.current.value = '';
+    };
+    
+    reader.readAsText(file);
+  };
 
   if(firebaseReady&&!user) return (
 
@@ -4735,6 +4827,11 @@ export default function App() {
               <button onClick={()=>exportCSV(books)} title="Export as CSV" style={{ background:'rgba(96,165,250,0.1)',color:'#60a5fa',border:'1px solid rgba(96,165,250,0.2)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>📤 CSV</button>
               
               <button onClick={syncGoodreads} title="Sync Goodreads" style={{ background:'rgba(52,211,153,0.1)',color:'#34d399',border:'1px solid rgba(52,211,153,0.2)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>🔄 Sync GR</button>
+
+              {/* Hidden file input for Goodreads CSV */}
+  <input ref={grCsvInputRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleGRCsvUpload} />
+
+<button onClick={() => grCsvInputRef.current?.click()} title="Import Goodreads CSV" style={{ background:'rgba(251,146,60,0.1)',color:'#fb923c',border:'1px solid rgba(251,146,60,0.2)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>📥 Import GR</button>
 
               <button onClick={()=>setModal('add')} style={{ background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.45rem 0.9rem',fontWeight:'600',cursor:'pointer',fontSize:'0.82rem' }}>+ Add</button>
 
