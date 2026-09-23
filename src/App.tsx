@@ -2331,8 +2331,7 @@ function YearBooksModal({ year, books, onClose, onBookClick }: { year: number; b
 
 // ── SeriesModal ────────────────────────────────────────────────────────────────
 
-function SeriesModal({ seriesName, books, onClose, onUpdate, onBookDetail }: { seriesName: string; books: any[]; onClose: () => void; onUpdate: (id: any, patch: any) => void; onBookDetail: (b: any) => void }) {
-
+function SeriesModal({ seriesName, books, onClose, onBookDetail }: { seriesName: string; books: any[]; onClose: () => void; onBookDetail: (b: any) => void }) {
   const sb = books.filter(b=>b.series===seriesName).sort((a,b)=>(a.sn??999)-(b.sn??999));
 
   return (
