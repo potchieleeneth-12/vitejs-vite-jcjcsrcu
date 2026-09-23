@@ -3,7 +3,7 @@ const parser = new Parser();
 
 exports.handler = async (event) => {
   // Replace with your actual Goodreads RSS URL
-  const rssUrl = 'https://www.goodreads.com/review/list_rss/136088818?key=9aH9qTvMzuUaHGCcaSOArVe-PSwqRXzkAGeO49KYGWVIEJoq&shelf=read';
+  const rssUrl = 'https://www.goodreads.com/review/list_rss/136088818?key=9aH9qTvMzuUaHGCcaSOArVe-PSwqRXzkAGeO49KYGWVIEJoq&shelf=read&per_page=100';
   
   try {
     const feed = await parser.parseURL(rssUrl);

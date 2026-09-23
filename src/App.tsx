@@ -4565,46 +4565,6 @@ export default function App() {
 
   };
 
-  const syncGoodreads = async () => {
-    setSyncing(true);
-    try {
-      const res = await fetch('/.netlify/functions/goodreads');
-      if (!res.ok) throw new Error('Failed to fetch from Goodreads');
-      
-      const data = await res.json();
-      const grBooks = data.books || [];
-  
-      let updatedBooks = [...books];
-  
-      grBooks.forEach((grBook: any) => {
-        // Find matching book by title (case-insensitive)
-        const existingIndex = updatedBooks.findIndex(
-          b => b.title.toLowerCase() === grBook.title.toLowerCase()
-        );
-  
-        if (existingIndex >= 0) {
-          // If the book exists in your shelf but is unread, update it
-          if (!updatedBooks[existingIndex].read) {
-            updatedBooks[existingIndex] = {
-              ...updatedBooks[existingIndex],
-              read: true,
-              readAt: grBook.readAt,
-              readYear: new Date(grBook.readAt).getFullYear(),
-              status: 'shelf'
-            };
-          }
-        }
-        // We removed the 'else' block here, so unknown books are simply ignored
-      });
-  
-      persist(updatedBooks);
-  
-    } catch (err) {
-      console.error("Goodreads sync failed", err);
-    }
-    setSyncing(false);
-  };
-
   if(!authReady||loading) return (
 
     <div style={{ background:'#06040f',minHeight:'100vh',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'0.75rem' }}>
