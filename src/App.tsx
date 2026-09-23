@@ -2396,8 +2396,8 @@ function SeriesModal({ seriesName, books, onClose, onBookDetail }: { seriesName:
 
 // ── AuthorModal ────────────────────────────────────────────────────────────────
 
-function AuthorModal({ author, books, onClose, onUpdate, onBookDetail }: { author: string; books: any[]; onClose: () => void; onUpdate: (id: any, patch: any) => void; onBookDetail: (b: any) => void }) {
-
+function AuthorModal({ author, books, onClose, onBookDetail }: { author: string; books: any[]; onClose: () => void; onBookDetail: (b: any) => void }) {
+  
   const ab = books.filter(b=>b.author===author).sort((a,b)=>{ if(a.series&&b.series){if(a.series!==b.series)return a.series.localeCompare(b.series);return(a.sn??999)-(b.sn??999);}if(a.series)return -1;if(b.series)return 1;return a.title.localeCompare(b.title); });
 
   const groups = useMemo(()=>{ const g: Record<string,any[]>={}; ab.forEach(b=>{const k=b.series||'__standalone__';if(!g[k])g[k]=[];g[k].push(b);}); return g; },[ab]);
@@ -2436,8 +2436,9 @@ function AuthorModal({ author, books, onClose, onUpdate, onBookDetail }: { autho
 
                   </div>
 
-                  <button onClick={()=>onUpdate(b.id,{read:!b.read,readYear:!b.read?THIS_YEAR:null,readAt:!b.read?Date.now():null})} style={{ fontSize:'0.6rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',border:'1px solid',cursor:'pointer',flexShrink:0,...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.4)'}) }}>{b.read?'✓':'Unread'}</button>
-
+                  <button onClick={()=>onBookDetail(b)} style={{ fontSize:'0.6rem',padding:'0.2rem 0.45rem',borderRadius:'9999px',border:'1px solid',cursor:'pointer',flexShrink:0,...(b.read?{background:'#05653044',borderColor:'#34d399',color:'#34d399'}:{background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.4)'}) }}>
+                    {b.read?'✓':'Unread'}
+                  </button>
                 </div>
 
               ); })}
@@ -2760,7 +2761,7 @@ function GoalSetModal({ goals, onSave, onClose }: { goals: any; onSave: (g: any)
 
 // ── HomeTab ───────────────────────────────────────────────────────────────────
 
-function HomeTab({ books, goals, onEditGoals, userName, onBookDetail, onUpdate }: { books: any[]; goals: any; onEditGoals: () => void; userName: string; onBookDetail: (b: any) => void; onUpdate: (id: any, patch: any) => void }) {
+function HomeTab({ books, goals, onEditGoals, userName, onBookDetail }: { books: any[]; goals: any; onEditGoals: () => void; userName: string; onBookDetail: (b: any) => void }) {
 
   const now = new Date();
 
@@ -4642,7 +4643,7 @@ export default function App() {
 
       {/* Book Detail Modal */}
 
-      {detailBook&&<BookDetailModal book={detailBook} onClose={()=>setDetailBook(null)} onReread={handleReread}/>}
+      <BookDetailModal book={detailBook} onClose={()=>setDetailBook(null)} onUpdate={update} onReread={handleReread}/>
 
       {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onBookDetail={b=>{setSeriesModal(null);setDetailBook(b);}}/>}
 
