@@ -4589,20 +4589,29 @@ export default function App() {
 
       let updatedBooks = [...books];
 
-      // This converts "House of Earth & Blood!" into "houseofearthandblood" for flawless matching
+      // Normalizes by removing all spaces, punctuation, and lowercasing
       const normalize = (str: string) => 
-        str.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]/g, '');
+        (str || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]/g, '');
 
       grBooks.forEach((grBook: any) => {
-        const grTitleNorm = normalize(grBook.title);
+        const grTitle = normalize(grBook.title);
+        const grAuthor = normalize(grBook.author);
         
-        // Find matching book using the supercharged normalizer
-        const existingIndex = updatedBooks.findIndex(
-          b => normalize(b.title) === grTitleNorm
-        );
+        // Find matching book using generous substring matching
+        const existingIndex = updatedBooks.findIndex(b => {
+          const bTitle = normalize(b.title);
+          const bAuthor = normalize(b.author);
+          
+          // Allow match if one author string is contained within the other
+          const authorMatch = bAuthor.includes(grAuthor) || grAuthor.includes(bAuthor);
+          
+          // Allow match if the core title is contained within the other
+          const titleMatch = bTitle.includes(grTitle) || grTitle.includes(bTitle);
+
+          return authorMatch && titleMatch;
+        });
 
         if (existingIndex >= 0) {
-          // If the book exists in your shelf but is unread, update it
           if (!updatedBooks[existingIndex].read) {
             updatedBooks[existingIndex] = {
               ...updatedBooks[existingIndex],
@@ -4622,7 +4631,7 @@ export default function App() {
     }
     setSyncing(false);
   };
-  
+
   if(firebaseReady&&!user) return (
 
     <div style={{ background:'#06040f',minHeight:'100vh',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:'2rem' }}>
