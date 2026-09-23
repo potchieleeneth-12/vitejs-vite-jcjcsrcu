@@ -485,8 +485,8 @@ const SEED = [
 
   // Abigail Owen
   fa(176,'The Rogue King','Abigail Owen','Paranormal Romance','Inferno Rising',1),
-  fa(177,'The Warrior King','Abigail Owen','Paranormal Romance','Inferno Rising',2),
-  fa(178,'The Blood King','Abigail Owen','Paranormal Romance','Inferno Rising',3),
+  fa(177,'The Warrior King','Abigail Owen','Paranormal Romance','Inferno Rising',3),
+  fa(178,'The Blood King','Abigail Owen','Paranormal Romance','Inferno Rising',2),
   fa(179,'The Cursed King','Abigail Owen','Paranormal Romance','Inferno Rising',4),
   fa(600,'The Games Gods Play','Abigail Owen','Paranormal Romance',null,null),
   fa(604,'The Things Gods Break','Abigail Owen','Paranormal Romance',null,null),
