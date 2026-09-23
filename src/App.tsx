@@ -4643,7 +4643,7 @@ export default function App() {
 
       {/* Book Detail Modal */}
 
-      <BookDetailModal book={detailBook} onClose={()=>setDetailBook(null)} onUpdate={update} onReread={handleReread}/>
+      {detailBook && <BookDetailModal book={detailBook} onClose={()=>setDetailBook(null)} onUpdate={update} onReread={handleReread}/>}
 
       {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onBookDetail={b=>{setSeriesModal(null);setDetailBook(b);}}/>}
 
