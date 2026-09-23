@@ -5209,6 +5209,7 @@ export default function App() {
 
       {tab==='insights'&&(()=>{
   const readAll_i = books.filter((b:any) => b.read);
+  
   const seriesData = (() => {
     const seriesMap: Record<string,{owned:number,read:number}> = {};
     books.forEach((b:any) => {
@@ -5229,9 +5230,9 @@ export default function App() {
       c[b.author].owned++;
       if (b.read) c[b.author].read++;
     });
-    return Object.entries(c).filter(([,v]) => v.owned >= 3)
+    return Object.entries(c).filter(([,v]) => v.owned >= 2)
       .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
-      .sort((a,b) => b.owned - a.owned).slice(0,6);
+      .sort((a,b) => b.owned - a.owned);
   })();
 
   const authorData = (() => {
@@ -5246,8 +5247,6 @@ export default function App() {
       {/* Series Completion Card */}
       {seriesData.length>0&&(
         <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-          
-          {/* Clickable Header */}
           <div 
             onClick={() => setShowAllSeriesModal(true)} 
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '0.65rem' }}
@@ -5258,9 +5257,8 @@ export default function App() {
             <span style={{ fontSize: '0.72rem', color: '#a78bfa', fontWeight: 600 }}>View All ➔</span>
           </div>
 
-          {/* Truncated Preview (Top 5) */}
           <div style={{ display:'flex',flexDirection:'column',gap:'0.5rem' }}>
-            {seriesData.slice(0, 5).map(({name,owned,read,pct})=>(
+            {seriesData.slice(0, 5).map(({name,owned,read,pct}:{name:string;owned:number;read:number;pct:number})=>(
               <div key={name} style={{ cursor:'pointer' }} onClick={()=>setSeriesModal(name)}>
                 <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
                   <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'70%' }}>{name}</span>
@@ -5272,16 +5270,24 @@ export default function App() {
               </div>
             ))}
           </div>
-
         </div>
       )}
 
       {/* Author Collections */}
       {authorOwned.length>0&&(
         <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-          <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.65rem' }}>✍️ Author Collections <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.25)',fontWeight:400 }}>(tap to explore)</span></div>
+          <div 
+            onClick={() => setShowAllAuthorsModal(true)} 
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '0.65rem' }}
+          >
+            <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>
+              ✍️ Author Collections <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',fontWeight:400 }}>(tap to view all {authorOwned.length})</span>
+            </div>
+            <span style={{ fontSize: '0.72rem', color: '#fb7185', fontWeight: 600 }}>View All ➔</span>
+          </div>
+
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem' }}>
-            {authorOwned.map(({author,owned,read,pct})=>(
+            {authorOwned.slice(0, 4).map(({author,owned,read,pct}:{author:string;owned:number;read:number;pct:number})=>(
               <div key={author} onClick={()=>setAuthorModal(author)} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer' }}
                 onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}
                 onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
@@ -5301,7 +5307,7 @@ export default function App() {
         <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
           <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white',marginBottom:'0.6rem' }}>Top Authors</div>
           <div style={{ display:'flex',flexDirection:'column',gap:'0.45rem' }}>
-            {authorData.map(({author,count})=>(
+            {authorData.map(({author,count}:{author:string;count:number})=>(
               <div key={author} style={{ marginBottom:'0.35rem',cursor:'pointer' }} onClick={()=>setAuthorModal(author)}>
                 <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'0.15rem' }}>
                   <span style={{ fontSize:'0.7rem',color:'rgba(255,255,255,0.65)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'75%' }}>{author}</span>
