@@ -4719,7 +4719,9 @@ export default function App() {
 
               )}
 
-<button onClick={syncGoodreads} title="Sync Goodreads" style={{ background:'rgba(52,211,153,0.1)',color:'#34d399',border:'1px solid rgba(52,211,153,0.2)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>🔄 Sync GR</button>
+              <button onClick={()=>exportCSV(books)} title="Export as CSV" style={{ background:'rgba(96,165,250,0.1)',color:'#60a5fa',border:'1px solid rgba(96,165,250,0.2)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>📤 CSV</button>
+              
+              <button onClick={syncGoodreads} title="Sync Goodreads" style={{ background:'rgba(52,211,153,0.1)',color:'#34d399',border:'1px solid rgba(52,211,153,0.2)',borderRadius:'0.65rem',padding:'0.4rem 0.7rem',fontSize:'0.72rem',cursor:'pointer',fontWeight:600 }}>🔄 Sync GR</button>
 
               <button onClick={()=>setModal('add')} style={{ background:'#6d28d9',color:'white',border:'none',borderRadius:'0.75rem',padding:'0.45rem 0.9rem',fontWeight:'600',cursor:'pointer',fontSize:'0.82rem' }}>+ Add</button>
 
