@@ -2850,9 +2850,9 @@ function HomeTab({ books, goals, onEditGoals, userName, onBookDetail, onUpdate }
 
       {yearModal!==null&&<YearBooksModal year={yearModal} books={books} onClose={()=>setYearModal(null)} onBookClick={b=>{setYearModal(null);onBookDetail(b);}}/>}
 
-      {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onUpdate={onUpdate} onBookDetail={b=>{setSeriesModal(null);onBookDetail(b);}}/>}
+      {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onBookDetail={b=>{setSeriesModal(null);onBookDetail(b);}}/>}
 
-      {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onUpdate={onUpdate} onBookDetail={b=>{setAuthorModal(null);onBookDetail(b);}}/>}
+      {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onBookDetail={b=>{setAuthorModal(null);onBookDetail(b);}}/>}
 
       {/* Hero */}
 
@@ -4642,11 +4642,11 @@ export default function App() {
 
       {/* Book Detail Modal */}
 
-      {detailBook&&<BookDetailModal book={detailBook} onClose={()=>setDetailBook(null)} onUpdate={update} onReread={handleReread}/>}
+      {detailBook&&<BookDetailModal book={detailBook} onClose={()=>setDetailBook(null)} onReread={handleReread}/>}
 
-      {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onUpdate={update} onBookDetail={b=>{setSeriesModal(null);setDetailBook(b);}}/>}
+      {seriesModal&&<SeriesModal seriesName={seriesModal} books={books} onClose={()=>setSeriesModal(null)} onBookDetail={b=>{setSeriesModal(null);setDetailBook(b);}}/>}
 
-      {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onUpdate={update} onBookDetail={b=>{setAuthorModal(null);setDetailBook(b);}}/>}
+      {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onBookDetail={b=>{setAuthorModal(null);setDetailBook(b);}}/>}
 
       
 
@@ -4810,7 +4810,7 @@ export default function App() {
 
 
 
-      {tab==='home'&&<HomeTab books={books} goals={goals} onEditGoals={()=>setGoalModal(true)} userName="Elle" onBookDetail={setDetailBook} onUpdate={update}/>}
+      {tab==='home'&&<HomeTab books={books} goals={goals} onEditGoals={()=>setGoalModal(true)} userName="Elle" onBookDetail={setDetailBook}/>}
 
 
 
