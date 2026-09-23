@@ -4705,7 +4705,7 @@ export default function App() {
               ...updatedBooks[existingIndex],
               read: true,
               readAt: parsedDate.getTime() || Date.now(),
-              readYear: parsedDate.getFullYear() || THIS_YEAR,
+              readYear: parsedDate.getFullYear() || new Date().getFullYear(),
               status: 'shelf' // Moves it out of TBR if it was sitting there
             };
             matchCount++;
