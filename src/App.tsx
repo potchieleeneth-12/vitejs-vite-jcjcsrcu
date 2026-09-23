@@ -4237,6 +4237,8 @@ export default function App() {
 
   const [syncing,     setSyncing]     = useState(false);
 
+  const grCsvInputRef = useRef<HTMLInputElement>(null);
+
   const [search,      setSearch]      = useState('');
 
   const [fGenre,      setFGenre]      = useState('All');
@@ -4631,7 +4633,6 @@ export default function App() {
     }
     setSyncing(false);
   };
-  const grCsvInputRef = useRef<HTMLInputElement>(null);
 
   const handleGRCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
