@@ -4986,22 +4986,23 @@ export default function App() {
 )}
 
 {showAllAuthorsModal && (
-  <AllAuthorsModal 
-    authorData={(() => {
-      const c: Record<string,{owned:number,read:number}> = {};
-      books.forEach((b:any) => {
-        if (!c[b.author]) c[b.author] = {owned:0,read:0};
-        c[b.author].owned++;
-        if (b.read) c[b.author].read++;
-      });
-      return Object.entries(c).filter(([,v]) => v.owned >= 2) // Shows all authors with 2+ books
-        .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
-        .sort((a,b) => b.owned - a.owned);
-    })()} 
-    onClose={() => setShowAllAuthorsModal(false)} 
-    onAuthorClick={(name) => setAuthorModal(name)}
-  />
-)}
+        <AllAuthorsModal  
+          authorData={(() => {
+            const c: Record<string,{owned:number,read:number}> = {};
+            books.forEach((b:any) => {
+              if (!c[b.author]) c[b.author] = {owned:0,read:0};
+              c[b.author].owned++;
+              if (b.read) c[b.author].read++;
+            });
+            return Object.entries(c).filter(([,v]) => v.owned >= 2)
+              .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
+              .sort((a,b) => b.owned - a.owned);
+          })()}  
+          onClose={() => setShowAllAuthorsModal(false)}  
+          onAuthorClick={(name) => setAuthorModal(name)}
+        />
+      )}
+
 
 {/* Author Collections */}
 {authorOwned.length>0&&(
