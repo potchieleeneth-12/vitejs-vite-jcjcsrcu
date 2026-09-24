@@ -4966,27 +4966,26 @@ export default function App() {
       {authorModal&&<AuthorModal author={authorModal} books={books} onClose={()=>setAuthorModal(null)} onBookDetail={b=>{setAuthorModal(null);setDetailBook(b);}}/>}
 
       {showAllSeriesModal && (
+        <AllSeriesModal 
+          seriesData={(() => {
+            const seriesMap: Record<string,{owned:number,read:number}> = {};
+            books.forEach((b:any) => {
+              if (!b.series) return;
+              if (!seriesMap[b.series]) seriesMap[b.series] = {owned:0,read:0};
+              seriesMap[b.series].owned++;
+              if (b.read) seriesMap[b.series].read++;
+            });
+            return Object.entries(seriesMap).filter(([,v]) => v.owned > 1)
+              .map(([name,v]) => ({name, ...v, pct: Math.round((v.read/v.owned)*100)}))
+              .sort((a,b) => b.owned - a.owned);
+          })()} 
+          onClose={() => setShowAllSeriesModal(false)} 
+          onSeriesClick={(name) => setSeriesModal(name)}
+        />
+      )}
 
-  <AllSeriesModal 
-    seriesData={(() => {
-      const seriesMap: Record<string,{owned:number,read:number}> = {};
-      books.forEach((b:any) => {
-        if (!b.series) return;
-        if (!seriesMap[b.series]) seriesMap[b.series] = {owned:0,read:0};
-        seriesMap[b.series].owned++;
-        if (b.read) seriesMap[b.series].read++;
-      });
-      return Object.entries(seriesMap).filter(([,v]) => v.owned > 1)
-        .map(([name,v]) => ({name, ...v, pct: Math.round((v.read/v.owned)*100)}))
-        .sort((a,b) => b.owned - a.owned);
-    })()} 
-    onClose={() => setShowAllSeriesModal(false)} 
-    onSeriesClick={(name) => setSeriesModal(name)}
-  />
-)}
-
-{showAllAuthorsModal && (
-        <AllAuthorsModal  
+      {showAllAuthorsModal && (
+        <AllAuthorsModal 
           authorData={(() => {
             const c: Record<string,{owned:number,read:number}> = {};
             books.forEach((b:any) => {
@@ -4997,11 +4996,13 @@ export default function App() {
             return Object.entries(c).filter(([,v]) => v.owned >= 2)
               .map(([author,v]) => ({author, ...v, pct: Math.round((v.read/v.owned)*100)}))
               .sort((a,b) => b.owned - a.owned);
-          })()}  
-          onClose={() => setShowAllAuthorsModal(false)}  
+          })()} 
+          onClose={() => setShowAllAuthorsModal(false)} 
           onAuthorClick={(name) => setAuthorModal(name)}
         />
       )}
+
+      
 
 
 {/* Author Collections */}
