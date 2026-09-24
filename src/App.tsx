@@ -5002,41 +5002,6 @@ export default function App() {
         />
       )}
 
-      
-
-
-{/* Author Collections */}
-{authorOwned.length>0&&(
-  <div style={{ background:'#0e0b1e',borderRadius:'0.875rem',border:'1px solid rgba(255,255,255,0.07)',padding:'1rem',marginBottom:'0.75rem' }}>
-    
-    {/* Clickable Header */}
-    <div 
-      onClick={() => setShowAllAuthorsModal(true)} 
-      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '0.65rem' }}
-    >
-      <div style={{ fontSize:'0.78rem',fontWeight:'600',color:'white' }}>
-        ✍️ Author Collections <span style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.3)',fontWeight:400 }}>(tap to view all)</span>
-      </div>
-      <span style={{ fontSize: '0.72rem', color: '#fb7185', fontWeight: 600 }}>View All ➔</span>
-    </div>
-
-    {/* Truncated Preview (Top 4) */}
-    <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem' }}>
-      {authorOwned.slice(0, 4).map(({author,owned,read,pct})=>(
-        <div key={author} onClick={()=>setAuthorModal(author)} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer' }}
-          onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}
-          onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
-          <div style={{ fontSize:'0.7rem',color:'white',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'0.2rem' }}>{author}</div>
-          <div style={{ fontSize:'0.62rem',color:'rgba(255,255,255,0.35)',marginBottom:'0.3rem' }}>{read} of {owned} read</div>
-          <div style={{ height:'4px',borderRadius:'9999px',background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
-            <div style={{ width:`${pct}%`,height:'100%',background:pct===100?'#34d399':'#fb7185',borderRadius:'9999px',transition:'width 0.5s' }}/>
-          </div>
-        </div>
-      ))}
-    </div>
-
-  </div>
-)}
 
       {/* STICKY HEADER */}
 
@@ -5289,7 +5254,7 @@ export default function App() {
           </div>
 
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem' }}>
-            {authorOwned.slice(0, 4).map(({author,owned,read,pct}:{author:string;owned:number;read:number;pct:number})=>(
+           {authorOwned.slice(0, 4).map(({author,owned,read,pct})=>(
               <div key={author} onClick={()=>setAuthorModal(author)} style={{ background:'rgba(255,255,255,0.03)',borderRadius:'0.6rem',padding:'0.5rem 0.65rem',border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer' }}
                 onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}
                 onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
